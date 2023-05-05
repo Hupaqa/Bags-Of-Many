@@ -1,0 +1,6 @@
+<Mod
+	name="Bags Of Many"
+	description="Adds bag items in the world that can be used to have more inventory space."
+    request_no_api_restrictions="0"
+>
+</Mod>
