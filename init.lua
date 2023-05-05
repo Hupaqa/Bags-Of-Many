@@ -104,14 +104,24 @@ function setup_gui()
                         GuiZSetForNextWidget(gui, 20)
                         local item_pos_x = storage_cell_x + 2
                         local item_pos_y = storage_cell_y
-                        -- Change drawing center and color on specific item type
+                        local tooltip
+                        -- Centering for wand and tooltip
                         if EntityHasTag(stored_items[i], "wand") then
                             item_pos_y = item_pos_y + center_wand
+                        -- Centering for spells and tooltip
                         elseif EntityHasTag(stored_items[i], "card_action") then
+                            local item_action_component = EntityGetComponentIncludingDisabled(stored_items[i], "ItemActionComponent")
+                            if item_action_component then
+                                local action_id = ComponentGetValue2(item_action_component[1], "action_id")
+                                tooltip = action_id
+                            end
                             item_pos_y = item_pos_y + center_spell
+                            -- Centering for potion, coloring and tooltip
                         elseif EntityHasTag(stored_items[i], "potion") then
+                            local material = get_potion_content(stored_items[i])
                             item_pos_x = item_pos_x + center_potion
                             item_pos_y = item_pos_y + center_potion
+                            tooltip = GameTextGet(material.name).. " " .. "POTION" .. " ( " .. material.amount .. "% FULL )"
                             local potion_color = GameGetPotionColorUint(stored_items[i])
                             if potion_color ~= 0 then
                                 local b = bit.rshift(bit.band(potion_color, 0xFF0000), 16) / 0xFF
@@ -128,13 +138,8 @@ function setup_gui()
                             show_entity(stored_items[i])
                         end
                         local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
-                        local item_component = EntityGetFirstComponentIncludingDisabled(stored_items[i], "ItemComponent")
-                        local material = get_potion_content(stored_items[i])
-                        local tooltip = GameTextGet(ComponentGetValue2(item_component, "item_name")) .. " " .. GameTextGet(material.name) .. " " .. material.amount
-                        -- local tooltip = "COOOL"
-                        -- Draw the tooltip
-                        if tooltip and hovered then
-                            get_potion_content(stored_items[i])
+                        -- Draw the tooltip for potion and spells
+                        if hovered and tooltip and not EntityHasTag(stored_items[i], "wand") then
                             GuiBeginAutoBox(gui)
                             GuiLayoutBeginHorizontal(gui, storage_cell_x, storage_cell_y + 30, true)
                             GuiLayoutBeginVertical(gui, 0, 0)
@@ -147,6 +152,22 @@ function setup_gui()
                             GuiLayoutEnd(gui)
                             GuiZSetForNextWidget(gui, 10)
                             GuiEndAutoBoxNinePiece(gui)
+                        -- Draw the tooltip for wand 
+                        elseif hovered and EntityHasTag(stored_items[i],"wand") then
+                            -- local tooltip_x = storage_cell_x
+                            -- local tooltip_y = storage_cell_y + 30
+                            -- local wand_capacity = EntityGetWandCapacity(stored_items[i])
+                            -- GuiBeginAutoBox(gui)
+                            -- GuiLayoutBeginHorizontal(gui, storage_cell_x, storage_cell_y + 30, true)
+                            -- GuiLayoutBeginVertical(gui, 0, 0)
+                            -- for i = 1, wand_capacity do
+                            --     GuiImage(gui, new_id(), tooltip_x+(20 * i-1), tooltip_y, "mods/bags_of_many/files/ui_gfx/full_inventory_box.png")
+                            --     i = i + i
+                            -- end
+                            -- GuiLayoutEnd(gui)
+                            -- GuiLayoutEnd(gui)
+                            -- GuiZSetForNextWidget(gui, 10)
+                            -- GuiEndAutoBoxNinePiece(gui)
                         end
                     end
                 end
