@@ -41,7 +41,7 @@ function is_item(entity)
 end
 
 function is_bag(entity_id)
-    return EntityGetName(entity_id) == "bag_small"
+    return string.find(EntityGetName(entity_id), "bag_") ~= nil
 end
 
 function is_bag_not_full(bag, maximum)
@@ -76,12 +76,58 @@ function add_item_to_inventory(inventory, path)
     end
 end
 
-function add_item_to_bag_inventory(inventory, item)
-    if item then
-        EntityAddChild(inventory, item)
-        return item
-    else
-        GamePrint("Error: Couldn't load the item ["..path.."]!")
+function add_spells_to_inventory(active_item, inventory, player_id, entities)
+    for _, entity in ipairs(entities) do
+        local parent = EntityGetParent(entity)
+        local root_entity = EntityGetRootEntity(entity)
+        if root_entity ~= player_id or root_entity == nil then
+            if not EntityHasTag(parent, "wand") and is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
+                EntityRemoveFromParent(entity)
+                EntityAddChild(inventory, entity)
+                hide_entity(entity)
+            end
+        end
+    end
+end
+
+function add_wands_to_inventory(active_item, inventory, player_id, entities)
+    for _, entity in ipairs(entities) do
+        local root_entity = EntityGetRootEntity(entity)
+        if root_entity ~= player_id or root_entity == nil then
+            if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
+                EntityRemoveFromParent(entity)
+                EntityAddChild(inventory, entity)
+                hide_entity(entity)
+            end
+        end
+    end
+end
+
+function add_potions_to_inventory(active_item, inventory, player_id, entities)
+    for _, entity in ipairs(entities) do
+        local root_entity = EntityGetRootEntity(entity)
+        if root_entity ~= player_id or root_entity == nil then
+            if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
+                EntityRemoveFromParent(entity)
+                EntityAddChild(inventory, entity)
+                hide_entity(entity)
+            end
+        end
+    end
+end
+
+function add_bags_to_inventory(active_item, inventory, player_id, entities)
+    for _, entity in ipairs(entities) do
+        if is_bag(entity) and entity ~= active_item then
+            local root_entity = EntityGetRootEntity(entity)
+            if root_entity ~= player_id or root_entity == nil then
+                if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
+                    EntityRemoveFromParent(entity)
+                    EntityAddChild(inventory, entity)
+                    hide_entity(entity)
+                end
+            end
+        end
     end
 end
 
@@ -112,7 +158,12 @@ function get_bag_inventory_items( entity_id )
 end
 
 function get_bag_inventory_size( entity_id )
-    return ComponentGetValue2(EntityGetFirstComponentIncludingDisabled(entity_id, "Inventory2Component"), "full_inventory_slots_x")
+    local size = tonumber(ModSettingGet("BagsOfMany.".. EntityGetName(entity_id) .. "_size"))
+    if not size then
+        size = 0
+    else
+        return math.floor(size)
+    end
 end
 
 function get_potion_content( entity_id )
@@ -140,6 +191,13 @@ function get_potion_content( entity_id )
             end
         end
         return biggest_percent_mat
+    end
+end
+
+function get_sprite_file( entity_id )
+    local sprite_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
+    if sprite_component then
+        return ComponentGetValue2(sprite_component[1], "image_file")
     end
 end
 

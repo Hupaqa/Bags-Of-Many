@@ -1,3 +1,7 @@
 ,en,ru,pt-br,es-es,de,fr-fr,it,pl,zh-cn,jp,ko,,NOTES – use \n for newline,max length
-bag_small,Small Bag,,,,Petit Sac,,,,,,,,,
-item_description_bag_small,A small bag that is able to carry a small amount of stuff,,,,Un petit sac qui est capable de transporter un petit peu de choses,,,,,,,,,
+bag_universal_small,Small Universal Bag,,,,Sac Universel Petit,,,,,,,,,
+bag_universal_medium,Medium Universal Bag,,,,Sac Universel Moyen,,,,,,,,,
+bag_universal_big,Big Universal Bag,,,,Sac Universel Petit,,,,,,,,,
+item_description_bag_universal_small,A bag for novices that is able to carry a small amount of stuff,,,,Un sac pour novices qui est capable de transporter un petit peu de choses,,,,,,,,,
+item_description_bag_universal_medium,A bag for adepts that is able to carry a medium amount of stuff,,,,Un sac pour adeptes qui est capable de transporter une quantité moyenne de choses,,,,,,,,,
+item_description_bag_universal_big,A bag for masters that is able to carry a large amount of stuff,,,,Un sac pour maîtres qui est capable de transporter une grande quantité de choses,,,,,,,,,
