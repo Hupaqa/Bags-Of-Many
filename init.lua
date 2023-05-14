@@ -79,24 +79,38 @@ function setup_gui()
     local active_item = get_active_item()
     if inventory_open and is_bag(active_item) then
         local stored_items = get_bag_inventory_items(active_item)
-        local nb_of_items = get_bag_inventory_size(active_item)
-        for i = 1, nb_of_items do
-            local storage_cell_x = button_pos_x + 6 + (20 * i - 1)
-            local storage_cell_y = button_pos_y
+        local qt_of_storage = get_bag_inventory_size(active_item)
+        local item_per_line = 10
+        local column_number = 1
+        local row_number = 1
+        local is_multi_row = 0
+        for i = 1, qt_of_storage do
+            if row_number > 1 then
+                is_multi_row = 1
+            end
+            local start_bracket = i%(item_per_line+1)
+            local end_bracket = i%(item_per_line)
+            local storage_cell_x = button_pos_x + 6 + (20 * (start_bracket + is_multi_row))
+            local storage_cell_y = button_pos_y + (28 * (row_number - 1))
             local center_spell = -2
             local center_wand = 1
             local center_potion = 2
             -- Draw the inventory container backdrop
-            if i == 1 then
+            -- Draw left bracket
+            if i == 1 or start_bracket == 0 then
                 GuiZSetForNextWidget(gui, 21)
                 GuiImageNinePiece(gui, new_id(), storage_cell_x - 9, storage_cell_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_left.png", "mods/bags_of_many/files/ui_gfx/piece_small_left.png")
             end
+            -- Draw middle portion
             GuiZSetForNextWidget(gui, 21)
             GuiImageNinePiece(gui, new_id(), storage_cell_x, storage_cell_y, 18, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_middle.png", "mods/bags_of_many/files/ui_gfx/piece_small_middle.png")
-            if i == nb_of_items then
+            -- Draw right bracket
+            if i == qt_of_storage or end_bracket == 0 then
+                row_number = row_number + 1
                 GuiZSetForNextWidget(gui, 21)
                 GuiImageNinePiece(gui, new_id(), storage_cell_x + 22, storage_cell_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_right.png", "mods/bags_of_many/files/ui_gfx/piece_small_right.png")
             end
+            column_number = column_number + 1
             -- Draw the inventory content
             if stored_items[i] ~= nil then
                 local sprite_path = get_sprite_file(stored_items[i])
