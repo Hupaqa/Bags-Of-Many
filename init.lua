@@ -34,6 +34,7 @@ function OnPausedChanged(is_paused, is_inventory_pause)
 	end
 	button_locked = ModSettingGet("BagsOfMany.locked")
 	show_bag_content = ModSettingGet("BagsOfMany.show_bag_content")
+    bag_wrap_number = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
 end
 
 function split_string(inputstr, sep)
@@ -49,6 +50,7 @@ end
 function setup_gui()
     gui = gui or GuiCreate()
     open = open or false
+    
     current_id = 1
     local function new_id()
         current_id = current_id + 1
@@ -80,63 +82,67 @@ function setup_gui()
     if inventory_open and is_bag(active_item) then
         local stored_items = get_bag_inventory_items(active_item)
         local qt_of_storage = get_bag_inventory_size(active_item)
-        local item_per_line = 10
-        local column_number = 1
-        local row_number = 1
-        local is_multi_row = 0
-        for i = 1, qt_of_storage do
-            if row_number > 1 then
-                is_multi_row = 1
-            end
-            local start_bracket = i%(item_per_line+1)
-            local end_bracket = i%(item_per_line)
-            local storage_cell_x = button_pos_x + 6 + (20 * (start_bracket + is_multi_row))
-            local storage_cell_y = button_pos_y + (28 * (row_number - 1))
+        local item_per_line = tonumber(bag_wrap_number)
+        if not item_per_line then
+            item_per_line = 10
+        end
+        for i = 0, qt_of_storage-1 do
+            local pos_in_line = i%(item_per_line)
+            local storage_cell_x = button_pos_x + 26 + 20 * (pos_in_line)
+            local storage_cell_y = button_pos_y + 28 * (math.floor(i / item_per_line))
             local center_spell = -2
             local center_wand = 1
             local center_potion = 2
-            -- Draw the inventory container backdrop
-            -- Draw left bracket
-            if i == 1 or start_bracket == 0 then
-                GuiZSetForNextWidget(gui, 21)
-                GuiImageNinePiece(gui, new_id(), storage_cell_x - 9, storage_cell_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_left.png", "mods/bags_of_many/files/ui_gfx/piece_small_left.png")
+
+            -- only 1
+            if (pos_in_line == 0 and i == qt_of_storage-1) or (pos_in_line == 0 and pos_in_line == item_per_line-1) then
+                draw_left_bracket(gui, new_id(), storage_cell_x, storage_cell_y)
+                draw_middle(gui, new_id(), storage_cell_x, storage_cell_y)
+                draw_right_bracket(gui, new_id(), storage_cell_x, storage_cell_y)
+            -- 1 and more
+            elseif pos_in_line == 0 then
+                draw_left_bracket(gui, new_id(), storage_cell_x, storage_cell_y)
+                draw_middle(gui, new_id(), storage_cell_x, storage_cell_y)
+            -- last for line
+            elseif pos_in_line == item_per_line-1 then
+                draw_middle(gui, new_id(), storage_cell_x, storage_cell_y)
+                draw_right_bracket(gui, new_id(), storage_cell_x, storage_cell_y)
+            -- middle end
+            elseif i == qt_of_storage-1 then
+                draw_middle(gui, new_id(), storage_cell_x, storage_cell_y)
+                draw_right_bracket(gui, new_id(), storage_cell_x, storage_cell_y)
+            -- middle
+            else
+                draw_middle(gui, new_id(), storage_cell_x, storage_cell_y)
             end
-            -- Draw middle portion
-            GuiZSetForNextWidget(gui, 21)
-            GuiImageNinePiece(gui, new_id(), storage_cell_x, storage_cell_y, 18, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_middle.png", "mods/bags_of_many/files/ui_gfx/piece_small_middle.png")
-            -- Draw right bracket
-            if i == qt_of_storage or end_bracket == 0 then
-                row_number = row_number + 1
-                GuiZSetForNextWidget(gui, 21)
-                GuiImageNinePiece(gui, new_id(), storage_cell_x + 22, storage_cell_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_right.png", "mods/bags_of_many/files/ui_gfx/piece_small_right.png")
-            end
-            column_number = column_number + 1
+
+            local inventory_position = i + 1
             -- Draw the inventory content
-            if stored_items[i] ~= nil then
-                local sprite_path = get_sprite_file(stored_items[i])
+            if stored_items[inventory_position] ~= nil then
+                local sprite_path = get_sprite_file(stored_items[inventory_position])
                 if sprite_path then
                     GuiZSetForNextWidget(gui, 20)
                     local item_pos_x = storage_cell_x + 2
                     local item_pos_y = storage_cell_y
                     local tooltip
                     -- Centering for wand and tooltip
-                    if EntityHasTag(stored_items[i], "wand") then
+                    if EntityHasTag(stored_items[inventory_position], "wand") then
                         item_pos_y = item_pos_y + center_wand
                     -- Centering for spells and tooltip
-                    elseif EntityHasTag(stored_items[i], "card_action") then
-                        local item_action_component = EntityGetComponentIncludingDisabled(stored_items[i], "ItemActionComponent")
+                    elseif EntityHasTag(stored_items[inventory_position], "card_action") then
+                        local item_action_component = EntityGetComponentIncludingDisabled(stored_items[inventory_position], "ItemActionComponent")
                         if item_action_component then
                             local action_id = ComponentGetValue2(item_action_component[1], "action_id")
                             tooltip = action_id
                         end
                         item_pos_y = item_pos_y + center_spell
                         -- Centering for potion, coloring and tooltip
-                    elseif EntityHasTag(stored_items[i], "potion") then
-                        local material = get_potion_content(stored_items[i])
+                    elseif EntityHasTag(stored_items[inventory_position], "potion") then
+                        local material = get_potion_content(stored_items[inventory_position])
                         item_pos_x = item_pos_x + center_potion
                         item_pos_y = item_pos_y + center_potion
                         tooltip = string.upper(GameTextGet(material.name)) .. " " .. "POTION" .. " ( " .. material.amount .. "% FULL )"
-                        local potion_color = GameGetPotionColorUint(stored_items[i])
+                        local potion_color = GameGetPotionColorUint(stored_items[inventory_position])
                         if potion_color ~= 0 then
                             local b = bit.rshift(bit.band(potion_color, 0xFF0000), 16) / 0xFF
                             local g = bit.rshift(bit.band(potion_color, 0xFF00), 8) / 0xFF
@@ -146,19 +152,19 @@ function setup_gui()
                     end
                     -- Draw the item
                     if GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", sprite_path) then
-                        EntityRemoveFromParent(stored_items[i])
+                        EntityRemoveFromParent(stored_items[inventory_position])
                         local x, y = EntityGetTransform(active_item)
-                        EntityApplyTransform(stored_items[i], x, y)
-                        show_entity(stored_items[i])
+                        EntityApplyTransform(stored_items[inventory_position], x, y)
+                        show_entity(stored_items[inventory_position])
                     end
                     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
                     -- Draw the tooltip for potion and spells
-                    if hovered and tooltip and not EntityHasTag(stored_items[i], "wand") then
+                    if hovered and tooltip and not EntityHasTag(stored_items[inventory_position], "wand") then
                         GuiBeginAutoBox(gui)
                         GuiLayoutBeginHorizontal(gui, storage_cell_x, storage_cell_y + 30, true)
                         GuiLayoutBeginVertical(gui, 0, 0)
                         local lines = split_string(tooltip, "\n")
-                        for i, line in ipairs(lines) do
+                        for _, line in ipairs(lines) do
                             local offset = line == " " and -7 or 0
                             GuiText(gui, 0, offset, line)
                         end
@@ -167,16 +173,16 @@ function setup_gui()
                         GuiZSetForNextWidget(gui, 10)
                         GuiEndAutoBoxNinePiece(gui)
                     -- Draw the tooltip for wand 
-                    elseif hovered and EntityHasTag(stored_items[i],"wand") then
+                    elseif hovered and EntityHasTag(stored_items[inventory_position],"wand") then
                         local tooltip_x = storage_cell_x
                         local tooltip_y = storage_cell_y + 20
-                        local wand_capacity = EntityGetWandCapacity(stored_items[i])
+                        local wand_capacity = EntityGetWandCapacity(stored_items[inventory_position])
                         for i = 1, wand_capacity do
                             GuiZSetForNextWidget(gui, 31)
                             GuiImage(gui, new_id(), tooltip_x+(20 * (i-1)), tooltip_y, "mods/bags_of_many/files/ui_gfx/full_inventory_box.png", 1, 1, 1)
                             i = i + 1
                         end
-                        local wand_spells = EntityGetAllChildren(stored_items[i])
+                        local wand_spells = EntityGetAllChildren(stored_items[inventory_position])
                         for i = 1, #wand_spells do
                             local spell_sprite = get_sprite_file(wand_spells[i])
                             if spell_sprite then
@@ -185,9 +191,24 @@ function setup_gui()
                             end
                         end
                     end
-                end
+                end 
             end
             i = i + 1
         end
     end
+end
+
+function draw_left_bracket(gui, id, pos_x, pos_y)
+    GuiZSetForNextWidget(gui, 21)
+    GuiImageNinePiece(gui, id, pos_x - 9, pos_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_left.png", "mods/bags_of_many/files/ui_gfx/piece_small_left.png")
+end
+
+function draw_middle(gui, id, pos_x, pos_y)
+    GuiZSetForNextWidget(gui, 21)
+    GuiImageNinePiece(gui, id, pos_x, pos_y, 18, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_middle.png", "mods/bags_of_many/files/ui_gfx/piece_small_middle.png")
+end
+
+function draw_right_bracket(gui, id, pos_x, pos_y)
+    GuiZSetForNextWidget(gui, 21)
+    GuiImageNinePiece(gui, id, pos_x + 22, pos_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_right.png", "mods/bags_of_many/files/ui_gfx/piece_small_right.png")
 end

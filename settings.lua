@@ -76,6 +76,15 @@ mod_settings =
                     "\n   the sliders first lock the bag position.",
                 not_setting = true,
             },
+            {
+                id = "bag_slots_inventory_wrap",
+                ui_name = "Inventory Wrapper",
+                ui_description = "Number of inventory slots before newline in ui",
+                value_default = "10",
+                text_max_length = 3,
+				allowed_characters = "0123456789",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
         }
     },
     {
