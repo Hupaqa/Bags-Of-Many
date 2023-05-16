@@ -20,6 +20,22 @@ function mod_setting_warning(mod_id, gui, in_main_menu, im_id, setting)
     GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_description)
 end
 
+function mod_setting_section(mod_id, gui, in_main_menu, im_id, setting)
+    GuiColorSetForNextWidget(gui, 0.4, 0.4, 0.4, 1.0)
+    GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. setting.ui_description)
+end
+
+function mod_setting_section_rgb(mod_id, gui, in_main_menu, im_id, setting)
+    local local_bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
+    local local_bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
+    local local_bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
+    local local_bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
+    GuiColorSetForNextWidget(gui, 0.4, 0.4, 0.4, 1.0)
+    GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. setting.ui_description)
+    GuiColorSetForNextWidget(gui, local_bag_ui_red, local_bag_ui_green, local_bag_ui_blue, local_bag_ui_alpha)
+    GuiText(gui, mod_setting_group_x_offset, 0, "BACKGROUND")
+end
+
 function mod_setting_warning_inventory_lock(mod_id, gui, in_main_menu, im_id, setting)
     if not ModSettingGet("BagsOfMany.locked") then
         GuiColorSetForNextWidget(gui, 1.0, 1.0, 0.4, 1.0)
@@ -35,9 +51,15 @@ mod_settings =
         category_id = "bag_position_inventory",
         foldable = true,
         _folded = true,
-        ui_name = "Bag Inventory Position",
-        ui_description = "Options for the position of the bags inventory",
+        ui_name = "Bag Inventory General",
+        ui_description = "Options for the of the bags",
         settings = {
+            {
+                ui_fn = mod_setting_section,
+                ui_name = "Position of the bag inventory ui",
+                ui_description = "",
+                not_setting = true,
+            },
             {
                 id = "pos_x",
                 ui_name = "Horizontal position",
@@ -77,12 +99,70 @@ mod_settings =
                 not_setting = true,
             },
             {
+                ui_fn = mod_setting_vertical_spacing,
+                not_setting = true,
+            },
+            {
                 id = "bag_slots_inventory_wrap",
                 ui_name = "Inventory Wrapper",
                 ui_description = "Number of inventory slots before newline in ui",
                 value_default = "10",
                 text_max_length = 3,
 				allowed_characters = "0123456789",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                ui_fn = mod_setting_vertical_spacing,
+                not_setting = true,
+            },
+            {
+                ui_fn = mod_setting_section_rgb,
+                ui_name = "RGB of the bag inventory ui",
+                ui_description = "",
+                not_setting = true,
+            },
+            {
+                id = "bag_image_red",
+                ui_name = "Red of the background",
+                ui_description = "The red in the rgb of the bag ui",
+                value_default = 255,
+                value_min = 0,
+                value_max = 255,
+                value_display_multiplier = 1,
+                value_display_formatting = " red = $0",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "bag_image_green",
+                ui_name = "Green of the background",
+                ui_description = "The green in the rgb of the bag ui",
+                value_default = 255,
+                value_min = 0,
+                value_max = 255,
+                value_display_multiplier = 1,
+                value_display_formatting = " green = $0",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "bag_image_blue",
+                ui_name = "Blue of the background",
+                ui_description = "The blue in the rgb of the bag ui",
+                value_default = 255,
+                value_min = 0,
+                value_max = 255,
+                value_display_multiplier = 1,
+                value_display_formatting = " blue = $0",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "bag_image_alpha",
+                ui_name = "Alpha of the background",
+                ui_description = "The alpha in the rgb of the bag ui",
+                value_default = 255,
+                value_min = 0,
+                value_max = 255,
+                value_display_multiplier = 1,
+                value_display_formatting = " alpha = $0",
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
         }

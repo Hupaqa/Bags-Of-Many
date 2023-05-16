@@ -7,7 +7,10 @@ button_pos_x = ModSettingGet("BagsOfMany.pos_x")
 button_pos_y = ModSettingGet("BagsOfMany.pos_y")
 button_locked = ModSettingGet("BagsOfMany.locked")
 show_bag_content = ModSettingGet("BagsOfMany.show_bag_content")
-test_variable_lol = 90
+bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
+bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
+bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
+bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
 
 -- Adding translations
 local TRANSLATIONS_FILE = "data/translations/common.csv"
@@ -25,16 +28,22 @@ function OnWorldPreUpdate()
 end
 
 function OnPausedChanged(is_paused, is_inventory_pause)
+    button_locked = ModSettingGet("BagsOfMany.locked")
 	if not button_locked then
-		ModSettingSet("BagsOfMany.pos_x", button_pos_x)
-		ModSettingSet("BagsOfMany.pos_y", button_pos_y)
+        print(button_pos_x)
+        print(button_pos_y)
+		ModSettingSetNextValue("BagsOfMany.pos_x", button_pos_x, false)
+		ModSettingSetNextValue("BagsOfMany.pos_y", button_pos_y, false)
     else
         button_pos_x = ModSettingGet("BagsOfMany.pos_x")
         button_pos_y = ModSettingGet("BagsOfMany.pos_y")
 	end
-	button_locked = ModSettingGet("BagsOfMany.locked")
 	show_bag_content = ModSettingGet("BagsOfMany.show_bag_content")
     bag_wrap_number = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
+    bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
+    bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
+    bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
+    bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
 end
 
 function split_string(inputstr, sep)
@@ -70,6 +79,8 @@ function setup_gui()
         if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= button_pos_x and draw_y ~= button_pos_y then
 			button_pos_x = draw_x - draw_width / 2
 			button_pos_y = draw_y - draw_height / 2
+            ModSettingSet("BagsOfMany.pos_x", button_pos_x)
+		    ModSettingSet("BagsOfMany.pos_y", button_pos_y)
 		end
     end
     if inventory_open and GuiImageButton(gui, new_id(), button_pos_x, button_pos_y, "", "mods/bags_of_many/files/ui_gfx/bag_universal_small.png") then
@@ -90,9 +101,12 @@ function setup_gui()
             local pos_in_line = i%(item_per_line)
             local storage_cell_x = button_pos_x + 26 + 20 * (pos_in_line)
             local storage_cell_y = button_pos_y + 28 * (math.floor(i / item_per_line))
-            local center_spell = -2
-            local center_wand = 1
-            local center_potion = 2
+            local center_spell_x = 1
+            local center_spell_y = -2
+            local center_wand_x = 2
+            local center_wand_y = 2
+            local center_potion_x = 5
+            local center_potion_y = 4
 
             -- only 1
             if (pos_in_line == 0 and i == qt_of_storage-1) or (pos_in_line == 0 and pos_in_line == item_per_line-1) then
@@ -123,11 +137,12 @@ function setup_gui()
                 if sprite_path then
                     GuiZSetForNextWidget(gui, 20)
                     local item_pos_x = storage_cell_x + 2
-                    local item_pos_y = storage_cell_y
+                    local item_pos_y = storage_cell_y - 1
                     local tooltip
                     -- Centering for wand and tooltip
                     if EntityHasTag(stored_items[inventory_position], "wand") then
-                        item_pos_y = item_pos_y + center_wand
+                        item_pos_x = item_pos_x + center_wand_x
+                        item_pos_y = item_pos_y + center_wand_y
                     -- Centering for spells and tooltip
                     elseif EntityHasTag(stored_items[inventory_position], "card_action") then
                         local item_action_component = EntityGetComponentIncludingDisabled(stored_items[inventory_position], "ItemActionComponent")
@@ -135,12 +150,13 @@ function setup_gui()
                             local action_id = ComponentGetValue2(item_action_component[1], "action_id")
                             tooltip = action_id
                         end
-                        item_pos_y = item_pos_y + center_spell
+                        item_pos_x = item_pos_x + center_spell_x
+                        item_pos_y = item_pos_y + center_spell_y
                         -- Centering for potion, coloring and tooltip
                     elseif EntityHasTag(stored_items[inventory_position], "potion") then
                         local material = get_potion_content(stored_items[inventory_position])
-                        item_pos_x = item_pos_x + center_potion
-                        item_pos_y = item_pos_y + center_potion
+                        item_pos_x = item_pos_x + center_potion_x
+                        item_pos_y = item_pos_y + center_potion_y
                         tooltip = string.upper(GameTextGet(material.name)) .. " " .. "POTION" .. " ( " .. material.amount .. "% FULL )"
                         local potion_color = GameGetPotionColorUint(stored_items[inventory_position])
                         if potion_color ~= 0 then
@@ -200,15 +216,18 @@ end
 
 function draw_left_bracket(gui, id, pos_x, pos_y)
     GuiZSetForNextWidget(gui, 21)
-    GuiImageNinePiece(gui, id, pos_x - 9, pos_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_left.png", "mods/bags_of_many/files/ui_gfx/piece_small_left.png")
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
+    GuiImage(gui, id, pos_x - 9, pos_y - 8, "mods/bags_of_many/files/ui_gfx/piece_small_left.png", bag_ui_alpha, 1, 1.1)
 end
 
 function draw_middle(gui, id, pos_x, pos_y)
     GuiZSetForNextWidget(gui, 21)
-    GuiImageNinePiece(gui, id, pos_x, pos_y, 18, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_middle.png", "mods/bags_of_many/files/ui_gfx/piece_small_middle.png")
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
+    GuiImage(gui, id, pos_x, pos_y - 8, "mods/bags_of_many/files/ui_gfx/piece_small_middle.png", bag_ui_alpha, 7, 1.1)
 end
 
 function draw_right_bracket(gui, id, pos_x, pos_y)
     GuiZSetForNextWidget(gui, 21)
-    GuiImageNinePiece(gui, id, pos_x + 22, pos_y, 5, 11, 1, "mods/bags_of_many/files/ui_gfx/piece_small_right.png", "mods/bags_of_many/files/ui_gfx/piece_small_right.png")
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
+    GuiImage(gui, id, pos_x + 21, pos_y - 8, "mods/bags_of_many/files/ui_gfx/piece_small_right.png", bag_ui_alpha, 1, 1.1)
 end
