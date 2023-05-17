@@ -7,20 +7,23 @@ button_pos_x = ModSettingGet("BagsOfMany.pos_x")
 button_pos_y = ModSettingGet("BagsOfMany.pos_y")
 button_locked = ModSettingGet("BagsOfMany.locked")
 show_bag_content = ModSettingGet("BagsOfMany.show_bag_content")
+bag_wrap_number = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
 bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
 bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
 bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
 bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
+open = true
 
 -- Adding translations
 local TRANSLATIONS_FILE = "data/translations/common.csv"
 local translations = ModTextFileGetContent(TRANSLATIONS_FILE) .. ModTextFileGetContent("mods/bags_of_many/translations/common.csv")
 ModTextFileSetContent(TRANSLATIONS_FILE, translations)
+ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
 
 function OnPlayerSpawned( player_entity ) -- This runs when player entity has been created
-    add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_small.xml")
+    add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_spells_small.xml")
     add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
-    add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
+    add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_potions_big.xml")
 end
 
 function OnWorldPreUpdate()
@@ -30,8 +33,6 @@ end
 function OnPausedChanged(is_paused, is_inventory_pause)
     button_locked = ModSettingGet("BagsOfMany.locked")
 	if not button_locked then
-        print(button_pos_x)
-        print(button_pos_y)
 		ModSettingSetNextValue("BagsOfMany.pos_x", button_pos_x, false)
 		ModSettingSetNextValue("BagsOfMany.pos_y", button_pos_y, false)
     else
@@ -58,7 +59,6 @@ end
 -- GUI
 function setup_gui()
     gui = gui or GuiCreate()
-    open = open or false
     
     current_id = 1
     local function new_id()
@@ -83,14 +83,26 @@ function setup_gui()
 		    ModSettingSet("BagsOfMany.pos_y", button_pos_y)
 		end
     end
-    if inventory_open and GuiImageButton(gui, new_id(), button_pos_x, button_pos_y, "", "mods/bags_of_many/files/ui_gfx/bag_universal_small.png") then
+    local gui_button_image = "mods/bags_of_many/files/ui_gfx/bag_gui_button_closed.png"
+    if open then
+        gui_button_image = "mods/bags_of_many/files/ui_gfx/bag_gui_button_open.png"
+    end
+    if inventory_open and GuiImageButton(gui, new_id(), button_pos_x, button_pos_y, "", gui_button_image) then
 		open = not open
 		GlobalsSetValue("BagsOfMany_is_open", open and 1 or 0)
 	end
+    local _, _, hovered, x, y, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+    if hovered then
+        if not open then
+            GuiText(gui, button_pos_x, button_pos_y + 20, GameTextGet("$bag_button_tooltip_closed"))
+        else
+            GuiText(gui, button_pos_x, button_pos_y + 20, GameTextGet("$bag_button_tooltip_opened"))
+        end
+    end
 
     -- Setup the inventory and its content
     local active_item = get_active_item()
-    if inventory_open and is_bag(active_item) then
+    if inventory_open and is_bag(active_item) and open then
         local stored_items = get_bag_inventory_items(active_item)
         local qt_of_storage = get_bag_inventory_size(active_item)
         local item_per_line = tonumber(bag_wrap_number)
@@ -100,7 +112,7 @@ function setup_gui()
         for i = 0, qt_of_storage-1 do
             local pos_in_line = i%(item_per_line)
             local storage_cell_x = button_pos_x + 26 + 20 * (pos_in_line)
-            local storage_cell_y = button_pos_y + 28 * (math.floor(i / item_per_line))
+            local storage_cell_y = button_pos_y + 3 + 28 * (math.floor(i / item_per_line))
             local center_spell_x = 1
             local center_spell_y = -2
             local center_wand_x = 2
@@ -155,9 +167,11 @@ function setup_gui()
                         -- Centering for potion, coloring and tooltip
                     elseif EntityHasTag(stored_items[inventory_position], "potion") then
                         local material = get_potion_content(stored_items[inventory_position])
+                        if material then
+                            tooltip = string.upper(GameTextGet(material.name)) .. " " .. "POTION" .. " ( " .. material.amount .. "% FULL )"
+                        end
                         item_pos_x = item_pos_x + center_potion_x
                         item_pos_y = item_pos_y + center_potion_y
-                        tooltip = string.upper(GameTextGet(material.name)) .. " " .. "POTION" .. " ( " .. material.amount .. "% FULL )"
                         local potion_color = GameGetPotionColorUint(stored_items[inventory_position])
                         if potion_color ~= 0 then
                             local b = bit.rshift(bit.band(potion_color, 0xFF0000), 16) / 0xFF

@@ -1,11 +1,11 @@
-<Entity name="bag_universal_small" tags="hittable,teleportable_NOT,item_physics,item_pickup" >
+<Entity name="bag_potions_small" tags="hittable,teleportable_NOT,item_pickup" >
 	<Base file="data/entities/base_item_projectile.xml" />
 
 	<!-- physical presence -->
 	
 	<PhysicsBodyComponent 
 		_tags="enabled_in_world"
-		uid="1" 
+		uid="1"
 		allow_sleep="1" 
 		angular_damping="0.6" 
 		linear_damping="0"
@@ -20,16 +20,19 @@
 	<PhysicsImageShapeComponent 
 		body_id="1"
 		centered="1"
-		image_file="mods/bags_of_many/files/ui_gfx/bag_universal_small.png"
+		image_file="mods/bags_of_many/files/ui_gfx/bag_potions_small.png"
 		material="item_box2d"
 		>
 	</PhysicsImageShapeComponent>
 	
 	<PhysicsThrowableComponent
+        _tags="enabled_in_world"
 		max_throw_speed="70"
 		throw_force_coeff="1.25"
 		min_torque="4"
 		max_torque="10"
+        attach_min_speed="10"
+        attach_to_surfaces_knife_style="true"
 		>
 	</PhysicsThrowableComponent>
 
@@ -53,13 +56,13 @@
     <!-- Grab things -->
 	<LuaComponent
         _tags="enabled_in_hand"
-		script_kick="mods/bags_of_many/files/scripts/bags/bags_universal_script.lua"
+		script_kick="mods/bags_of_many/files/scripts/bags/bags_potions_script.lua"
         execute_every_n_frame="-1">
 	</LuaComponent>
 	
     <!-- Throw out things -->
     <!-- <LuaComponent
-		script_throw_item="mods/bags_of_many/files/scripts/bags/bags_universal_script.lua"
+		script_throw_item="mods/bags_of_many/files/scripts/bags/bags_potions_script.lua"
         execute_every_n_frame="-1" >
 	</LuaComponent> -->
 	
@@ -71,29 +74,29 @@
 		_enabled="0"
 		offset_x="4"
 		offset_y="6"
-		image_file="mods/bags_of_many/files/ui_gfx/bag_universal_small.png"
+		image_file="mods/bags_of_many/files/ui_gfx/bag_potions_small.png"
 		>
 	</SpriteComponent>
 
 	<ItemComponent
 		_tags="enabled_in_world"
-		item_name="$bag_universal_small"
+		item_name="$bag_potions_small"
 		is_pickable="1"
 		is_equipable_forced="1"
-		ui_sprite="mods/bags_of_many/files/ui_gfx/bag_universal_small.png"
-		ui_description="$item_description_bag_universal_small"
+		ui_sprite="mods/bags_of_many/files/ui_gfx/bag_potions_small.png"
+		ui_description="$item_description_bag_potions_small"
 		preferred_inventory="QUICK"
 		>
 	</ItemComponent>
 
 	<UIInfoComponent
 		_tags="enabled_in_world"
-		name="$bag_universal_small">
+		name="$bag_potions_small">
 	</UIInfoComponent>
 	
 	<AbilityComponent
         throw_as_item="1"
-		ui_name="$bag_universal_small"
+		ui_name="$bag_potions_small"
 		>
         <gun_config
             deck_capacity="0"

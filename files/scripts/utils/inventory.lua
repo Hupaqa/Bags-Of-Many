@@ -41,7 +41,17 @@ function is_item(entity)
 end
 
 function is_bag(entity_id)
+    if EntityGetName(entity_id) == nil then
+        return false
+    end
     return string.find(EntityGetName(entity_id), "bag_") ~= nil
+end
+
+function name_contains(entity_id, contains_string)
+    if EntityGetName(entity_id) == nil then
+        return false
+    end
+    return string.find(EntityGetName(entity_id), contains_string) ~= nil
 end
 
 function is_bag_not_full(bag, maximum)
@@ -211,14 +221,16 @@ end
 function show_entity( entity_id )
     local components = EntityGetAllComponents(entity_id)
     for _, component in ipairs(components or {}) do
-        local component_type = ComponentGetTypeName(component)
-        if component_type == "SpriteComponent" then
-            local file_name = ComponentGetValue2(component, "image_file")
-            if file_name and not string.find(file_name, "unidentified.png") then
+        if ComponentHasTag(component, "enabled_in_world") then
+            local component_type = ComponentGetTypeName(component)
+            if component_type == "SpriteComponent" then
+                local file_name = ComponentGetValue2(component, "image_file")
+                if file_name and not string.find(file_name, "unidentified.png") then
+                    EntitySetComponentIsEnabled(entity_id, component, true)
+                end
+            elseif component_type ~= "SpriteParticleEmitterComponent" then
                 EntitySetComponentIsEnabled(entity_id, component, true)
             end
-        elseif component_type ~= "SpriteParticleEmitterComponent" then
-            EntitySetComponentIsEnabled(entity_id, component, true)
         end
     end
 end
