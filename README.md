@@ -31,21 +31,21 @@ Each of these size give a progressively larger inventory space. The space is dep
 **Universal**
 | Size  | **Small** | **Medium** | **Big** |
 |---|---|---|---|
-| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_universal_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_universal_medium.png"> | <img src="files/ui_gfx/bag_universal_big.png"> |
+| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_universal_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_universal_medium.png"> | <img style="width:20px" src="files/ui_gfx/bag_universal_big.png"> |
 | **Inventory** | 3 | 5 | 8 |
 <br>
 
 **Binders** 
 | Size | **Small** | **Medium** | **Big** |
 |---|---|---|---|
-| **Sprite** | <img src="files/ui_gfx/bag_spells_small.png"> | <img src="files/ui_gfx/bag_spells_medium.png"> | <img src="files/ui_gfx/bag_spells_big.png"> |
+| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_spells_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_spells_medium.png"> | <img style="width:20px" src="files/ui_gfx/bag_spells_big.png"> |
 | **Inventory** | 5 | 7 | 10 |
 <br>
 
 **Potions** 
 | Size  | **Small** | **Medium** | **Big** |
 |---|---|---|---|
-| **Sprite** | <img src="files/ui_gfx/bag_potions_small.png"> | <img src="files/ui_gfx/bag_potions_medium.png"> | <img src="files/ui_gfx/bag_potions_big.png"> |
+| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_potions_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_potions_medium.png"> | <img style="width:20px" src="files/ui_gfx/bag_potions_big.png"> |
 | **Inventory** | 5 | 7 | 10 |
 <br>
 
