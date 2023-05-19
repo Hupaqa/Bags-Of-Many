@@ -48,7 +48,7 @@ Each of these size give a progressively larger inventory space. The space is dep
 | Size  | **Small** | **Medium** | **Big** |
 |---|---|---|---|
 | **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_potions_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_potions_medium.png"> | <img style="width:20px" src="files/ui_gfx/bag_potions_big.png"> |
-| **Inventory** | 5 | 7 | 10 |
+| **Inventory** | 2 | 3 | 5 |
 <br>
 
 ---
