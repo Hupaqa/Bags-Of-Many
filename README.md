@@ -26,13 +26,28 @@ Three sizes exist by type of bags:
 
 Each of these size give a progressively larger inventory space. The space is dependant on the type of bags you are using and so is the inventory size increase.
 
-###### Bag size by categories
-By default these are the stats for each bags and tiers:
-|   |  Universal <img src="files/ui_gfx/bag_universal_small.png"> | Binders <img src="files/ui_gfx/bag_spells_small.png"> | Potions <img style="top:10px" src="files/ui_gfx/bag_potions_small.png"> |
+###### Bags
+
+**Universal**
+| Size  | **Small** | **Medium** | **Big** |
 |---|---|---|---|
-| **Small** | 3 | 5 | 2 |
-| **Medium** | 5 |  7 | 3 |
-| **Big** | 8 | 10 | 5 |
+| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_universal_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_universal_medium.png"> | <img src="files/ui_gfx/bag_universal_big.png"> |
+| **Inventory** | 3 | 5 | 8 |
+<br>
+
+**Binders** 
+| Size | **Small** | **Medium** | **Big** |
+|---|---|---|---|
+| **Sprite** | <img src="files/ui_gfx/bag_spells_small.png"> | <img src="files/ui_gfx/bag_spells_medium.png"> | <img src="files/ui_gfx/bag_spells_big.png"> |
+| **Inventory** | 5 | 7 | 10 |
+<br>
+
+**Potions** 
+| Size  | **Small** | **Medium** | **Big** |
+|---|---|---|---|
+| **Sprite** | <img src="files/ui_gfx/bag_potions_small.png"> | <img src="files/ui_gfx/bag_potions_medium.png"> | <img src="files/ui_gfx/bag_potions_big.png"> |
+| **Inventory** | 5 | 7 | 10 |
+<br>
 
 ---
 
