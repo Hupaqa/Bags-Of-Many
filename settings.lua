@@ -56,6 +56,23 @@ mod_settings =
         settings = {
             {
                 ui_fn = mod_setting_section,
+                ui_name = "Starter loadout",
+                ui_description = "",
+                not_setting = true,
+            },
+            {
+                id = "starter_loadout",
+                ui_name = "Starter Loadout",
+                ui_description = "When true will start your run with a bag of each type lying around near you.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_NEW_GAME,
+            },
+            {
+                ui_fn = mod_setting_vertical_spacing,
+                not_setting = true,
+            },
+            {
+                ui_fn = mod_setting_section,
                 ui_name = "Position of the bag inventory ui",
                 ui_description = "",
                 not_setting = true,

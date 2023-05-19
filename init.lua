@@ -1,5 +1,6 @@
 dofile_once( "data/scripts/game_helpers.lua" )
 dofile_once( "data/scripts/lib/utilities.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
 
@@ -20,10 +21,17 @@ local translations = ModTextFileGetContent(TRANSLATIONS_FILE) .. ModTextFileGetC
 ModTextFileSetContent(TRANSLATIONS_FILE, translations)
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
 
+local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
 function OnPlayerSpawned( player_entity ) -- This runs when player entity has been created
-    add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_spells_small.xml")
-    add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
-    add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_potions_big.xml")
+    if not GameHasFlagRun(LOAD_KEY) then
+        if ModSettingGet("BagsOfMany.starter_loadout") then
+            local x, y = get_player_pos()
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_small.xml", x + 30, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_small.xml", x + 50, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", x + 70, y)
+        end
+        GameAddFlagRun(LOAD_KEY)
+    end
 end
 
 function OnWorldPreUpdate()
