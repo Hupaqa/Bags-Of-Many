@@ -19,7 +19,7 @@ Universal bags allow you to carry by default: wand, potions and spells.
 Spell Binders allow you to carry spells.
 Potion Pouches allow you to carry potions.
 
-Three types of bag size exist by type:
+Three sizes exist by type of bags:
 - Small <img src="files/ui_gfx/bag_universal_small.png">
 - Medium <img src="files/ui_gfx/bag_universal_medium.png">
 - Big <img src="files/ui_gfx/bag_universal_big.png">
