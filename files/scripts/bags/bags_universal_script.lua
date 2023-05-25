@@ -27,6 +27,11 @@ function kick( entity_who_kicked )
             local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "potion")
             add_potions_to_inventory(active_item, inventory, player_id, entities)
         end
+        -- Pickup items
+        if ModSettingGet("BagsOfMany.allow_items") then
+            local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "item_pickup")
+            add_items_to_inventory(active_item, inventory, player_id, entities)
+        end
         -- Pickup bags
         if ModSettingGet("BagsOfMany.allow_bags_inception") then
             local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "item_pickup")

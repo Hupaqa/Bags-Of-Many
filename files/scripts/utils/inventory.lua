@@ -90,7 +90,7 @@ function add_spells_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         local parent = EntityGetParent(entity)
         local root_entity = EntityGetRootEntity(entity)
-        if root_entity ~= player_id or root_entity == nil then
+        if root_entity ~= player_id and not is_bag(root_entity) then
             if not EntityHasTag(parent, "wand") and is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                 EntityRemoveFromParent(entity)
                 EntityAddChild(inventory, entity)
@@ -103,7 +103,7 @@ end
 function add_wands_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         local root_entity = EntityGetRootEntity(entity)
-        if root_entity ~= player_id or root_entity == nil then
+        if root_entity ~= player_id and not is_bag(root_entity) then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                 EntityRemoveFromParent(entity)
                 EntityAddChild(inventory, entity)
@@ -116,7 +116,7 @@ end
 function add_potions_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         local root_entity = EntityGetRootEntity(entity)
-        if root_entity ~= player_id or root_entity == nil then
+        if root_entity ~= player_id and not is_bag(root_entity) then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                 EntityRemoveFromParent(entity)
                 EntityAddChild(inventory, entity)
@@ -126,11 +126,27 @@ function add_potions_to_inventory(active_item, inventory, player_id, entities)
     end
 end
 
+function add_items_to_inventory(active_item, inventory, player_id, entities)
+    for _, entity in ipairs(entities) do
+        if not is_bag(entity) and entity ~= active_item and not EntityHasTag(entity ,"essence") then
+            local root_entity = EntityGetRootEntity(entity)
+            if root_entity ~= player_id and not is_bag(root_entity) then
+                if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
+                    EntityRemoveFromParent(entity)
+                    EntityAddChild(inventory, entity)
+                    hide_entity(entity)
+                end
+            end
+        end
+    end
+end
+
 function add_bags_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if is_bag(entity) and entity ~= active_item then
             local root_entity = EntityGetRootEntity(entity)
-            if root_entity ~= player_id or root_entity == nil then
+            print(tostring(root_entity))
+            if root_entity ~= player_id and (root_entity == entity or not is_bag(root_entity)) then
                 if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                     EntityRemoveFromParent(entity)
                     EntityAddChild(inventory, entity)
@@ -205,20 +221,34 @@ function get_potion_content( entity_id )
 end
 
 function get_sprite_file( entity_id )
-    local sprite_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
-    if sprite_component then
-        return ComponentGetValue2(sprite_component[1], "image_file")
+    -- Sprite for the spells
+    if EntityHasTag(entity_id, "card_action") then
+        local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
+        if item_component then
+            return ComponentGetValue2(item_component[1], "image_file")
+        end
+    -- Sprite for the other items
+    else
+        local item_component = EntityGetComponentIncludingDisabled(entity_id, "ItemComponent")
+        if item_component then
+            return ComponentGetValue2(item_component[1], "ui_sprite")
+        end
     end
 end
 
 function hide_entity( entity_id )
     local components = EntityGetAllComponents(entity_id)
+    local children = EntityGetAllChildren(entity_id)
+    for _, child in ipairs(children or {}) do
+        hide_entity(child)
+    end
     for _, component in ipairs(components or {}) do
         EntitySetComponentIsEnabled(entity_id, component, false)
     end
 end
 
 function show_entity( entity_id )
+    local x, y = get_player_pos()
     local components = EntityGetAllComponents(entity_id)
     for _, component in ipairs(components or {}) do
         if ComponentHasTag(component, "enabled_in_world") then

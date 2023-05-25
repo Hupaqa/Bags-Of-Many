@@ -196,9 +196,9 @@ mod_settings =
                 not_setting = true,
             },
             {
-                id = "show_bag_content",
-                ui_name = "Show bag contents",
-                value_default = true,
+                id = "only_show_bag_button_when_held",
+                ui_name = "Only show bag button when held",
+                value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
@@ -229,6 +229,13 @@ mod_settings =
                 id = "allow_potions",
                 ui_name = "Allow Potions",
                 ui_description = "When set to true potions will be allowed to be stored in the universal bags",
+                value_default = true,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "allow_items",
+                ui_name = "Allow Items",
+                ui_description = "When set to true items will be allowed to be stored in the universal bags (evil eye, sunseed, etc.)",
                 value_default = true,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
