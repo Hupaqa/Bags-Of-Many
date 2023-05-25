@@ -8,6 +8,8 @@ To drop items you use the inventory ui that appears when you open you inventory 
 
 I wanted to add an option for more inventory space that more closely fits the theme of the game and is more balanced.
 
+Bags of Many on steam: https://steamcommunity.com/sharedfiles/filedetails/?id=2977593393
+
 ---
 
 ### Items
