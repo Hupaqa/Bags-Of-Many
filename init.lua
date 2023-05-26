@@ -11,7 +11,7 @@ local TRANSLATIONS_FILE = "data/translations/common.csv"
 local translations = ModTextFileGetContent(TRANSLATIONS_FILE) .. ModTextFileGetContent("mods/bags_of_many/translations/common.csv")
 ModTextFileSetContent(TRANSLATIONS_FILE, translations)
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
-TESTING=false
+TESTING=true
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
 function OnPlayerSpawned( player_entity ) -- This runs when player entity has been created
@@ -25,6 +25,7 @@ function OnPlayerSpawned( player_entity ) -- This runs when player entity has be
         if TESTING then
             add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
             add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
+            spawn_bags_for_test()
         end
         GameAddFlagRun(LOAD_KEY)
     end

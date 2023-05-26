@@ -15,18 +15,18 @@ Bags of Many on steam: https://steamcommunity.com/sharedfiles/filedetails/?id=29
 ### Items
 
 Three types of bags exist:
-- Universal <img src="files/ui_gfx/bag_universal_small.png">
-- Binder <img src="files/ui_gfx/bag_spells_small.png">
-- Pouch <img src="files/ui_gfx/bag_potions_small.png">
+- Universal <img src="files/ui_gfx/bags/bag_universal_small.png">
+- Binder <img src="files/ui_gfx/bags/bag_spells_small.png">
+- Pouch <img src="files/ui_gfx/bags/bag_potions_small.png">
 
 Universal bags allow you to carry by default: wand, potions and spells.  
 Spell Binders allow you to carry spells.  
 Potion Pouches allow you to carry potions.  
 
 Three sizes exist by type of bags:
-- Small <img src="files/ui_gfx/bag_universal_small.png">
-- Medium <img src="files/ui_gfx/bag_universal_medium.png">
-- Big <img src="files/ui_gfx/bag_universal_big.png">
+- Small <img src="files/ui_gfx/bags/bag_universal_small.png">
+- Medium <img src="files/ui_gfx/bags/bag_universal_medium.png">
+- Big <img src="files/ui_gfx/bags/bag_universal_big.png">
 
 Each of these size give a progressively larger inventory space. The space is dependant on the type of bags you are using and so is the inventory size increase.
 
@@ -35,21 +35,21 @@ Each of these size give a progressively larger inventory space. The space is dep
 **Universal Bag**
 | Size  | **Small** | **Medium** | **Big** |
 |---|---|---|---|
-| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_universal_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_universal_medium.png"> | <img style="width:20px" src="files/ui_gfx/bag_universal_big.png"> |
+| **Sprite** | <img style="width:20px" src="files/ui_gfx/bags/bag_universal_small.png"> | <img style="width:20px" src="files/ui_gfx/bags/bag_universal_medium.png"> | <img style="width:20px" src="files/ui_gfx/bags/bag_universal_big.png"> |
 | **Inventory** | 3 | 5 | 8 |
 <br>
 
 **Spell Binders** 
 | Size | **Small** | **Medium** | **Big** |
 |---|---|---|---|
-| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_spells_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_spells_medium.png"> | <img style="width:20px" src="files/ui_gfx/bag_spells_big.png"> |
+| **Sprite** | <img style="width:20px" src="files/ui_gfx/bags/bag_spells_small.png"> | <img style="width:20px" src="files/ui_gfx/bags/bag_spells_medium.png"> | <img style="width:20px" src="files/ui_gfx/bags/bag_spells_big.png"> |
 | **Inventory** | 5 | 7 | 10 |
 <br>
 
 **Potion Pouches** 
 | Size  | **Small** | **Medium** | **Big** |
 |---|---|---|---|
-| **Sprite** | <img style="width:20px" src="files/ui_gfx/bag_potions_small.png"> | <img style="width:20px" src="files/ui_gfx/bag_potions_medium.png"> | <img style="width:20px" src="files/ui_gfx/bag_potions_big.png"> |
+| **Sprite** | <img style="width:20px" src="files/ui_gfx/bags/bag_potions_small.png"> | <img style="width:20px" src="files/ui_gfx/bags/bag_potions_medium.png"> | <img style="width:20px" src="files/ui_gfx/bags/bag_potions_big.png"> |
 | **Inventory** | 2 | 3 | 5 |
 <br>
 

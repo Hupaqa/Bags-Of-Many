@@ -84,7 +84,10 @@ function draw_inventory_button(gui, active_item)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local background_button = GuiImageButton(gui, new_id(), button_pos_x, button_pos_y, "", gui_button_image)
     local _, _, hovered_background = GuiGetPreviousWidgetInfo(gui)
-    local bag_sprite = get_sprite_file(active_item)
+    local bag_sprite = "mods/bags_of_many/files/ui_gfx/inventory/drag_icon.png"
+    if is_bag(active_item) then
+        bag_sprite = get_sprite_file(active_item)
+    end
     local width_img, height_img = GuiGetImageDimensions(gui, bag_sprite, 1)
     local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
     GuiZSetForNextWidget(gui, 19)
@@ -228,7 +231,9 @@ function draw_inventory_bag(gui, active_item)
         end
         i = i + 1
     end
-    draw_inventory_drop_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2)
+    if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
+        draw_inventory_drop_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2)
+    end
 end
 
 function inventory_slot(gui, pos_x, pos_y)

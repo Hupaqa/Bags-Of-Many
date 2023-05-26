@@ -43,6 +43,13 @@ function mod_setting_warning_inventory_lock(mod_id, gui, in_main_menu, im_id, se
     end
 end
 
+-- function mod_setting_dev_enabled(mod_id, gui, in_main_menu, im_id, setting)
+--     if ModSettingGet("BagsOfMany.dev_enabled") then
+--         GuiColorSetForNextWidget(gui, 1.0, 1.0, 1.0, 1.0)
+--         GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name)
+--     end
+-- end
+
 local mod_id = "BagsOfMany"
 mod_settings_version = 1
 mod_settings =
@@ -196,9 +203,23 @@ mod_settings =
                 not_setting = true,
             },
             {
+                ui_fn = mod_setting_section,
+                ui_name = "Inventory UI Options",
+                ui_description = "",
+                not_setting = true,
+            },
+            {
                 id = "only_show_bag_button_when_held",
                 ui_name = "Only show bag button when held",
+                ui_description = "Will only show the bag button when a bag item is held in the player\nhands, otherwise will always be shown when the inventory is open",
                 value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "show_drop_all_inventory_button",
+                ui_name = "Show drop all inventory button",
+                ui_description = "Will display the drop all inventory button at the end of the inventory UI",
+                value_default = true,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
@@ -568,6 +589,25 @@ mod_settings =
                 "\n    to see the effect of the change.",
                 not_setting = true,
             },
+            -- {
+            --     ui_fn = mod_setting_vertical_spacing,
+            --     not_setting = true,
+            -- },
+            -- {
+            --     id = "dev_enabled",
+            --     ui_name = "Developper Mode",
+            --     ui_description = "Enable for developper mode",
+            --     value_default = false,
+            --     scope = MOD_SETTING_SCOPE_RUNTIME,
+            -- },
+            -- {
+            --     ui_fn = mod_setting_dev_enabled,
+            --     id = "spawn_all_bags",
+            --     ui_name = "Spawn All Bags",
+            --     ui_description = "Spawn all bags",
+            --     value_default = false,
+            --     scope = MOD_SETTING_SCOPE_NEW_GAME,
+            -- },
         }
     }
 }

@@ -45,3 +45,21 @@ function spawn_spells_for_test(nb_of_spells)
         EntityLoad("data/entities/items/pickup/random_card.xml", x+i, y)
     end
 end
+
+function spawn_bags_for_test()
+    local bags = {
+        "mods/bags_of_many/files/entities/bags/bag_potions_small.xml",
+        "mods/bags_of_many/files/entities/bags/bag_potions_medium.xml",
+        "mods/bags_of_many/files/entities/bags/bag_potions_big.xml",
+        "mods/bags_of_many/files/entities/bags/bag_spells_small.xml",
+        "mods/bags_of_many/files/entities/bags/bag_spells_medium.xml",
+        "mods/bags_of_many/files/entities/bags/bag_spells_big.xml",
+        "mods/bags_of_many/files/entities/bags/bag_universal_small.xml",
+        "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml",
+        "mods/bags_of_many/files/entities/bags/bag_universal_big.xml",
+    }
+    local x, y = get_player_pos()
+    for i, bag in ipairs(bags or {}) do
+        EntityLoad(bag, x+i*10, y + i * 3)
+    end
+end
