@@ -143,7 +143,6 @@ function add_item_to_inventory(inventory, path)
 end
 
 function add_entity_to_inventory_bag(bag, inventory, entity)
-    add_entity_to_var_storage(bag, entity)
     EntityRemoveFromParent(entity)
     EntityAddChild(inventory, entity)
     hide_entity(entity)

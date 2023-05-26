@@ -1,0 +1,67 @@
+A mod that adds different bags you can find in the world of Noita allowing you to carry more of you wizard stuff by expanding your available inventory space.
+
+To pickup items in the bags you need to hold it in your hands then use your [b]KICK[/b] action near an object you want to pick up. The items you can pick up depends on the type of bag.
+
+To drop items you use the inventory ui that appears when you open you inventory and [b]CLICK[/b] on the object you want to drop.
+
+I wanted to add an option for more inventory space that more closely fits the theme of the game and is more balanced.
+
+[b] Checkout the mod settings there is a lot of options to tailor the mod to your liking [/b]
+
+[h2] Items [/h2]
+[b] Pickup item: KICK [/b]
+[b] Drop item: CLICK [/b]
+
+Three types of bags exist:
+[list]
+ [*] Universal [img]https://i.imgur.com/CV8C5PQ.png[/img]
+ [*] Binder [img]https://i.imgur.com/j3S9itl.png[/img]
+ [*] Pouch [img]https://i.imgur.com/PIc8krn.png[/img]
+[/list]
+The universal bag allows you to carry wands, potions and spells.
+The spell binder allows you to carry spells.
+The potion pouch allows you to carry potions.
+
+Three sizes exist by type of bags:
+[list]
+ [*] Small [img]https://i.imgur.com/CV8C5PQ.png[/img]
+ [*] Medium [img]https://i.imgur.com/hQRjUf7.png[/img]
+ [*] Big [img]https://i.imgur.com/gCWmrHd.png[/img]
+[/list]
+Each of these size give a progressively larger inventory space. The space is dependant on the type of bags you are using and so is the inventory size increase.
+
+[h3] Bags sizes [/h3]
+[table]
+ [tr]
+  [th][/th]
+  [th]Universal[/th]
+  [th]Binder[/th]
+  [th]Pouch[/th]
+ [/tr]
+ [tr]
+  [th]Small[/th]
+  [td]3[/td]
+  [td]5[/td]
+  [td]2[/td]
+ [/tr]
+ [tr]
+  [th]Medium[/th]
+  [td]5[/td]
+  [td]7[/td]
+  [td]3[/td]
+ [/tr]
+ [tr]
+  [th]Big[/th]
+  [td]8[/td]
+  [td]10[/td]
+  [td]5[/td]
+ [/tr]
+[/table]
+
+[h2][b] Github [/b][/h2]
+A bit more info on the github page of the mod:
+https://github.com/Hupaqa/Bags-Of-Many
+
+Dont be shy and submit bug reports or suggestions there too ! :D
+
+[img] https://i.imgur.com/wloC5cS.gif [/img]

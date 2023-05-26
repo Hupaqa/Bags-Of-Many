@@ -220,7 +220,6 @@ function draw_inventory_bag(gui, active_item)
                 -- Draw the item
                 GuiZSetForNextWidget(gui, 15)
                 if GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", sprite_path) then
-                    remove_entity_from_var_storage(active_item, item)
                     drop_item_from_parent(active_item, item)
                 end
                 local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
