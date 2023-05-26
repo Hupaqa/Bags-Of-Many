@@ -1,6 +1,7 @@
 dofile_once( "data/scripts/game_helpers.lua" )
 dofile_once( "data/scripts/lib/utilities.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 
 button_pos_x = ModSettingGet("BagsOfMany.pos_x")
@@ -23,10 +24,6 @@ local function reset_id()
     current_id = 1
 end
 
-function padding_to_center(width_box, height_box, width_entity, height_entity)
-    return math.ceil((width_box - width_entity)/2), math.ceil((height_box - height_entity)/2)
-end
-
 -- GUI
 function setup_gui()
     gui = gui or GuiCreate()
@@ -40,7 +37,7 @@ function setup_gui()
 
     -- Setup the inventory button
     if inventory_open and ((not only_show_bag_button_when_held) or (is_bag(active_item) and only_show_bag_button_when_held)) then
-        draw_inventory_button(gui)
+        draw_inventory_button(gui, active_item)
     end
 
     -- Setup the inventory and its content
@@ -67,12 +64,12 @@ function draw_right_bracket(gui, id, pos_x, pos_y)
     GuiImage(gui, id, pos_x+20, pos_y - 4, "mods/bags_of_many/files/ui_gfx/inventory/background_right.png", bag_ui_alpha, 1)
 end
 
-function draw_inventory_button(gui)
+function draw_inventory_button(gui, active_item)
     if not button_locked then
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
         GuiImageButton(gui, 4192922, button_pos_x, button_pos_y, "", "mods/bags_of_many/files/ui_gfx/gui_button_invisible.png")
-        local _, _, hovered, x, y, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+        local _, _, _, _, _, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
         if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= button_pos_x and draw_y ~= button_pos_y then
             button_pos_x = draw_x - draw_width / 2
             button_pos_y = draw_y - draw_height / 2
@@ -80,22 +77,41 @@ function draw_inventory_button(gui)
             ModSettingSet("BagsOfMany.pos_y", button_pos_y)
         end
     end
-    local gui_button_image = "mods/bags_of_many/files/ui_gfx/bag_gui_button_closed.png"
-    if open then
-        gui_button_image = "mods/bags_of_many/files/ui_gfx/bag_gui_button_open.png"
-    end
+    
+    local gui_button_image = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button.png"
+    local width_background, height_background = GuiGetImageDimensions(gui, gui_button_image, 1)
+    GuiZSetForNextWidget(gui, 20)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
-    if GuiImageButton(gui, new_id(), button_pos_x, button_pos_y, "", gui_button_image) then
+    local background_button = GuiImageButton(gui, new_id(), button_pos_x, button_pos_y, "", gui_button_image)
+    local _, _, hovered_background = GuiGetPreviousWidgetInfo(gui)
+    local bag_sprite = get_sprite_file(active_item)
+    local width_img, height_img = GuiGetImageDimensions(gui, bag_sprite, 1)
+    local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
+    GuiZSetForNextWidget(gui, 19)
+    local bag_button = GuiImageButton(gui, new_id(), button_pos_x + pad_x, button_pos_y + pad_y, "", bag_sprite)
+    local _, _, hovered_bag = GuiGetPreviousWidgetInfo(gui)
+    if background_button or bag_button then
         open = not open
         GlobalsSetValue("BagsOfMany_is_open", open and 1 or 0)
     end
-    local _, _, hovered, x, y, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
-    if hovered then
+    if hovered_background or hovered_bag then
         if not open then
             GuiText(gui, button_pos_x, button_pos_y + 20, GameTextGet("$bag_button_tooltip_closed"))
         else
             GuiText(gui, button_pos_x, button_pos_y + 20, GameTextGet("$bag_button_tooltip_opened"))
         end
+    end
+end
+
+function draw_inventory_drop_button(gui, active_item, pos_x, pos_y)
+    GuiZSetForNextWidget(gui, 20)
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
+    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop.png") then
+        drop_all_inventory(active_item)
+    end
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+    if hovered then
+        GuiText(gui, pos_x + 14, pos_y, GameTextGet("$bag_button_tooltip_drop"))
     end
 end
 
@@ -161,13 +177,15 @@ function draw_tooltip(gui, item, hovered, tooltip, pos_x, pos_y)
             i = i + 1
         end
         local wand_spells = EntityGetAllChildren(item)
-        for i = 1, #wand_spells do
-            local background_pos_x = tooltip_x+(20*((i-1)%spells_per_line))
-            local background_pos_y = tooltip_y+(math.floor((i-1)/spells_per_line)*20)
-            local spell_sprite = get_sprite_file(wand_spells[i])
-            if spell_sprite then
-                GuiZSetForNextWidget(gui, 10)
-                GuiImage(gui, new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, 1, 1, 1)
+        if wand_spells then
+            for i = 1, #wand_spells do
+                local background_pos_x = tooltip_x+(20*((i-1)%spells_per_line))
+                local background_pos_y = tooltip_y+(math.floor((i-1)/spells_per_line)*20)
+                local spell_sprite = get_sprite_file(wand_spells[i])
+                if spell_sprite then
+                    GuiZSetForNextWidget(gui, 10)
+                    GuiImage(gui, new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, 1, 1, 1)
+                end
             end
         end
     end
@@ -180,7 +198,7 @@ function draw_inventory_bag(gui, active_item)
     if not item_per_line then
         item_per_line = 10
     end
-    local positions = inventory(gui, qt_of_storage, item_per_line, button_pos_x + 25, button_pos_y - 2.5)
+    local positions = inventory(gui, qt_of_storage, item_per_line, button_pos_x + 25, button_pos_y)
     for i = 0, qt_of_storage-1 do
         local storage_cell_x = positions.positions_x[i+1]
         local storage_cell_y = positions.positions_y[i+1]
@@ -201,25 +219,17 @@ function draw_inventory_bag(gui, active_item)
                 item_pos_y = item_pos_y + pad_y
                 -- Draw the item
                 GuiZSetForNextWidget(gui, 15)
-                GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
                 if GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", sprite_path) then
-                    EntityRemoveFromParent(item)
-                    local x, y = EntityGetTransform(active_item)
-                    EntityApplyTransform(item, x, y)
-                    show_entity(item)
+                    remove_entity_from_var_storage(active_item, item)
+                    drop_item_from_parent(active_item, item)
                 end
                 local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
-                
                 draw_tooltip(gui, item, hovered, tooltip, storage_cell_x, storage_cell_y)
             end
         end
         i = i + 1
     end
-end
-
-function has_moved_threshold(gui, thresh_x, thresh_y, init_x, init_y)
-    local _, _, _, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
-    return ((init_x - draw_x) > thresh_x or (init_y - draw_y) > thresh_y)
+    draw_inventory_drop_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2)
 end
 
 function inventory_slot(gui, pos_x, pos_y)

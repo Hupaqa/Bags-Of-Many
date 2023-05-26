@@ -1,4 +1,4 @@
-dofile_once( "mods/bags_of_many/files/scripts/utils/debug.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 
 function get_player_entity()
 	local players = EntityGetWithTag("player_unit")
@@ -12,7 +12,7 @@ function has_bag_container( entity_id )
     if not childs then
         return false
     end
-    for i, child in ipairs(childs) do
+    for _, child in ipairs(childs) do
         if EntityGetName(child) == "bag_inventory_container" then
             return true
         end
@@ -47,6 +47,15 @@ function is_bag(entity_id)
     return string.find(EntityGetName(entity_id), "bag_") ~= nil
 end
 
+function item_pickup_is_pickable_in_inventory(entity_id)
+    local item_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ItemComponent")
+    if item_comp then
+        local ui_sprite = ComponentGetValue2(item_comp, "ui_sprite")
+        return ui_sprite ~= ""
+    end
+    return false
+end
+
 function name_contains(entity_id, contains_string)
     if EntityGetName(entity_id) == nil then
         return false
@@ -56,6 +65,23 @@ end
 
 function is_bag_not_full(bag, maximum)
     return #get_bag_inventory_items(bag) < maximum
+end
+
+function drop_item_from_parent(parent, item)
+    EntityRemoveFromParent(item)
+    local x, y = EntityGetTransform(parent)
+    EntityApplyTransform(item, x, y)
+    show_entity(item)
+end
+
+function drop_all_inventory(bag)
+    local items = get_bag_inventory_items(bag)
+    local x, y = EntityGetTransform(bag)
+    for _, item in ipairs(items or {}) do
+        EntityRemoveFromParent(item)
+        EntityApplyTransform(item, x, y)
+        show_entity(item)
+    end
 end
 
 function get_pickable_items_in_radius(radius)
@@ -77,6 +103,35 @@ function get_player_inventory()
     end
 end
 
+function add_entity_to_var_storage(bag, entity)
+    if bag then
+        local variable_storages = EntityGetComponentIncludingDisabled(bag, "VariableStorageComponent")
+        for _, var_storage in ipairs(variable_storages or {}) do
+            if var_storage then
+                local initial_val = ComponentGetValue2(var_storage, "value_string")
+                local t = string_table_to_table(initial_val)
+                table.insert(t, tostring(entity))
+                ComponentSetValue2(var_storage, "value_string", table_to_string_table(t))
+            end
+        end
+    end
+end
+
+function remove_entity_from_var_storage(bag, entity)
+    if bag then
+        local variable_storages = EntityGetComponentIncludingDisabled(bag, "VariableStorageComponent")
+        for _, var_storage in ipairs(variable_storages or {}) do
+            if var_storage then
+                local initial_val = ComponentGetValue2(var_storage, "value_string")
+                local t = string_table_to_table(initial_val)
+                local index = find_value_in_table(t, entity)
+                t = remove_value_in_table(t, index)
+                ComponentSetValue2(var_storage, "value_string", table_to_string_table(t))
+            end
+        end
+    end
+end
+
 function add_item_to_inventory(inventory, path)
     local item = EntityLoad(path)
     if item then
@@ -84,6 +139,14 @@ function add_item_to_inventory(inventory, path)
     else
         GamePrint("Error: Couldn't load the item ["..path.."]!")
     end
+    return item
+end
+
+function add_entity_to_inventory_bag(bag, inventory, entity)
+    add_entity_to_var_storage(bag, entity)
+    EntityRemoveFromParent(entity)
+    EntityAddChild(inventory, entity)
+    hide_entity(entity)
 end
 
 function add_spells_to_inventory(active_item, inventory, player_id, entities)
@@ -92,9 +155,7 @@ function add_spells_to_inventory(active_item, inventory, player_id, entities)
         local root_entity = EntityGetRootEntity(entity)
         if root_entity ~= player_id and not is_bag(root_entity) then
             if not EntityHasTag(parent, "wand") and is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                EntityRemoveFromParent(entity)
-                EntityAddChild(inventory, entity)
-                hide_entity(entity)
+                add_entity_to_inventory_bag(active_item, inventory, entity)
             end
         end
     end
@@ -105,9 +166,7 @@ function add_wands_to_inventory(active_item, inventory, player_id, entities)
         local root_entity = EntityGetRootEntity(entity)
         if root_entity ~= player_id and not is_bag(root_entity) then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                EntityRemoveFromParent(entity)
-                EntityAddChild(inventory, entity)
-                hide_entity(entity)
+                add_entity_to_inventory_bag(active_item, inventory, entity)
             end
         end
     end
@@ -118,9 +177,7 @@ function add_potions_to_inventory(active_item, inventory, player_id, entities)
         local root_entity = EntityGetRootEntity(entity)
         if root_entity ~= player_id and not is_bag(root_entity) then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                EntityRemoveFromParent(entity)
-                EntityAddChild(inventory, entity)
-                hide_entity(entity)
+                add_entity_to_inventory_bag(active_item, inventory, entity)
             end
         end
     end
@@ -128,13 +185,11 @@ end
 
 function add_items_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
-        if not is_bag(entity) and entity ~= active_item and not EntityHasTag(entity ,"essence") then
+        if not is_bag(entity) and entity ~= active_item and not EntityHasTag(entity ,"essence") and item_pickup_is_pickable_in_inventory(entity) then
             local root_entity = EntityGetRootEntity(entity)
             if root_entity ~= player_id and not is_bag(root_entity) then
                 if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                    EntityRemoveFromParent(entity)
-                    EntityAddChild(inventory, entity)
-                    hide_entity(entity)
+                    add_entity_to_inventory_bag(active_item, inventory, entity)
                 end
             end
         end
@@ -145,12 +200,9 @@ function add_bags_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if is_bag(entity) and entity ~= active_item then
             local root_entity = EntityGetRootEntity(entity)
-            print(tostring(root_entity))
             if root_entity ~= player_id and (root_entity == entity or not is_bag(root_entity)) then
                 if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                    EntityRemoveFromParent(entity)
-                    EntityAddChild(inventory, entity)
-                    hide_entity(entity)
+                    add_entity_to_inventory_bag(active_item, inventory, entity)
                 end
             end
         end
@@ -166,7 +218,7 @@ function get_active_item()
 end
 
 function get_inventory( entity_id )
-    for i, child in ipairs(EntityGetAllChildren(entity_id) or {}) do
+    for _, child in ipairs(EntityGetAllChildren(entity_id) or {}) do
         if EntityGetName(child) == "inventory_full" then
             return child
         end
@@ -221,8 +273,8 @@ function get_potion_content( entity_id )
 end
 
 function get_sprite_file( entity_id )
-    -- Sprite for the spells
-    if EntityHasTag(entity_id, "card_action") then
+    -- Sprite for the spells and wands
+    if EntityHasTag(entity_id, "card_action") or EntityHasTag(entity_id, "wand") then
         local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
         if item_component then
             return ComponentGetValue2(item_component[1], "image_file")
@@ -250,6 +302,12 @@ end
 function show_entity( entity_id )
     local x, y = get_player_pos()
     local components = EntityGetAllComponents(entity_id)
+    local components_sprite = EntityGetComponentIncludingDisabled(entity_id, "SpriteParticleEmitterComponent")
+    for _, component_sprite in ipairs(components_sprite or {}) do
+        if ComponentHasTag(component_sprite, "enabled_in_world") then
+            EntitySetComponentIsEnabled(entity_id, component_sprite, true)
+        end
+    end
     for _, component in ipairs(components or {}) do
         if ComponentHasTag(component, "enabled_in_world") then
             local component_type = ComponentGetTypeName(component)
@@ -258,7 +316,7 @@ function show_entity( entity_id )
                 if file_name and not string.find(file_name, "unidentified.png") then
                     EntitySetComponentIsEnabled(entity_id, component, true)
                 end
-            elseif component_type ~= "SpriteParticleEmitterComponent" then
+            else
                 EntitySetComponentIsEnabled(entity_id, component, true)
             end
         end

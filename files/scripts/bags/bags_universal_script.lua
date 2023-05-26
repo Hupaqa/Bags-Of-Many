@@ -1,7 +1,6 @@
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/utils/debug.lua" )
 
 local pickup_distance = 20
 
@@ -29,7 +28,7 @@ function kick( entity_who_kicked )
         end
         -- Pickup items
         if ModSettingGet("BagsOfMany.allow_items") then
-            local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "item_pickup")
+            local entities = EntityGetInRadius(pos_x, pos_y, pickup_distance)
             add_items_to_inventory(active_item, inventory, player_id, entities)
         end
         -- Pickup bags

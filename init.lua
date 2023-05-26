@@ -2,6 +2,7 @@ dofile_once( "data/scripts/game_helpers.lua" )
 dofile_once( "data/scripts/lib/utilities.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/testing/item_spawner.lua" )
 dofile_once( "mods/bags_of_many/files/gui.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
 
@@ -10,6 +11,7 @@ local TRANSLATIONS_FILE = "data/translations/common.csv"
 local translations = ModTextFileGetContent(TRANSLATIONS_FILE) .. ModTextFileGetContent("mods/bags_of_many/translations/common.csv")
 ModTextFileSetContent(TRANSLATIONS_FILE, translations)
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
+TESTING=false
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
 function OnPlayerSpawned( player_entity ) -- This runs when player entity has been created
@@ -20,10 +22,12 @@ function OnPlayerSpawned( player_entity ) -- This runs when player entity has be
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_small.xml", x + 50, y)
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", x + 70, y)
         end
+        if TESTING then
+            add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
+            add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
+        end
         GameAddFlagRun(LOAD_KEY)
     end
-    -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
-    -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
 end
 
 function OnWorldPreUpdate()
@@ -45,13 +49,4 @@ function OnPausedChanged(is_paused, is_inventory_pause)
     bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
     bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
     bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
-end
-
-function split_string(inputstr, sep)
-    sep = sep or "%s"
-    local t= {}
-    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-      table.insert(t, str)
-    end
-    return t
 end

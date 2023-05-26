@@ -1,7 +1,6 @@
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/utils/debug.lua" )
 
 local pickup_distance = 20
 
