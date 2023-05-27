@@ -223,6 +223,20 @@ mod_settings =
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
+                id = "show_change_sorting_direction_button",
+                ui_name = "Show change sorting direction inventory button",
+                ui_description = "Will display the change sorting direction inventory button at the end of the inventory UI",
+                value_default = true,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "sorting_order",
+                ui_name = "Ascending sorting direction",
+                ui_description = "Will sort the items in the bag by the order of time of pickup.",
+                value_default = true,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
                 ui_fn = mod_setting_vertical_spacing,
                 not_setting = true,
             },

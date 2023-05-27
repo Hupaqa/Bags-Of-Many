@@ -64,17 +64,11 @@ function name_contains(entity_id, contains_string)
 end
 
 function is_bag_not_full(bag, maximum)
-    return #get_bag_inventory_items(bag) < maximum
+    return #get_bag_inventory_items(bag, true) < maximum
 end
 
 function drop_item_from_parent(parent, item)
-    local var_storages = EntityGetComponentIncludingDisabled(item, "VariableStorageComponent")
-    for _, var_storage in ipairs(var_storages or {}) do
-        print(tostring(ComponentGetValue2(var_storage, "name")))
-        if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
-            EntityRemoveComponent(item, var_storage)
-        end
-    end
+    remove_component_pickup_frame(item)
     EntityRemoveFromParent(item)
     local x, y = EntityGetTransform(parent)
     EntityApplyTransform(item, x, y)
@@ -82,7 +76,7 @@ function drop_item_from_parent(parent, item)
 end
 
 function drop_all_inventory(bag)
-    local items = get_bag_inventory_items(bag)
+    local items = get_bag_inventory_items(bag, true)
     local x, y = EntityGetTransform(bag)
     for _, item in ipairs(items or {}) do
         EntityRemoveFromParent(item)
@@ -103,9 +97,45 @@ function get_pickable_items_in_radius(radius)
 end
 
 function get_player_inventory()
-    for i, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
+    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
         if EntityGetName(child) == "inventory_quick" then
             return child
+        end
+    end
+end
+
+function get_item_pickup_frame(entity)
+    local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
+    for _, var_storage in ipairs(var_storages or {}) do
+        if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
+            return ComponentGetValue2(var_storage, "value_int")
+        end
+    end
+    return 0
+end
+
+function add_component_pickup_frame(entity)
+    local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
+    local item_has_item_pickup_frame = false
+    for _, var_storage in ipairs(var_storages or {}) do
+        if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
+            item_has_item_pickup_frame = true
+            ComponentSetValue2(var_storage, "value_int", GameGetFrameNum())
+        end
+    end
+    if not item_has_item_pickup_frame then
+        EntityAddComponent2(entity, "VariableStorageComponent", {
+            name="item_pickup_frame",
+            value_int=GameGetFrameNum(),
+        })
+    end
+end
+
+function remove_component_pickup_frame(entity)
+    local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
+    for _, var_storage in ipairs(var_storages or {}) do
+        if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
+            EntityRemoveComponent(entity, var_storage)
         end
     end
 end
@@ -150,21 +180,7 @@ function add_item_to_inventory(inventory, path)
 end
 
 function add_entity_to_inventory_bag(bag, inventory, entity)
-    local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
-    local item_has_item_pickup_frame = false
-    for _, var_storage in ipairs(var_storages or {}) do
-        print(tostring(ComponentGetValue2(var_storage, "name")))
-        if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
-            item_has_item_pickup_frame = true
-            ComponentSetValue2(var_storage, "value_int", GameGetFrameNum())
-        end
-    end
-    if not item_has_item_pickup_frame then
-        EntityAddComponent2(entity, "VariableStorageComponent", {
-            name="item_pickup_frame",
-            value_int=GameGetFrameNum(),
-        })
-    end
+    add_component_pickup_frame(entity)
     EntityRemoveFromParent(entity)
     EntityAddChild(inventory, entity)
     hide_entity(entity)
@@ -246,10 +262,11 @@ function get_inventory( entity_id )
     end
 end
 
-function get_bag_inventory_items( entity_id )
+function get_bag_inventory_items(entity_id, order_asc)
     local inventory = get_inventory(entity_id)
     local items = EntityGetAllChildren(inventory)
     if items then
+        sort_entity_by_pickup_frame(items, order_asc)
         return items
     else
         return {}
@@ -343,3 +360,52 @@ function show_entity( entity_id )
         end
     end
 end
+
+function sort_entity_by_pickup_frame(inventory, order_asc)
+    insertion_sort_entityId(inventory)
+    -- if not order_asc then
+    --     inventory = revert_table(inventory)
+    -- end
+    insertion_sort_frame(inventory)
+    if not order_asc then
+        inventory = revert_table(inventory)
+    end
+end
+
+function insertion_sort_entityId(array)
+    local len = #array
+    local j
+    for j = 2, len do
+        local key = array[j]
+        local i = j - 1
+        while i > 0 and array[i] > key do
+            array[i + 1] = array[i]
+            i = i - 1
+        end
+        array[i + 1] = key
+    end
+    return array
+end
+
+function insertion_sort_frame(array)
+    local len = #array
+    local j
+    for j = 2, len do
+        local key = array[j]
+        local i = j - 1
+        while i > 0 and get_item_pickup_frame(array[i]) > get_item_pickup_frame(key) do
+            array[i + 1] = array[i]
+            i = i - 1
+        end
+        array[i + 1] = key
+    end
+    return array
+end
+
+function revert_table(x)
+    local n, m = #x, #x/2
+    for i=1, m do
+      x[i], x[n-i+1] = x[n-i+1], x[i]
+    end
+    return x
+  end

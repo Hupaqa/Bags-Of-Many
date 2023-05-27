@@ -22,11 +22,11 @@ function OnPlayerSpawned( player_entity ) -- This runs when player entity has be
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_small.xml", x + 50, y)
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", x + 70, y)
         end
-        if TESTING then
+        -- if TESTING then
             -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
             -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
             -- spawn_bags_for_test()
-        end
+        -- end
         GameAddFlagRun(LOAD_KEY)
     end
 end

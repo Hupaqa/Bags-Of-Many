@@ -14,6 +14,7 @@ bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
 bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
 bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
 open = true
+sorting = ModSettingGet("BagsOfMany.sorting_order")
 
 current_id = 1
 local function new_id()
@@ -42,7 +43,7 @@ function setup_gui()
 
     -- Setup the inventory and its content
     if inventory_open and is_bag(active_item) and open then
-        draw_inventory_bag(gui, active_item)
+        draw_inventory_bag(gui, active_item, sorting)
     end
 end
 
@@ -115,6 +116,26 @@ function draw_inventory_drop_button(gui, active_item, pos_x, pos_y)
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
     if hovered then
         GuiText(gui, pos_x + 14, pos_y, GameTextGet("$bag_button_tooltip_drop"))
+    end
+end
+
+function draw_inventory_sorting_direction_button(gui, active_item, pos_x, pos_y, order_asc)
+    GuiZSetForNextWidget(gui, 20)
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
+    local order_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sort_asc.png"
+    if not order_asc then
+        order_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sort_desc.png"
+    end
+    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", order_sprite) then
+        sorting = not sorting
+    end
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+    if hovered then
+        local txt_hovered = "$bag_button_tooltip_asc_sort"
+        if not order_asc then
+            txt_hovered = "$bag_button_tooltip_desc_sort"
+        end
+        GuiText(gui, pos_x + 14, pos_y, GameTextGet(txt_hovered))
     end
 end
 
@@ -194,8 +215,8 @@ function draw_tooltip(gui, item, hovered, tooltip, pos_x, pos_y)
     end
 end
 
-function draw_inventory_bag(gui, active_item)
-    local stored_items = get_bag_inventory_items(active_item)
+function draw_inventory_bag(gui, active_item, order_asc)
+    local stored_items = get_bag_inventory_items(active_item, order_asc)
     local qt_of_storage = get_bag_inventory_size(active_item)
     local item_per_line = tonumber(bag_wrap_number)
     if not item_per_line then
@@ -232,7 +253,10 @@ function draw_inventory_bag(gui, active_item)
         i = i + 1
     end
     if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
-        draw_inventory_drop_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2)
+        draw_inventory_drop_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]+9)
+    end
+    if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        draw_inventory_sorting_direction_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2, sorting)
     end
 end
 
