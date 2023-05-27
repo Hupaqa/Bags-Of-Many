@@ -216,7 +216,7 @@ function draw_tooltip(gui, item, hovered, tooltip, pos_x, pos_y)
 end
 
 function draw_inventory_bag(gui, active_item, order_asc)
-    local stored_items = get_bag_inventory_items(active_item, order_asc)
+    local stored_items = get_bag_inventory_items(active_item, true, order_asc)
     local qt_of_storage = get_bag_inventory_size(active_item)
     local item_per_line = tonumber(bag_wrap_number)
     if not item_per_line then

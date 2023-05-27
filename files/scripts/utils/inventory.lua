@@ -64,7 +64,7 @@ function name_contains(entity_id, contains_string)
 end
 
 function is_bag_not_full(bag, maximum)
-    return #get_bag_inventory_items(bag, true) < maximum
+    return #get_bag_inventory_items(bag, false, false) < maximum
 end
 
 function drop_item_from_parent(parent, item)
@@ -76,7 +76,7 @@ function drop_item_from_parent(parent, item)
 end
 
 function drop_all_inventory(bag)
-    local items = get_bag_inventory_items(bag, true)
+    local items = get_bag_inventory_items(bag, false, true)
     local x, y = EntityGetTransform(bag)
     for _, item in ipairs(items or {}) do
         EntityRemoveFromParent(item)
@@ -262,11 +262,13 @@ function get_inventory( entity_id )
     end
 end
 
-function get_bag_inventory_items(entity_id, order_asc)
+function get_bag_inventory_items(entity_id, sort, order_asc)
     local inventory = get_inventory(entity_id)
     local items = EntityGetAllChildren(inventory)
     if items then
-        sort_entity_by_pickup_frame(items, order_asc)
+        if sort then
+            sort_entity_by_pickup_frame(items, order_asc)
+        end
         return items
     else
         return {}
@@ -363,9 +365,6 @@ end
 
 function sort_entity_by_pickup_frame(inventory, order_asc)
     insertion_sort_entityId(inventory)
-    -- if not order_asc then
-    --     inventory = revert_table(inventory)
-    -- end
     insertion_sort_frame(inventory)
     if not order_asc then
         inventory = revert_table(inventory)
