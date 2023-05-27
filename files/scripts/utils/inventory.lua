@@ -68,6 +68,13 @@ function is_bag_not_full(bag, maximum)
 end
 
 function drop_item_from_parent(parent, item)
+    local var_storages = EntityGetComponentIncludingDisabled(item, "VariableStorageComponent")
+    for _, var_storage in ipairs(var_storages or {}) do
+        print(tostring(ComponentGetValue2(var_storage, "name")))
+        if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
+            EntityRemoveComponent(item, var_storage)
+        end
+    end
     EntityRemoveFromParent(item)
     local x, y = EntityGetTransform(parent)
     EntityApplyTransform(item, x, y)
@@ -143,6 +150,21 @@ function add_item_to_inventory(inventory, path)
 end
 
 function add_entity_to_inventory_bag(bag, inventory, entity)
+    local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
+    local item_has_item_pickup_frame = false
+    for _, var_storage in ipairs(var_storages or {}) do
+        print(tostring(ComponentGetValue2(var_storage, "name")))
+        if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
+            item_has_item_pickup_frame = true
+            ComponentSetValue2(var_storage, "value_int", GameGetFrameNum())
+        end
+    end
+    if not item_has_item_pickup_frame then
+        EntityAddComponent2(entity, "VariableStorageComponent", {
+            name="item_pickup_frame",
+            value_int=GameGetFrameNum(),
+        })
+    end
     EntityRemoveFromParent(entity)
     EntityAddChild(inventory, entity)
     hide_entity(entity)

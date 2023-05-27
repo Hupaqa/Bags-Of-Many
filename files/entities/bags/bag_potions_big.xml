@@ -46,10 +46,6 @@
         full_inventory_slots_y="1"
     />
 
-    <VariableStorageComponent
-        name="storage_order"
-    >
-    </VariableStorageComponent>
 
     <Entity name="inventory_quick">
     </Entity>
