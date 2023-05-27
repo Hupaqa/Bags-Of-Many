@@ -1,0 +1,13 @@
+----1.1----
+- New ability to put items in universal bags.
+- New button icon change with the currently held bag.
+- New drop all items of currently held bag button added. (with config to remove the button)  
+- New sort by item pickup order button added. Will by default sort in ascending order so newer items will be at the end of the bag. (with config to remove the button and change the default ordering)  
+- Better UI for bags to fit the vanilla theme more.
+- Better display of items name.
+- Better display of wand spells in bags.
+- Fixed Bag Inception. (no restriction for the moment >:)...).
+
+----1.0----
+- Removed automatic starter loadout of bags.
+- Added option in config to spawn a starter loadout near player on game start to not conflict with starter loadout mods.

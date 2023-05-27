@@ -232,7 +232,7 @@ mod_settings =
             {
                 id = "sorting_order",
                 ui_name = "Ascending sorting direction",
-                ui_description = "Will sort the items in the bag by the order of time of pickup.",
+                ui_description = "Will sort the items in the bag by the order of time of pickup.\n ON: Newer items will be at the end of the bag\n OFF: Newer items will be at the beginning of the bag",
                 value_default = true,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
