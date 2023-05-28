@@ -2,9 +2,14 @@ dofile_once( "data/scripts/game_helpers.lua" )
 dofile_once( "data/scripts/lib/utilities.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/spells_lookup.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/testing/item_spawner.lua" )
 dofile_once( "mods/bags_of_many/files/gui.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
+
+bags_mod_state = {
+    lookup_spells = {}
+}
 
 -- Adding translations
 local TRANSLATIONS_FILE = "data/translations/common.csv"
@@ -30,6 +35,9 @@ function OnPlayerSpawned( player_entity ) -- This runs when player entity has be
         -- end
         GameAddFlagRun(LOAD_KEY)
     end
+
+    -- Load a spell table to find their name with their id
+    bags_mod_state.lookup_spells = lookup_spells()
 end
 
 function OnWorldPreUpdate()

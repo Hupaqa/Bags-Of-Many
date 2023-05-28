@@ -146,7 +146,12 @@ function generate_tooltip(gui, item)
         local item_action_component = EntityGetComponentIncludingDisabled(item, "ItemActionComponent")
         if item_action_component then
             local action_id = ComponentGetValue2(item_action_component[1], "action_id")
-            tooltip = "$action_" .. string.lower(action_id)
+            local name = bags_mod_state.lookup_spells[action_id].name
+            if name then
+                tooltip = name
+            else
+                tooltip = action_id
+            end
         end
     -- Potion coloring and tooltip
     elseif EntityHasTag(item, "potion") then
