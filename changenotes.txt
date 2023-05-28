@@ -1,2 +1,1 @@
-----1.2----
-- Added sprite particle emitter to help find the bags in the world (like other items).
+"----1.2.1----\n - Better spell naming in bag."
