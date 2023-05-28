@@ -26,7 +26,7 @@ function OnPlayerSpawned( player_entity ) -- This runs when player entity has be
             -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
             -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
             -- spawn_spells_for_test(90)
-            -- spawn_bags_for_test()
+        --     spawn_bags_for_test()
         -- end
         GameAddFlagRun(LOAD_KEY)
     end
