@@ -1,1 +1,1 @@
-"----1.2.1----\n - Better spell naming in bag."
+"----1.2.2----\n - Fixed better spell naming in bag."

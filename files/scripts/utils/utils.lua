@@ -80,3 +80,7 @@ function remove_value_in_table(table_in, index)
     end
     return t
 end
+
+function calculate_scale(size_x, size_y, sprite_x, sprite_y)
+    return size_x/sprite_x, size_y/sprite_y
+end
