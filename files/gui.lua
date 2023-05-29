@@ -196,8 +196,8 @@ function draw_tooltip(gui, item, hovered, tooltip, pos_x, pos_y)
         GuiEndAutoBoxNinePiece(gui)
     -- Draw the tooltip for wand 
     elseif hovered and EntityHasTag(item,"wand") then
-        local tooltip_x = pos_x
-        local tooltip_y = pos_y+42
+        local tooltip_x = pos_x+1
+        local tooltip_y = pos_y+31
         local spells_per_line = tonumber(ModSettingGet("BagsOfMany.spells_slots_inventory_wrap"))
         local wand_capacity = EntityGetWandCapacity(item)
         local wand_spells = EntityGetAllChildren(item)
@@ -210,15 +210,15 @@ function draw_tooltip(gui, item, hovered, tooltip, pos_x, pos_y)
             spell_tooltip_size_x = slot_size_x * wand_capacity
         end
         local spell_tooltip_size_y = slot_size_y * (math.ceil(wand_capacity/spells_per_line))
-        -- local text_width, text_height = draw_wand_infos(tooltip_x, tooltip_y, wand_info)
-        local text_width, text_height = 0,0
+        local text_width, text_height = draw_wand_infos(tooltip_x, tooltip_y, wand_info)
+        -- local text_width, text_height = 0,0
         if spell_tooltip_size_x < text_width then
             spell_tooltip_size_x = text_width
         end
         spell_tooltip_size_y = spell_tooltip_size_y + text_height
         draw_background_box(gui, tooltip_x, tooltip_y, 13, spell_tooltip_size_x, spell_tooltip_size_y, 8, 10, 10, 8)
         tooltip_y = tooltip_y + text_height
-        local alpha = 0.45
+        local alpha = 1
         for i = 1, wand_capacity do
             -- Spell background
             local background_pos_x = tooltip_x+(20*((i-1)%spells_per_line))
@@ -330,24 +330,28 @@ end
 
 function draw_wand_infos(pos_x, pos_y, wand)
     local draw_width_sum, draw_height_sum = 0, 0
-    local draw_width, draw_height = draw_info_line(pos_x - 5, pos_y + draw_height_sum, nil, "WAND", "")
-    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_shuffle.png", "Shuffle", tostring(wand.shuffle))
+    local draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, nil, "WAND", "")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height + 5)
+    local wand_shuffle = "No"
+    if wand.shuffle then
+        wand_shuffle = "Yes"
+    end
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_shuffle.png", "Shuffle", wand_shuffle)
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
     draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_actions_per_round.png", "Spells/Cast", tostring(wand.actions_per_round))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_fire_rate_wait.png", "Cast delay", tostring(wand.reload_time_frames))
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_fire_rate_wait.png", "Cast delay", string.format("%.2f s", wand.cast_delay / 60))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_reload_time.png", "Recharg. Time", "")
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_reload_time.png", "Recharg. Time", string.format("%.2f s", wand.recharge_time / 60))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_mana_max.png", "Mana max", "")
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_mana_max.png", "Mana max", tostring(wand.mana_max))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_mana_charge_speed.png", "Mana chg. Spd", "")
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_mana_charge_speed.png", "Mana chg. Spd", tostring(wand.mana_charge_speed))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_capacity.png", "Capacity", "")
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_capacity.png", "Capacity", tostring(wand.capacity))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_spread_degrees.png", "Spread", "")
-    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_spread_degrees.png", "Spread", tostring(wand.spread) .. " DEG")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height + 5)
     return draw_width_sum, draw_height_sum
 end
 

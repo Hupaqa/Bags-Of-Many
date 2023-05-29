@@ -318,7 +318,12 @@ function get_wand_info(entity)
     if ability_comp then
         wand_info.shuffle = ComponentObjectGetValue2(ability_comp, "gun_config", "shuffle_deck_when_empty")
         wand_info.actions_per_round = ComponentObjectGetValue2(ability_comp, "gun_config", "actions_per_round")
-        wand_info.reload_time_frames = ComponentGetValue2(ability_comp, "reload_time_frames")
+        wand_info.cast_delay = ComponentObjectGetValue2(ability_comp, "gunaction_config", "fire_rate_wait")
+        wand_info.recharge_time = ComponentObjectGetValue2(ability_comp, "gun_config", "reload_time")
+        wand_info.mana_max = ComponentGetValue2(ability_comp,"mana_max")
+        wand_info.mana_charge_speed = ComponentGetValue2(ability_comp,"mana_charge_speed")
+        wand_info.capacity = ComponentObjectGetValue2(ability_comp, "gun_config", "deck_capacity")
+        wand_info.spread = ComponentObjectGetValue2(ability_comp, "gunaction_config", "spread_degrees")
     end
     return wand_info
 end
