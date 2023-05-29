@@ -1,6 +1,6 @@
-dofile_once("data/scripts/gun/gun_actions.lua")
 
 function lookup_spells()
+    dofile_once("data/scripts/gun/gun_actions.lua")
     local lookup = {}
     for i = 1, #actions do
         lookup[actions[i].id] = actions[i]
