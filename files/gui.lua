@@ -146,9 +146,11 @@ function generate_tooltip(gui, item)
         local item_action_component = EntityGetComponentIncludingDisabled(item, "ItemActionComponent")
         if item_action_component then
             local action_id = ComponentGetValue2(item_action_component[1], "action_id")
-            local name = bags_mod_state.lookup_spells[action_id].name
-            if name then
-                tooltip = name
+            if bags_mod_state.lookup_spells[action_id] ~= nil then
+                local name = bags_mod_state.lookup_spells[action_id].name
+                if name then
+                    tooltip = name
+                end
             else
                 tooltip = action_id
             end
@@ -195,10 +197,11 @@ function draw_tooltip(gui, item, hovered, tooltip, pos_x, pos_y)
     -- Draw the tooltip for wand 
     elseif hovered and EntityHasTag(item,"wand") then
         local tooltip_x = pos_x
-        local tooltip_y = pos_y+25
+        local tooltip_y = pos_y+42
         local spells_per_line = tonumber(ModSettingGet("BagsOfMany.spells_slots_inventory_wrap"))
         local wand_capacity = EntityGetWandCapacity(item)
         local wand_spells = EntityGetAllChildren(item)
+        local wand_info = get_wand_info(item)
         
         -- Background
         local slot_size_x, slot_size_y = GuiGetImageDimensions(gui, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png")
@@ -207,21 +210,29 @@ function draw_tooltip(gui, item, hovered, tooltip, pos_x, pos_y)
             spell_tooltip_size_x = slot_size_x * wand_capacity
         end
         local spell_tooltip_size_y = slot_size_y * (math.ceil(wand_capacity/spells_per_line))
-        local pad_x, pad_y = padding_to_center(spell_tooltip_size_x, spell_tooltip_size_y, slot_size_x, slot_size_y)
-        draw_background_box(gui, tooltip_x, tooltip_y, 12, spell_tooltip_size_x, spell_tooltip_size_y, math.floor(pad_x/4), math.floor(pad_y/4), math.floor(pad_x/4)*3, math.floor(pad_y/4)*3)
-
+        -- local text_width, text_height = draw_wand_infos(tooltip_x, tooltip_y, wand_info)
+        local text_width, text_height = 0,0
+        if spell_tooltip_size_x < text_width then
+            spell_tooltip_size_x = text_width
+        end
+        spell_tooltip_size_y = spell_tooltip_size_y + text_height
+        draw_background_box(gui, tooltip_x, tooltip_y, 13, spell_tooltip_size_x, spell_tooltip_size_y, 8, 10, 10, 8)
+        tooltip_y = tooltip_y + text_height
+        local alpha = 0.45
         for i = 1, wand_capacity do
             -- Spell background
             local background_pos_x = tooltip_x+(20*((i-1)%spells_per_line))
             local background_pos_y = tooltip_y+(math.floor((i-1)/spells_per_line)*20)
-            GuiZSetForNextWidget(gui, 11)
-            GuiImage(gui, new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png", 1, 1, 1)
+            GuiZSetForNextWidget(gui, 12)
+            GuiImage(gui, new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/inventory_box_inactive_overlay.png", alpha, 1, 1)
             -- Spell sprite
             if wand_spells and wand_spells[i] then
                 local spell_sprite = get_sprite_file(wand_spells[i])
                 if spell_sprite then
                     GuiZSetForNextWidget(gui, 10)
-                    GuiImage(gui, new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, 1, 1, 1)
+                    GuiImage(gui, new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, alpha, 1, 1)
+                    GuiZSetForNextWidget(gui, 11)
+                    GuiImage(gui, new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/item_bg_projectile.png", alpha, 1, 1)
                 end
             end
         end
@@ -260,7 +271,7 @@ function draw_inventory_bag(gui, active_item, order_asc)
                     drop_item_from_parent(active_item, item)
                 end
                 local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
-                draw_tooltip(gui, item, hovered, tooltip, storage_cell_x, storage_cell_y)
+                draw_tooltip(gui, item, hovered, tooltip, button_pos_x + 25, storage_cell_y)
             end
         end
         i = i + 1
@@ -271,49 +282,6 @@ function draw_inventory_bag(gui, active_item, order_asc)
     if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
         draw_inventory_sorting_direction_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2, sorting)
     end
-end
-
-function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)
-    size_x = size_x - 1
-    size_y = size_y - 1
-
-    ---- CORNERS
-    -- TOP LEFT CORNER
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
-    -- TOP RIGHT CORNER ONE
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x  + size_x - 1, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
-    -- TOP RIGHT CORNER TWO
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x  + size_x, pos_y + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
-    -- BOTTOM LEFT CORNER ONE
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x, pos_y + size_y - 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
-    -- BOTTOM LEFT CORNER TWO
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x + 1, pos_y + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
-    -- BOTTOM RIGHT CORNER
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x + size_x, pos_y + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
-    
-    ---- MIDDLE
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x + 1, pos_y + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/middle_piece.png", 0.9, size_x - 1, size_y - 1)
-
-    ---- BORDERS
-    -- TOP BORDER
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(),  pos_x + 1, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x - 2, 1)
-    -- LEFT BORDER
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(),  pos_x, pos_y + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y - 2)
-    -- RIGHT BORDER
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(),  pos_x + size_x, pos_y + 2, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y - 2)
-    -- BOTTOM BORDER
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(),  pos_x + 2, pos_y + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x - 2, 1)
 end
 
 function inventory_slot(gui, pos_x, pos_y)
@@ -356,4 +324,117 @@ function inventory(gui, size, item_per_line, pos_x, pos_y)
         end
     end
     return {positions_x = positions_x, positions_y = positions_y}
+end
+
+--------- UTILS ---------
+
+function draw_wand_infos(pos_x, pos_y, wand)
+    local draw_width_sum, draw_height_sum = 0, 0
+    local draw_width, draw_height = draw_info_line(pos_x - 5, pos_y + draw_height_sum, nil, "WAND", "")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_shuffle.png", "Shuffle", tostring(wand.shuffle))
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_actions_per_round.png", "Spells/Cast", tostring(wand.actions_per_round))
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_fire_rate_wait.png", "Cast delay", tostring(wand.reload_time_frames))
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_reload_time.png", "Recharg. Time", "")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_mana_max.png", "Mana max", "")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_mana_charge_speed.png", "Mana chg. Spd", "")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_capacity.png", "Capacity", "")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_spread_degrees.png", "Spread", "")
+    draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
+    return draw_width_sum, draw_height_sum
+end
+
+function draw_info_line(pos_x, pos_y, image, text, value)
+    -- DRAW IMAGE
+    local draw_width_sum, draw_height_sum = 0,0
+    local draw_width, draw_height = 0,0
+    if image ~= nil and image ~= "" then
+        GuiZSetForNextWidget(gui, 10)
+        GuiImage(gui, new_id(), pos_x, pos_y, image, 1, 1, 1)
+        draw_width, _ = GuiGetImageDimensions(gui, image, 1)
+        draw_width_sum = draw_width_sum + draw_width + 6
+    end
+    GuiText(gui, pos_x + draw_width_sum, pos_y - 1, text)
+    draw_width, draw_height = get_last_widget_size(gui)
+    draw_width_sum = draw_width_sum + draw_width
+    draw_height_sum = draw_height_sum + draw_height
+    if value ~= nil and value ~= "" then
+        draw_width, _ = get_last_widget_size(gui)
+        local padding = 60 - draw_width
+        if padding < 0 then
+            padding = draw_width
+        end
+        GuiText(gui, pos_x + draw_width_sum + padding, pos_y - 1, value)
+        draw_width_sum = draw_width_sum + draw_width + padding
+    end
+    return draw_width_sum, draw_height_sum
+end
+
+function get_last_widget_size(gui)
+    local _, _, _, _, _, _, _, _, _, draw_width, draw_height = GuiGetPreviousWidgetInfo(gui)
+    return draw_width, draw_height
+end
+
+function add_to_sum_width(val_width_sum, val_height_sum, val_width, val_height)
+    if val_width_sum < val_width then
+        val_width_sum = val_width
+    end
+    return val_width_sum, val_height_sum + val_height
+end
+
+function add_to_sum_height(val_width_sum, val_height_sum, val_width, val_height)
+    if val_height_sum < val_height then
+        val_height_sum = val_height
+    end
+    return val_width_sum + val_width, val_height_sum
+end
+
+function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)
+    size_x = size_x - 1
+    size_y = size_y - 1
+
+    ---- CORNERS
+    -- TOP LEFT CORNER
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x - pad_left, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    -- TOP RIGHT CORNER ONE
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x + pad_right + size_x - 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    -- TOP RIGHT CORNER TWO
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x + pad_right + size_x, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    -- BOTTOM LEFT CORNER ONE
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x - pad_left, pos_y + pad_bottom + size_y - 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    -- BOTTOM LEFT CORNER TWO
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x - pad_left + 1, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    -- BOTTOM RIGHT CORNER
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x + pad_right + size_x, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    
+    ---- MIDDLE
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x - pad_left + 1, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/middle_piece.png", 0.99, size_x + pad_left + pad_right - 1, size_y + pad_top + pad_bottom - 1)
+
+    ---- BORDERS
+    -- TOP BORDER
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x - pad_left + 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
+    -- LEFT BORDER
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x - pad_left, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
+    -- RIGHT BORDER
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x + size_x + pad_right, pos_y - pad_top + 2, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
+    -- BOTTOM BORDER
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
 end

@@ -312,6 +312,17 @@ function get_potion_content( entity_id )
     end
 end
 
+function get_wand_info(entity)
+    local ability_comp = EntityGetFirstComponentIncludingDisabled(entity, "AbilityComponent")
+    local wand_info = {}
+    if ability_comp then
+        wand_info.shuffle = ComponentObjectGetValue2(ability_comp, "gun_config", "shuffle_deck_when_empty")
+        wand_info.actions_per_round = ComponentObjectGetValue2(ability_comp, "gun_config", "actions_per_round")
+        wand_info.reload_time_frames = ComponentGetValue2(ability_comp, "reload_time_frames")
+    end
+    return wand_info
+end
+
 function get_sprite_file( entity_id )
     -- Sprite for the spells and wands
     if EntityHasTag(entity_id, "card_action") or EntityHasTag(entity_id, "wand") then
