@@ -25,6 +25,8 @@ function OnPlayerSpawned( player_entity ) -- This runs when player entity has be
             local x, y = get_player_pos()
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_small.xml", x + 30, y)
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_small.xml", x + 50, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", x + 70, y)
         end
         -- if TESTING then

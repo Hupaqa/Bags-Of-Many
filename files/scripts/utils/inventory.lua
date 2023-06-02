@@ -96,9 +96,17 @@ function get_pickable_items_in_radius(radius)
     return pickable_items
 end
 
-function get_player_inventory()
+function get_player_inventory_quick()
     for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
         if EntityGetName(child) == "inventory_quick" then
+            return child
+        end
+    end
+end
+
+function get_player_inventory_full()
+    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
+        if EntityGetName(child) == "inventory_full" then
             return child
         end
     end
@@ -310,22 +318,6 @@ function get_potion_content( entity_id )
         end
         return biggest_percent_mat
     end
-end
-
-function get_wand_info(entity)
-    local ability_comp = EntityGetFirstComponentIncludingDisabled(entity, "AbilityComponent")
-    local wand_info = {}
-    if ability_comp then
-        wand_info.shuffle = ComponentObjectGetValue2(ability_comp, "gun_config", "shuffle_deck_when_empty")
-        wand_info.actions_per_round = ComponentObjectGetValue2(ability_comp, "gun_config", "actions_per_round")
-        wand_info.cast_delay = ComponentObjectGetValue2(ability_comp, "gunaction_config", "fire_rate_wait")
-        wand_info.recharge_time = ComponentObjectGetValue2(ability_comp, "gun_config", "reload_time")
-        wand_info.mana_max = ComponentGetValue2(ability_comp,"mana_max")
-        wand_info.mana_charge_speed = ComponentGetValue2(ability_comp,"mana_charge_speed")
-        wand_info.capacity = ComponentObjectGetValue2(ability_comp, "gun_config", "deck_capacity")
-        wand_info.spread = ComponentObjectGetValue2(ability_comp, "gunaction_config", "spread_degrees")
-    end
-    return wand_info
 end
 
 function get_sprite_file( entity_id )
