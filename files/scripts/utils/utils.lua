@@ -2,6 +2,10 @@ function padding_to_center(width_box, height_box, width_entity, height_entity)
     return math.ceil((width_box - width_entity)/2), math.ceil((height_box - height_entity)/2)
 end
 
+function string_contains(text, contains)
+    return string.find(text, contains) ~= nil
+end
+
 function split_string(inputstr, sep)
     sep = sep or "%s"
     local t= {}
@@ -14,7 +18,7 @@ end
 function string_table_to_table(inputstr)
     local t={}
     for str in string.gmatch(inputstr, "([^"..",".."]+)") do
-            table.insert(t, str)
+        table.insert(t, str)
     end
     if t then
         for i = 1, #t do
@@ -58,10 +62,6 @@ function find_value_in_table(table, value)
     if table then
         for index, val_in_table in ipairs(table) do
             if tonumber(val_in_table) == tonumber(value) then
-                print("tostring(val_in_table)")
-                print(tostring(val_in_table))
-                print("tostring(value)")
-                print(tostring(value))
                 index_val = index
             end
         end
@@ -83,4 +83,49 @@ end
 
 function calculate_scale(size_x, size_y, sprite_x, sprite_y)
     return size_x/sprite_x, size_y/sprite_y
+end
+
+function map_size(map)
+    local count = 0
+    for _, _ in pairs(map) do
+        count = count + 1
+    end
+    return count
+end
+
+function string_to_map(inputstr)
+    local t={}
+    local size = 0
+    for position in string.gmatch(inputstr, "([^"..",".."]+)") do
+        local values = {}
+        for val in string.gmatch(position, "([^"..":".."]+)") do
+            table.insert(values, val)
+        end
+        t[values[1]] = values[2]
+        size = size + 1
+    end
+    return t, size
+end
+
+function map_to_string(map, size)
+    local stringified_array = ""
+    local count = 0
+    for key, value in pairs(map) do
+        stringified_array = stringified_array .. key .. ":" .. value
+        if count < size then
+            stringified_array = stringified_array .. ","
+        end
+        count = count + 1
+    end
+    return stringified_array
+end
+
+function get_var_storage_with_name(entity_id, name)
+    local variable_storages = EntityGetComponentIncludingDisabled(entity_id, "VariableStorageComponent")
+    for _, var_storage in ipairs(variable_storages or {}) do
+        local storage_name = ComponentGetValue2(var_storage, "name")
+        if storage_name == name then
+            return var_storage
+        end
+    end
 end

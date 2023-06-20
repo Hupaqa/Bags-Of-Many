@@ -49,6 +49,13 @@
         full_inventory_slots_y="1"
     />
 
+    <VariableStorageComponent
+        name="bags_of_many_last_available_position"
+        value_int=1
+    ></VariableStorageComponent>
+    <VariableStorageComponent
+        name="bags_of_many_positions"
+    ></VariableStorageComponent>
 
     <Entity name="inventory_quick">
     </Entity>

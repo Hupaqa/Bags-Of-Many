@@ -47,6 +47,25 @@ function is_bag(entity_id)
     return string.find(EntityGetName(entity_id), "bag_") ~= nil
 end
 
+function find_item_level_in_draw_list(draw_list, item)
+    local level_item = 0
+    for key, value in pairs(draw_list) do
+        if value == item then
+            level_item = key
+        end
+    end
+    return level_item
+end
+
+function remove_draw_list_under_level(draw_list, level)
+    for key, _ in pairs(draw_list) do
+        if key > level then
+            draw_list[key] = nil
+        end
+    end
+    return draw_list
+end
+
 function item_pickup_is_pickable_in_inventory(entity_id)
     local item_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ItemComponent")
     if item_comp then
@@ -69,6 +88,7 @@ end
 
 function drop_item_from_parent(parent, item)
     remove_component_pickup_frame(item)
+    remove_item_position(item)
     EntityRemoveFromParent(item)
     local x, y = EntityGetTransform(parent)
     EntityApplyTransform(item, x, y)
@@ -162,6 +182,58 @@ function add_entity_to_var_storage(bag, entity)
     end
 end
 
+function add_item_position(entity, position)
+    local var_storage = get_var_storage_with_name(entity, "bags_of_many_item_position")
+    if var_storage then
+        ComponentSetValue2(var_storage, "value_int", position)
+    else
+        EntityAddComponent2(entity, "VariableStorageComponent", {
+            name="bags_of_many_item_position",
+            value_int=position,
+        })
+    end
+end
+
+function remove_item_position(entity)
+    local var_storage = get_var_storage_with_name(entity, "bags_of_many_item_position")
+    if var_storage then
+        EntityRemoveComponent(entity, var_storage)
+    end
+end
+
+function switch_item_position(bag_one, pos_one, bag_two, pos_two)
+    if bag_one and bag_two then
+        if bag_one == bag_two then
+            local var_storage = get_var_storage_with_name(bag_one, "bags_of_many_positions")
+            if var_storage then
+                local table_positions = ComponentGetValue2(var_storage, "value_string")
+                local map_positions, size = string_to_map(table_positions)
+                local entity_temp = map_positions[pos_one]
+                map_positions[pos_one] = map_positions[pos_two]
+                map_positions[pos_two] = entity_temp
+                local map_stringified = map_to_string(map_positions, size)
+                ComponentSetValue2(var_storage, "value_string", map_stringified)
+            end
+        else
+            local var_storage_one = get_var_storage_with_name(bag_one, "bags_of_many_positions")
+            local var_storage_two = get_var_storage_with_name(bag_two, "bags_of_many_positions")
+            if var_storage_one and var_storage_two then
+                local table_positions_one = ComponentGetValue2(var_storage_one, "value_string")
+                local table_positions_two = ComponentGetValue2(var_storage_two, "value_string")
+                local map_positions_one, size_one = string_to_map(table_positions_one)
+                local map_positions_two, size_two = string_to_map(table_positions_two)
+                local entity_temp = map_positions_one[pos_one]
+                map_positions_one[pos_one] = map_positions_two[pos_two]
+                map_positions_two[pos_two] = entity_temp
+                local map_stringified_one = map_to_string(map_positions_one, size_one)
+                local map_stringified_two = map_to_string(map_positions_two, size_two)
+                ComponentSetValue2(var_storage_one, "value_string", map_stringified_one)
+                ComponentSetValue2(var_storage_two, "value_string", map_stringified_two)
+            end
+        end
+    end
+end
+
 function remove_entity_from_var_storage(bag, entity)
     if bag then
         local variable_storages = EntityGetComponentIncludingDisabled(bag, "VariableStorageComponent")
@@ -192,6 +264,7 @@ function add_entity_to_inventory_bag(bag, inventory, entity)
     EntityRemoveFromParent(entity)
     EntityAddChild(inventory, entity)
     hide_entity(entity)
+    add_item_position(entity, get_smallest_position_avalaible(bag))
 end
 
 function add_spells_to_inventory(active_item, inventory, player_id, entities)
@@ -281,6 +354,52 @@ function get_bag_inventory_items(entity_id, sort, order_asc)
     else
         return {}
     end
+end
+
+function get_inventory_bag_owner(item)
+    local inventory = EntityGetParent(item)
+    return EntityGetParent(inventory)
+end
+
+function get_bag_items(entity_id)
+    local inventory = get_inventory(entity_id)
+    local items = EntityGetAllChildren(inventory)
+    if items then
+        return items
+    else
+        return {}
+    end
+end
+
+function get_item_position(entity_id)
+    local var_storage = get_var_storage_with_name(entity_id, "bags_of_many_item_position")
+    if var_storage then
+        return ComponentGetValue2(var_storage, "value_int")
+    end
+    return 0
+end
+
+function get_smallest_position_avalaible(bag)
+    local items = get_bag_items(bag)
+    local bag_size = get_bag_inventory_size(bag)
+    local smallest_pos = 1
+    local i = 1
+    while smallest_pos <= bag_size and i <= bag_size do
+        local var_storage = get_var_storage_with_name(items[i], "bags_of_many_item_position")
+        local restart = false
+        if var_storage then
+            if ComponentGetValue2(var_storage, "value_int") == smallest_pos then
+                smallest_pos = smallest_pos + 1
+                restart = true
+            end
+        end
+        if restart then
+            i = 1
+        else
+            i = i + 1
+        end
+    end
+    return smallest_pos
 end
 
 function get_bag_inventory_size( entity_id )

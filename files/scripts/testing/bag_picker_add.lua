@@ -6,10 +6,8 @@ function enabled_changed( entity_id, is_enabled )
         local player = get_player_entity()
         local x, y = get_player_pos()
         local items = EntityGetInRadiusWithTag(x, y, 100, "item_pickup")
-        print("LENGTH "..tostring(#items))
         for index, item in ipairs(items) do
             if item then
-                print(tostring(index))
                 local item_has_interaction = EntityGetComponentIncludingDisabled(item, "InteractableComponent") ~= nil
                 if EntityGetRootEntity(item) ~= player and not item_has_interaction then
                     local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
