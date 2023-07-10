@@ -15,8 +15,9 @@ bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
 bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
 bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
 open = true
-sorting = ModSettingGet("BagsOfMany.sorting_order")
+sorting_order = ModSettingGet("BagsOfMany.sorting_order")
 keep_tooltip_open = false
+sort_by_time = false
 last_hovered = nil
 
 last_hovered_level = {}
@@ -155,14 +156,14 @@ function draw_inventory_button(gui, active_item)
         GlobalsSetValue("bags_of_many.bag_open", open and 1 or 0)
     end
     if right_clicked then
-        keep_tooltip_open = not keep_tooltip_open
+        sort_by_time = not sort_by_time
     end
     -- Show tooltip
     if hovered_invisible then
         if not keep_tooltip_open then
-            GuiText(gui, button_pos_x, button_pos_y + 30, GameTextGet("$bag_button_tooltip_right_click_on"))
-        else
             GuiText(gui, button_pos_x, button_pos_y + 30, GameTextGet("$bag_button_tooltip_right_click_off"))
+        else
+            GuiText(gui, button_pos_x, button_pos_y + 30, GameTextGet("$bag_button_tooltip_right_click_on"))
         end
         if not open then
             GuiText(gui, button_pos_x, button_pos_y + 20, GameTextGet("$bag_button_tooltip_closed"))
@@ -172,14 +173,48 @@ function draw_inventory_button(gui, active_item)
     end
 end
 
--- Change for drop all
-function draw_inventory_drop_button(gui, bag, pos_x, pos_y)
+function draw_inventory_sorting_option(pos_x, pos_y)
+    GuiZSetForNextWidget(gui, 7)
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
+    local sorting_option_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sorting_by_position.png"
+    local sorting_option_tooltip = "$bag_button_sorting_by_position_tooltip"
+    if sort_by_time then
+        sorting_option_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sorting_by_time.png"
+        sorting_option_tooltip = "$bag_button_sorting_by_time_tooltip"
+    end
+    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", sorting_option_sprite) then
+        sort_by_time = not sort_by_time
+    end
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+    if hovered then
+        GuiText(gui, pos_x + 14, pos_y, GameTextGet(sorting_option_tooltip))
+    end
+end
+
+function draw_inventory_sorting_direction(pos_x, pos_y)
+    GuiZSetForNextWidget(gui, 7)
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
+    local sorting_direction_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sort_desc.png"
+    local sorting_direction_tooltip = "$bag_button_tooltip_desc_sort"
+    if sorting_order then
+        sorting_direction_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sort_asc.png"
+        sorting_direction_tooltip = "$bag_button_tooltip_asc_sort"
+    end
+    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", sorting_direction_sprite) then
+        sorting_order = not sorting_order
+    end
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+    if hovered then
+        GuiText(gui, pos_x + 14, pos_y, GameTextGet(sorting_direction_tooltip))
+    end
+end
+
+function draw_inventory_drop_button(bag, pos_x, pos_y)
     GuiZSetForNextWidget(gui, 7)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     if GuiImageButton(gui, new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop.png") then
         local active_item = get_active_item()
         local draw_item_level = find_item_level_in_draw_list(draw_inventory_list[active_item], bag)
-        print(tostring(draw_item_level))
         remove_draw_list_under_level(draw_inventory_list[active_item], draw_item_level)
         drop_all_inventory(bag)
     end
@@ -189,9 +224,7 @@ function draw_inventory_drop_button(gui, bag, pos_x, pos_y)
     end
 end
 
-
--- Change to sorting button
-function draw_inventory_multiple_depth_button(gui, pos_x, pos_y)
+function draw_inventory_multiple_depth_button(pos_x, pos_y)
     GuiZSetForNextWidget(gui, 7)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local order_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_multi_depth_display.png"
@@ -430,7 +463,7 @@ end
 --         draw_inventory_drop_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]+9)
 --     end
 --     if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
---         draw_inventory_sorting_direction_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2, sorting)
+--         draw_inventory_sorting_direction_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2, sorting_order)
 --     end
 --     return positions
 -- end
@@ -566,6 +599,21 @@ function add_to_sum_height(val_width_sum, val_height_sum, val_width, val_height)
     return val_width_sum + val_width, val_height_sum
 end
 
+function setup_inventory_options_buttons(bag, level, pos_x, pos_y)
+    if level == 1 and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        draw_inventory_multiple_depth_button(pos_x + 25, pos_y - 3)
+    end
+    if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
+        draw_inventory_drop_button(bag, pos_x + 25, pos_y + 10)
+    end
+    if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        draw_inventory_sorting_option(pos_x + 38, pos_y -3)
+    end
+    if sort_by_time and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        draw_inventory_sorting_direction(pos_x + 38, pos_y + 10)
+    end
+end
+
 function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)
     size_x = size_x - 1
     size_y = size_y - 1
@@ -620,7 +668,6 @@ function add_potion_color(entity)
 end
 
 -- NEW INVENTORY CODE
-
 local positions = {}
 
 function add_item_specifity(entity, x, y)
@@ -646,18 +693,14 @@ function draw_inventory(gui, entity, level)
         end
         positions[level] = inventory(gui, storage_size, item_per_line, button_pos_x + 25 + (5 * (level - 1)), button_pos_y + (28 * (level - 1)), 10)
         -- Inventory Options
-        if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
-            draw_inventory_drop_button(gui, entity, positions[level].positions_x[#positions[level].positions_x] + 25, positions[level].positions_y[#positions[level].positions_y]+10)
-        end
-        if level == 1 and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
-            draw_inventory_multiple_depth_button(gui, positions[level].positions_x[#positions[level].positions_x] + 25, positions[level].positions_y[#positions[level].positions_y]-3)
-        end
-        local items = get_bag_inventory_items(entity)
+        setup_inventory_options_buttons(entity, level, positions[level].positions_x[#positions[level].positions_x], positions[level].positions_y[#positions[level].positions_y])
+
+        local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
         for i = 1, #items do
             local item = items[i]
             local position = get_item_position(item)
-            if position == 0 then
-                return
+            if position == 0 or sort_by_time then
+                position = i
             end
             local item_pos_x = positions[level].positions_x[position]
             local item_pos_y = positions[level].positions_y[position]
