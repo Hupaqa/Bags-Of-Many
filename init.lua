@@ -19,17 +19,22 @@ ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/sc
 TESTING=false
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
-function OnPlayerSpawned( player_entity ) -- This runs when player entity has been created
+function OnPlayerSpawned(player_entity) -- This runs when player entity has been created
     if not GameHasFlagRun(LOAD_KEY) then
+        GameAddFlagRun(LOAD_KEY)
+        local x, y = get_player_pos()
         if ModSettingGet("BagsOfMany.starter_loadout") then
-            local x, y = get_player_pos()
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_small.xml", x + 30, y)
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_small.xml", x + 50, y)
-            EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-            EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", x + 70, y)
         end
         -- if TESTING then
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", x + 30, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", x + 30, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_medium.xml", x + 70, y)
+            EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_big.xml", x + 70, y)
         -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
         -- print(tostring("====================================LOADING WAND===================================="))
         -- local x, y = get_player_pos()
@@ -39,7 +44,6 @@ function OnPlayerSpawned( player_entity ) -- This runs when player entity has be
             -- spawn_spells_for_test(90)
         --     spawn_bags_for_test()
         -- end
-        GameAddFlagRun(LOAD_KEY)
     end
 
     -- Load a spell table to find their name with their id

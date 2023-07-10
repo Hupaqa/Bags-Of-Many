@@ -1,6 +1,8 @@
 ,en,ru,pt-br,es-es,de,fr-fr,it,pl,zh-cn,jp,ko,,NOTES – use \n for newline,max length
 bag_button_tooltip_closed,Open the bag,,,,Ouvrir le sac,,,,,,,,,
 bag_button_tooltip_opened,Close the bag,,,,Fermer le sac,,,,,,,,,
+bag_button_tooltip_right_click_on,Show multiple inventory depth,,,,Montrer plusieurs niveau d'inventaire,,,,,,,,,
+bag_button_tooltip_right_click_off,Show one inventory depth,,,,Montrer un niveau d'inventaire,,,,,,,,,
 bag_button_tooltip_drop,Drop inventory,,,,Déposer l'inventaire,,,,,,,,,
 bag_button_tooltip_asc_sort,Sort inventory ascending,,,,Trier l'inventaire ascendant,,,,,,,,,
 bag_button_tooltip_desc_sort,Sort inventory descending,,,,Trier l'inventaire descendant,,,,,,,,,

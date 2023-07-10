@@ -40,6 +40,16 @@ function is_item(entity)
     return string.find(tags, "item_pickup") ~= nil
 end
 
+function is_potion(entity)
+    local tags = EntityGetTags(entity)
+    return string.find(tags, "potion") ~= nil
+end
+
+function is_spell(entity)
+    local tags = EntityGetTags(entity)
+    return string.find(tags, "card_action") ~= nil
+end
+
 function is_bag(entity_id)
     if EntityGetName(entity_id) == nil then
         return false
@@ -90,6 +100,7 @@ function drop_item_from_parent(parent, item)
     remove_component_pickup_frame(item)
     remove_item_position(item)
     EntityRemoveFromParent(item)
+    parent = EntityGetRootEntity(parent)
     local x, y = EntityGetTransform(parent)
     EntityApplyTransform(item, x, y)
     show_entity(item)
@@ -97,11 +108,8 @@ end
 
 function drop_all_inventory(bag)
     local items = get_bag_inventory_items(bag, false, true)
-    local x, y = EntityGetTransform(bag)
     for _, item in ipairs(items or {}) do
-        EntityRemoveFromParent(item)
-        EntityApplyTransform(item, x, y)
-        show_entity(item)
+        drop_item_from_parent(bag, item)
     end
 end
 

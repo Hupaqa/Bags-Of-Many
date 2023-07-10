@@ -426,12 +426,12 @@ mod_settings =
                 id = "bag_ratio_vs_potions",
                 ui_name = "Bag Spawn Chance",
                 ui_description = "General chance of spawning bags, will take up chances for potions spawn.\n(0 -> almost no bags lots of potions & 100 -> lots of bags almost no potions).",
-                value_default = 5,
+                value_default = 10,
                 value_min = 1,
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 ui_fn = mod_setting_vertical_spacing,
@@ -452,7 +452,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_universal_small_spawn_chance",
@@ -463,7 +463,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_universal_medium_spawn_chance",
@@ -474,7 +474,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_universal_big_spawn_chance",
@@ -485,7 +485,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 ui_fn = mod_setting_vertical_spacing,
@@ -506,7 +506,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_spells_small_spawn_chance",
@@ -517,7 +517,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_spells_medium_spawn_chance",
@@ -528,7 +528,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_spells_big_spawn_chance",
@@ -539,7 +539,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 ui_fn = mod_setting_vertical_spacing,
@@ -560,7 +560,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_potions_small_spawn_chance",
@@ -571,7 +571,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_potions_medium_spawn_chance",
@@ -582,7 +582,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 id = "bag_potions_big_spawn_chance",
@@ -593,7 +593,7 @@ mod_settings =
                 value_max = 100,
                 value_display_multiplier = 1,
                 value_display_formatting = " $0%",
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
+                scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
             },
             {
                 ui_fn = mod_setting_vertical_spacing,
@@ -602,7 +602,7 @@ mod_settings =
             {
                 ui_fn = mod_setting_warning_with_title,
                 ui_name = "Bags Spawning Chance",
-                ui_description = " \n   Bag Spawn Chance replaces some potion spawn with the bags of the mod.\n"..
+                ui_description = " \n   'Bag Spawn Chance' replaces some potion spawn with the bags of the mod.\n"..
                     "   The other Spawn Chance options are weighted chance\n"..
                     "   so multiple item can be at 100% or whatever percent.",
                 not_setting = true,
@@ -615,7 +615,10 @@ mod_settings =
                 ui_fn = mod_setting_error_with_title,
                 ui_name = "Warning on change",
                 ui_description = "\n    Changing options in this section require a new game or a game restart\n"..
-                "\n    to see the effect of the change.",
+                "\n    to see the effect of the change. You will need to explore\n"..
+                "\n    new zones to see a difference in the spawn chance since\n"..
+                "\n    in explored zones the items have already spawned."
+                ,
                 not_setting = true,
             },
             -- {
