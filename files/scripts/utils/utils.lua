@@ -129,3 +129,55 @@ function get_var_storage_with_name(entity_id, name)
         end
     end
 end
+
+function calculate_grid(length, nb_items, px_rows, px_columns, direction)
+    local grid = {x = {}, y = {}}
+    if direction == "column" then
+        local nb_columns = math.ceil(nb_items/length)
+        local nb_rows = length
+        if nb_items < length then
+            nb_rows = nb_items
+        end
+        for i = 1, nb_columns do
+            local pos_x, pos_y = 0,0
+            pos_x = pos_x + (px_columns * i)
+            for j = 1, nb_rows do
+                pos_y = pos_y + (px_rows * j)
+                table.insert(grid.x, pos_x)
+                table.insert(grid.y, pos_y)
+            end
+        end
+    else
+        local nb_rows = math.ceil(nb_items/length)
+        local nb_columns = length
+        if nb_items < length then
+            nb_columns = nb_items
+        end
+        for i = 1, nb_rows do
+            local pos_x, pos_y = 0,0
+            pos_x = pos_x + (px_rows * i)
+            for j = 1, nb_columns do
+                pos_y = pos_y + (px_columns * j)
+                table.insert(grid.x, pos_x)
+                table.insert(grid.y, pos_y)
+            end
+        end
+    end
+    return grid
+end
+
+function calculate_grid_position(length, px_rows, px_columns, direction, nb_position_used)
+    local pos_x, pos_y = 0,0
+    if direction == "column" then
+        local pos_column = math.floor(nb_position_used/length)
+        local pos_row = (nb_position_used % length)
+        pos_x = pos_column * px_columns
+        pos_y = pos_row * px_rows
+    else
+        local pos_column = (nb_position_used % length)
+        local pos_row = math.floor(nb_position_used/length)
+        pos_x = pos_column * px_columns
+        pos_y = pos_row * px_rows
+    end
+    return pos_x, pos_y
+end

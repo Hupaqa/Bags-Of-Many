@@ -5,6 +5,8 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/wand_and_spells.lua" )
 
+local positions = {}
+
 button_pos_x = ModSettingGet("BagsOfMany.pos_x")
 button_pos_y = ModSettingGet("BagsOfMany.pos_y")
 button_locked = ModSettingGet("BagsOfMany.locked")
@@ -18,10 +20,15 @@ open = true
 sorting_order = ModSettingGet("BagsOfMany.sorting_order")
 keep_tooltip_open = false
 sort_by_time = false
-last_hovered = nil
+option_changed = false
 
 last_hovered_level = {}
 draw_inventory_list = {}
+
+is_dragging = false
+dragging_swap = false
+dragging_item = nil
+dragging_hovered_item = nil
 
 current_id = 1
 local function new_id()
@@ -88,6 +95,13 @@ function setup_gui()
             end
             draw_inventory(gui, value, key)
         end
+        if dragging_possible_swap and dragging_item and dragging_hovered_item then
+            print("SWITCHING " .. tostring(dragging_item) .. " with " .. tostring(dragging_hovered_item))
+            dragging_item = nil
+            is_dragging = false
+        end
+        dragging_hovered_item = nil
+        dragging_possible_swap = false
     end
 end
 
@@ -113,6 +127,9 @@ function draw_inventory_button(gui, active_item)
     -- Invisible button overlay
     local clicked, hovered_invisible, right_clicked
     if not button_locked then
+        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+        GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
         GuiZSetForNextWidget(gui, 1)
@@ -184,6 +201,7 @@ function draw_inventory_sorting_option(pos_x, pos_y)
     end
     if GuiImageButton(gui, new_id(), pos_x, pos_y, "", sorting_option_sprite) then
         sort_by_time = not sort_by_time
+        option_changed = true
     end
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
     if hovered then
@@ -600,17 +618,29 @@ function add_to_sum_height(val_width_sum, val_height_sum, val_width, val_height)
 end
 
 function setup_inventory_options_buttons(bag, level, pos_x, pos_y)
-    if level == 1 and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
-        draw_inventory_multiple_depth_button(pos_x + 25, pos_y - 3)
-    end
+    local nb_button = 0
+    local length = 2
+    local size = 13
+    local direction = "column"
     if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
-        draw_inventory_drop_button(bag, pos_x + 25, pos_y + 10)
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_drop_button(bag, pos_x + pos_x_button, pos_y + pos_y_button)
+    end
+    if level == 1 and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_multiple_depth_button(pos_x + pos_x_button, pos_y + pos_y_button)
     end
     if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
-        draw_inventory_sorting_option(pos_x + 38, pos_y -3)
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_sorting_option(pos_x + pos_x_button, pos_y + pos_y_button)
     end
     if sort_by_time and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
-        draw_inventory_sorting_direction(pos_x + 38, pos_y + 10)
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_sorting_direction(pos_x + pos_x_button, pos_y + pos_y_button)
     end
 end
 
@@ -668,7 +698,6 @@ function add_potion_color(entity)
 end
 
 -- NEW INVENTORY CODE
-local positions = {}
 
 function add_item_specifity(entity, x, y)
     -- Draw the item
@@ -693,7 +722,7 @@ function draw_inventory(gui, entity, level)
         end
         positions[level] = inventory(gui, storage_size, item_per_line, button_pos_x + 25 + (5 * (level - 1)), button_pos_y + (28 * (level - 1)), 10)
         -- Inventory Options
-        setup_inventory_options_buttons(entity, level, positions[level].positions_x[#positions[level].positions_x], positions[level].positions_y[#positions[level].positions_y])
+        setup_inventory_options_buttons(entity, level, positions[level].positions_x[#positions[level].positions_x] + 25, positions[level].positions_y[#positions[level].positions_y] - 3)
 
         local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
         for i = 1, #items do
@@ -706,16 +735,40 @@ function draw_inventory(gui, entity, level)
             local item_pos_y = positions[level].positions_y[position]
             local sprite_path = get_sprite_file(item)
 
+            
             if sprite_path then
                 local img_width, img_height = GuiGetImageDimensions(gui, sprite_path, 1)
                 local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
                 item_pos_x = item_pos_x + pad_x
                 item_pos_y = item_pos_y + pad_y
-                add_item_specifity(item, item_pos_x, item_pos_y)
-                GuiZSetForNextWidget(gui, 4)
-                GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", sprite_path)
-                local clicked, right_clicked, hovered, x, y, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
-                if clicked then
+                
+                -- Invisible dragging button
+                if not sort_by_time then
+                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
+                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+                end
+                GuiZSetForNextWidget(gui, 1)
+                local clicked_inv, right_clicked_inv = GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+                local _, _, hovered_invisible = GuiGetPreviousWidgetInfo(gui)
+                -- WHEN SORTING BY POSITION DRAGGIN IS ALLOWED
+                if not sort_by_time then
+                    local _, _, _, _, _, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+                    if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= item_pos_x and draw_y ~= item_pos_y then
+                        is_dragging = true
+                        dragging_item = item
+                        item_pos_x = draw_x
+                        item_pos_y = draw_y
+                    elseif dragging_item == item then
+                        dragging_possible_swap = true
+                    end
+                end
+
+
+                -- local clicked, right_clicked, hovered, x, y, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+                if clicked_inv and not dragging_item then
                     local draw_item_level = find_item_level_in_draw_list(draw_inventory_list[active_item], item)
                     if draw_item_level ~= 0 then
                         remove_draw_list_under_level(draw_inventory_list[active_item], level)
@@ -723,18 +776,39 @@ function draw_inventory(gui, entity, level)
                     remove_item_position(item)
                     drop_item_from_parent(entity, item)
                 end
-                if right_clicked then
-                end
-                if not clicked and hovered then
-                    draw_tooltip(item, item_pos_x, item_pos_y, level)
-                    if last_hovered_level[level] ~= item then
-                        remove_draw_list_under_level(draw_inventory_list[active_item], level)
-                    end
-                    last_hovered_level[level] = item
+                if right_clicked_inv then
+                    keep_tooltip_open = not keep_tooltip_open
                     if is_bag(item) then
                         draw_inventory_list[active_item][level + 1] = item
                     end
                 end
+                if hovered_invisible then
+                    if not is_dragging then
+                        item_pos_y = item_pos_y - 1
+                        draw_tooltip(item, item_pos_x, item_pos_y, level)
+                        if last_hovered_level[level] ~= item then
+                            remove_draw_list_under_level(draw_inventory_list[active_item], level)
+                        end
+                        last_hovered_level[level] = item
+                        if is_bag(item) then
+                            draw_inventory_list[active_item][level + 1] = item
+                        end
+                    end
+                end
+
+                -- Display the item sprite
+                if item_pos_x <= 100.0 or item_pos_y <= 30.0 then
+                    print("WEIRD " .. tostring(item) .. " POS : ---- > :" ..  tostring(item_pos_x) .. " _ " .. tostring(item_pos_y))
+                end
+                add_item_specifity(item, item_pos_x, item_pos_y)
+                GuiZSetForNextWidget(gui, 4)
+                GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "",sprite_path)
+
+                -- Detect when hovering another item while dragging another one
+                if hovered_invisible and is_dragging and item ~= dragging_item then
+                    dragging_hovered_item = item
+                end
+
             end
         end
     else
