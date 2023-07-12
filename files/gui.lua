@@ -16,10 +16,8 @@ bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
 bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
 bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
 bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
-open = true
-sorting_order = ModSettingGet("BagsOfMany.sorting_order")
+bag_open = true
 keep_tooltip_open = false
-sort_by_time = false
 option_changed = false
 
 last_hovered_level = {}
@@ -28,7 +26,18 @@ draw_inventory_list = {}
 is_dragging = false
 dragging_swap = false
 dragging_item = nil
+dragging_item_position = nil
 dragging_hovered_item = nil
+dragging_hovered_item_position = nil
+
+local sort_type_change_flag = false
+sort_by_time = false
+local sort_order_change_flag = false
+sorting_order = ModSettingGet("BagsOfMany.sorting_order")
+
+local drop_no_order = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop.png"
+local drop_orderly = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop_orderly.png"
+local dropping_button_sprite = drop_orderly
 
 current_id = 1
 local function new_id()
@@ -56,13 +65,16 @@ function setup_gui()
     end
 
     -- Setup the inventory and its content
-    if inventory_open and is_bag(active_item) and open then
+    if inventory_open and is_bag(active_item) and bag_open then
         if active_item and not draw_inventory_list[active_item] then
             draw_inventory_list[active_item] = {}
         end
         local level = 1
         draw_inventory(gui, active_item, level)
-        for key, value in pairs(draw_inventory_list[active_item]) do
+        for key, value in pairs(draw_inventory_list[active_item] or {}) do
+            if option_changed then
+                break
+            end
             local bag_hovered_sprite = get_sprite_file(value)
             if bag_hovered_sprite then
                 local bag_display_x, bag_display_y = button_pos_x + (5 * (key - 1)), button_pos_y + (28 * (key - 1))
@@ -76,7 +88,7 @@ function setup_gui()
                 local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
                 GuiZSetForNextWidget(gui, 10)
                 GuiImage(gui, new_id(), bag_display_x + pad_x, bag_display_y + pad_y, bag_hovered_sprite, 1, 1, 1)
-                _, _, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
+                local _, _, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
                 if hovered_inception_bag then
                     local tooltip = generate_tooltip(value)
                     GuiBeginAutoBox(gui)
@@ -96,12 +108,229 @@ function setup_gui()
             draw_inventory(gui, value, key)
         end
         if dragging_possible_swap and dragging_item and dragging_hovered_item then
-            print("SWITCHING " .. tostring(dragging_item) .. " with " .. tostring(dragging_hovered_item))
+            swap_item_position(dragging_item, dragging_hovered_item)
             dragging_item = nil
+            dragging_item_position = nil
             is_dragging = false
+        elseif dragging_possible_swap and dragging_item and dragging_hovered_item_position and not dragging_hovered_item then
+            swap_item_to_position(dragging_item, dragging_hovered_item_position)
+        elseif dragging_possible_swap and not dragging_hovered_item then
+            drop_item_from_parent(dragging_item)
+            dragging_item = nil
+            dragging_item_position = nil
+            is_dragging = nil
         end
-        dragging_hovered_item = nil
-        dragging_possible_swap = false
+    end
+    if sort_order_change_flag then
+        sort_order_change_flag = false
+        sorting_order = not sorting_order
+    end
+    if sort_type_change_flag then
+        sort_type_change_flag = false
+        sort_by_time = not sort_by_time
+    end
+    dragging_hovered_item = nil
+    dragging_hovered_item_position = nil
+    dragging_possible_swap = false
+    option_changed = false
+end
+
+-- Inventory drawing
+function draw_inventory(gui, entity, level)
+    local active_item = get_active_item()
+    if not keep_tooltip_open then
+        draw_inventory_list[entity] = {}
+    end
+    if is_bag(entity) then
+        local storage_size = get_bag_inventory_size(entity)
+        if not item_per_line then
+            item_per_line = 10
+        end
+        
+        -- Draw and calculate inventory positions
+        positions[level] = inventory(gui, storage_size, item_per_line, button_pos_x + 25 + (5 * (level - 1)), button_pos_y + (28 * (level - 1)), 10)
+        
+        -- Inventory Options
+        setup_inventory_options_buttons(entity, level, positions[level].positions_x[#positions[level].positions_x] + 25, positions[level].positions_y[#positions[level].positions_y] - 3)
+
+        -- Items drawing loop
+        local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
+        local items_displayed = 1
+        if not option_changed then
+            for i = 1, storage_size do
+                local item_pos_x = positions[level].positions_x[i]
+                local item_pos_y = positions[level].positions_y[i]
+
+                -- Invisible dragging button
+                local clicked_inv, right_clicked_inv, hovered_invisible
+                GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+                GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+                GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+                GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
+                GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+                GuiZSetForNextWidget(gui, 1)
+                clicked_inv, right_clicked_inv = GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+                _, _, hovered_invisible = GuiGetPreviousWidgetInfo(gui)
+                
+                -- WHEN SORTING BY POSITION SWITCHING IS ALLOWED
+                if items[items_displayed] and i == get_item_position(items[items_displayed]) then
+                    items_displayed = items_displayed + 1
+                    local item = items[items_displayed]
+                    local sprite_path = get_sprite_file(item)
+                    if sprite_path then
+
+                        -- WHEN SORTING BY POSITION SWITCHING IS ALLOWED
+                        local _, _, _, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+                        if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= item_pos_x and draw_y ~= item_pos_y then
+                            is_dragging = true
+                            dragging_item = item
+                            dragging_item_position = i
+                            item_pos_x = draw_x
+                            item_pos_y = draw_y
+                        elseif dragging_item == item then
+                            dragging_possible_swap = true
+                        end
+
+                        -- LEFT CLICK: DROP ITEM
+                        if clicked_inv and not dragging_item then
+                            local draw_item_level = find_item_level_in_draw_list(draw_inventory_list[active_item], item)
+                            if draw_item_level ~= 0 then
+                                remove_draw_list_under_level(draw_inventory_list[active_item], level)
+                            end
+                            drop_item_from_parent(item)
+                        end
+                        
+                        -- RIGHT CLICK: MULTI DEPTH CHANGE
+                        if right_clicked_inv then
+                            keep_tooltip_open = not keep_tooltip_open
+                            if is_bag(item) then
+                                draw_inventory_list[active_item][level + 1] = item
+                            end
+                        end
+
+                        -- HOVERING: SHOW TOOLTIP, ADD BAG TO INVENTORY DRAW OR SWITCH ITEM HOVERED
+                        if hovered_invisible then
+                            if not is_dragging then
+                                item_pos_y = item_pos_y - 1
+                                draw_tooltip(item, item_pos_x, item_pos_y, level)
+                                if last_hovered_level[level] ~= item then
+                                    remove_draw_list_under_level(draw_inventory_list[active_item], level)
+                                end
+                                last_hovered_level[level] = item
+                                if is_bag(item) then
+                                    draw_inventory_list[active_item][level + 1] = item
+                                end
+                            end
+                        end
+
+                        -- Display the item sprite
+                        if not dragging_possible_swap or item ~= dragging_item then
+                            local img_width, img_height = GuiGetImageDimensions(gui, sprite_path, 1)
+                            local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
+                            item_pos_x = item_pos_x + pad_x
+                            item_pos_y = item_pos_y + pad_y
+                            add_item_specifity(item, item_pos_x, item_pos_y)
+                            GuiZSetForNextWidget(gui, 4)
+                            GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "",sprite_path)
+                        end
+
+                        -- Detect when hovering another item while dragging another one
+                        if hovered_invisible and is_dragging and item ~= dragging_item and not sort_by_time then
+                            dragging_hovered_item = item
+                            dragging_hovered_item_position = i
+                        end
+                    end
+                end
+                if hovered_invisible and is_dragging and not sort_by_time then
+                    dragging_hovered_item_position = i
+                end
+            end
+        end
+        -- if not option_changed then
+        --     for i = 1, #items do
+        --         local item = items[i]
+        --         local position = get_item_position(item)
+        --         if position == 0 or sort_by_time then
+        --             position = i
+        --         end
+        --         local item_pos_x = positions[level].positions_x[position]
+        --         local item_pos_y = positions[level].positions_y[position]
+
+        --         local sprite_path = get_sprite_file(item)
+        --         if sprite_path then
+                    
+        --             -- Invisible dragging button
+        --             local clicked_inv, right_clicked_inv, hovered_invisible
+        --             GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+        --             GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+        --             GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+        --             GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
+        --             GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+        --             GuiZSetForNextWidget(gui, 1)
+        --             clicked_inv, right_clicked_inv = GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+        --             _, _, hovered_invisible = GuiGetPreviousWidgetInfo(gui)
+                    
+        --             -- WHEN SORTING BY POSITION SWITCHING IS ALLOWED
+        --             local _, _, _, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+        --             if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= item_pos_x and draw_y ~= item_pos_y then
+        --                 is_dragging = true
+        --                 dragging_item = item
+        --                 item_pos_x = draw_x
+        --                 item_pos_y = draw_y
+        --             elseif dragging_item == item then
+        --                 dragging_possible_swap = true
+        --             end
+    
+        --             -- LEFT CLICK: DROP ITEM
+        --             if clicked_inv and not dragging_item then
+        --                 local draw_item_level = find_item_level_in_draw_list(draw_inventory_list[active_item], item)
+        --                 if draw_item_level ~= 0 then
+        --                     remove_draw_list_under_level(draw_inventory_list[active_item], level)
+        --                 end
+        --                 drop_item_from_parent(item)
+        --             end
+        --             -- RIGHT CLICK: MULTI DEPTH CHANGE
+        --             if right_clicked_inv then
+        --                 keep_tooltip_open = not keep_tooltip_open
+        --                 if is_bag(item) then
+        --                     draw_inventory_list[active_item][level + 1] = item
+        --                 end
+        --             end
+        --             -- HOVERING: SHOW TOOLTIP, ADD BAG TO INVENTORY DRAW OR SWITCH ITEM HOVERED
+        --             if hovered_invisible then
+        --                 if not is_dragging then
+        --                     item_pos_y = item_pos_y - 1
+        --                     draw_tooltip(item, item_pos_x, item_pos_y, level)
+        --                     if last_hovered_level[level] ~= item then
+        --                         remove_draw_list_under_level(draw_inventory_list[active_item], level)
+        --                     end
+        --                     last_hovered_level[level] = item
+        --                     if is_bag(item) then
+        --                         draw_inventory_list[active_item][level + 1] = item
+        --                     end
+        --                 end
+        --             end
+    
+        --             -- Display the item sprite
+        --             if not dragging_possible_swap or item ~= dragging_item then
+        --                 local img_width, img_height = GuiGetImageDimensions(gui, sprite_path, 1)
+        --                 local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
+        --                 item_pos_x = item_pos_x + pad_x
+        --                 item_pos_y = item_pos_y + pad_y
+        --                 add_item_specifity(item, item_pos_x, item_pos_y)
+        --                 GuiZSetForNextWidget(gui, 4)
+        --                 GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "",sprite_path)
+        --             end
+    
+        --             -- Detect when hovering another item while dragging another one
+        --             if hovered_invisible and is_dragging and item ~= dragging_item and not sort_by_time then
+        --                 dragging_hovered_item = item
+        --             end
+    
+        --         end
+        --     end
+        -- end
+    else
     end
 end
 
@@ -154,7 +383,6 @@ function draw_inventory_button(gui, active_item)
     GuiZSetForNextWidget(gui, 3)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local background_button = GuiImage(gui, new_id(), button_pos_x, button_pos_y, gui_button_image, 1, 1 ,1)
-    -- local _, _, hovered_background = GuiGetPreviousWidgetInfo(gui)
 
     -- Bag button
     local bag_sprite = "mods/bags_of_many/files/ui_gfx/inventory/drag_icon.png"
@@ -165,15 +393,13 @@ function draw_inventory_button(gui, active_item)
     local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
     GuiZSetForNextWidget(gui, 2)
     local bag_button = GuiImage(gui, new_id(), button_pos_x + pad_x, button_pos_y + pad_y, bag_sprite, 1, 1, 1)
-    -- local _, _, hovered_bag = GuiGetPreviousWidgetInfo(gui)
 
     -- Open or close bag
     if clicked then
-        open = not open
-        GlobalsSetValue("bags_of_many.bag_open", open and 1 or 0)
+        bag_open = not bag_open
+        GlobalsSetValue("bags_of_many.bag_open", bag_open and 1 or 0)
     end
     if right_clicked then
-        sort_by_time = not sort_by_time
     end
     -- Show tooltip
     if hovered_invisible then
@@ -182,7 +408,7 @@ function draw_inventory_button(gui, active_item)
         else
             GuiText(gui, button_pos_x, button_pos_y + 30, GameTextGet("$bag_button_tooltip_right_click_on"))
         end
-        if not open then
+        if not bag_open then
             GuiText(gui, button_pos_x, button_pos_y + 20, GameTextGet("$bag_button_tooltip_closed"))
         else
             GuiText(gui, button_pos_x, button_pos_y + 20, GameTextGet("$bag_button_tooltip_opened"))
@@ -200,7 +426,7 @@ function draw_inventory_sorting_option(pos_x, pos_y)
         sorting_option_tooltip = "$bag_button_sorting_by_time_tooltip"
     end
     if GuiImageButton(gui, new_id(), pos_x, pos_y, "", sorting_option_sprite) then
-        sort_by_time = not sort_by_time
+        sort_type_change_flag = true
         option_changed = true
     end
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
@@ -219,7 +445,7 @@ function draw_inventory_sorting_direction(pos_x, pos_y)
         sorting_direction_tooltip = "$bag_button_tooltip_asc_sort"
     end
     if GuiImageButton(gui, new_id(), pos_x, pos_y, "", sorting_direction_sprite) then
-        sorting_order = not sorting_order
+        sort_order_change_flag = true
     end
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
     if hovered then
@@ -230,11 +456,22 @@ end
 function draw_inventory_drop_button(bag, pos_x, pos_y)
     GuiZSetForNextWidget(gui, 7)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
-    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop.png") then
+    local l_clk, r_clk = GuiImageButton(gui, new_id(), pos_x, pos_y, "", dropping_button_sprite)
+    if l_clk then
         local active_item = get_active_item()
         local draw_item_level = find_item_level_in_draw_list(draw_inventory_list[active_item], bag)
         remove_draw_list_under_level(draw_inventory_list[active_item], draw_item_level)
-        drop_all_inventory(bag)
+        if dropping_button_sprite == drop_orderly then
+            drop_all_inventory(bag, true)
+        else
+            drop_all_inventory(bag, false)
+        end
+    elseif r_clk then
+        if dropping_button_sprite == "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop_orderly.png" then
+            dropping_button_sprite = drop_no_order
+        else
+            dropping_button_sprite = drop_orderly
+        end
     end
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
     if hovered then
@@ -360,132 +597,6 @@ function draw_action_type(entity, pos_x, pos_y, pos_z, alpha)
     end
 end
 
---  TODO REMOVE
--- function draw_bag_content_tooltip(entity, pos_x, pos_y, pos_z, alpha, order_asc, level)
---     local item_per_line = tonumber(bag_wrap_number)
---     local bag_capacity = get_bag_inventory_size(entity)
---     local items = get_bag_inventory_items(entity, true, order_asc)
---     local slot_size_x, slot_size_y = GuiGetImageDimensions(gui, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png")
---     local bag_tooltip_size_x = bag_capacity*slot_size_x + slot_size_x
---     local bag_tooltip_size_y = slot_size_y * (math.ceil(bag_capacity/item_per_line))
---     local z_item, z_spell_background, z_inventory, z_background = pos_z+1, pos_z+2, pos_z+3, pos_z+4
---     draw_background_box(gui, pos_x-slot_size_x, pos_y, z_background, bag_tooltip_size_x, bag_tooltip_size_y, 2, 2, 2, 2)
-
---     -- Draw bag hovered
---     local bag_hovered_sprite = get_sprite_file(entity)
---     if bag_hovered_sprite then
---         GuiZSetForNextWidget(gui, z_item)
---         GuiImage(gui, new_id(), pos_x-15, pos_y+3, bag_hovered_sprite, alpha, 1, 1)
---     end
-
---     for i = 1, bag_capacity do
---         -- Bag background items
---         local background_pos_x = pos_x+(20*((i-1)%item_per_line))
---         local background_pos_y = pos_y+(math.floor((i-1)/item_per_line)*20)
---         GuiZSetForNextWidget(gui, z_inventory)
---         GuiImage(gui, new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/inventory_box_inactive_overlay.png", alpha, 1, 1)
---         -- Items
---         if items and items[i] then
---             local item = items[i]
---             local item_sprite = get_sprite_file(item)
---             if item_sprite then
---                 -- if is_bag(item) then
---                 --     -- GuiZSetForNextWidget(gui, z_item)
---                 --     -- GuiImage(gui, new_id(), pos_x+(5*bags_in_inventory)-15, pos_y+(30*bags_in_inventory)+3, item_sprite, alpha, 1, 1)
---                 --     draw_bag_content_tooltip(item, pos_x + 5, pos_y+ 30*bags_in_inventory, pos_z, 1, order_asc)
---                 --     bags_in_inventory = bags_in_inventory + 1
---                 -- end
---                 if EntityHasTag(item, "card_action") then
---                     -- Add the background to the spell sprite
---                     draw_action_type(item, background_pos_x, background_pos_y, z_spell_background, alpha)
---                 elseif EntityHasTag(item, "potion") then
---                     -- Add the color to the potion sprite
---                     add_potion_color(item)
---                 end
---                 local img_x, img_y = GuiGetImageDimensions(gui, item_sprite)
---                 local pad_x, pad_y = padding_to_center(20, 20, img_x, img_y)
---                 GuiZSetForNextWidget(gui, z_item)
---                 GuiImageButton(gui, new_id(), background_pos_x+pad_x, background_pos_y+pad_y, "", item_sprite)
---                 local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
---                 local tooltip = generate_tooltip(gui, item)
---                 if hovered then
---                     draw_tooltip(gui, item, tooltip, pos_x, pos_y, order_asc, level)
---                 end
---             end
---         end
---     end
--- end
-
-
--- TODO REMOVE
--- function draw_inventory_bag(gui, active_item, order_asc)
---     local stored_items = get_bag_inventory_items(active_item, true, order_asc)
---     local qt_of_storage = get_bag_inventory_size(active_item)
---     local item_per_line = tonumber(bag_wrap_number)
---     if not item_per_line then
---         item_per_line = 10
---     end
---     local positions = inventory(gui, qt_of_storage, item_per_line, button_pos_x + 25, button_pos_y, 10)
---     for i = 0, qt_of_storage-1 do
---         local storage_cell_x = positions.positions_x[i+1]
---         local storage_cell_y = positions.positions_y[i+1]
-
---         local inventory_position = i+1
---         -- Draw the inventory content
---         local item = stored_items[inventory_position]
---         if item ~= nil then
---             local sprite_path = get_sprite_file(item)
---             if sprite_path then
---                 local item_pos_x = storage_cell_x
---                 local item_pos_y = storage_cell_y
---                 local tooltip = generate_tooltip(gui, item)
-
---                 local img_width, img_height = GuiGetImageDimensions(gui, sprite_path, 1)
---                 local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
---                 item_pos_x = item_pos_x + pad_x
---                 item_pos_y = item_pos_y + pad_y
---                 -- Draw the item
---                 if EntityHasTag(item, "card_action") then
---                     --Draw the action type if its a spell
---                     draw_action_type(item, storage_cell_x, storage_cell_y, 5, 1)
---                 elseif EntityHasTag(item, "potion") then
---                     -- Add the color to the potion sprite
---                     add_potion_color(item)
---                 end
---                 GuiZSetForNextWidget(gui, 4)
---                 local clicked, right_clicked = GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", sprite_path)
---                 if clicked then
---                     drop_item_from_parent(active_item, item)
---                 end
---                 if right_clicked then
---                     keep_tooltip_open = not keep_tooltip_open
---                     if not keep_tooltip_open then
---                         last_hovered = nil
---                     end
---                 end
---                 local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
---                 if keep_tooltip_open and hovered then
---                     last_hovered = item
---                 end
-
---                 if hovered then
---                     draw_tooltip(gui, item, tooltip, button_pos_x + 25, storage_cell_y, order_asc, 0)
---                 elseif last_hovered == item then
---                     draw_tooltip(gui, item, tooltip, button_pos_x + 25, storage_cell_y, order_asc, 0)
---                 end
---             end
---         end
---         i = i + 1
---     end
---     if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
---         draw_inventory_drop_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]+9)
---     end
---     if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
---         draw_inventory_sorting_direction_button(gui, active_item, positions.positions_x[#positions.positions_x] + 24, positions.positions_y[#positions.positions_y]-2, sorting_order)
---     end
---     return positions
--- end
-
 item_to_move_bag = nil
 item_to_move_pos = nil
 
@@ -493,18 +604,6 @@ function inventory_slot(gui, pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
     GuiImage(gui, new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png", bag_ui_alpha, 1, 1)
-    -- local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(gui)
-    -- if right_clicked then
-    --     if not item_to_move_pos then
-    --         item_to_move_pos = slot
-    --         item_to_move_bag = entity
-    --     elseif item_to_move_pos == slot then
-    --         item_to_move_pos = nil
-    --         item_to_move_bag = nil
-    --     elseif entity == item_to_move_bag then
-    --         switch_item_position(entity, slot, entity, item_to_move_pos)
-    --     end
-    -- end
 end
 
 function inventory(gui, size, item_per_line, pos_x, pos_y, pos_z)
@@ -538,6 +637,9 @@ function inventory(gui, size, item_per_line, pos_x, pos_y, pos_z)
         -- middle
         else
             draw_middle(gui, new_id(),  x, y)
+        end
+        if x <= 10 or y <= 10 then
+            print("WEIRD STUFF HERE")
         end
     end
     return {positions_x = positions_x, positions_y = positions_y}
@@ -697,120 +799,13 @@ function add_potion_color(entity)
     end
 end
 
--- NEW INVENTORY CODE
-
 function add_item_specifity(entity, x, y)
     -- Draw the item
     if EntityHasTag(entity, "card_action") then
         --Draw the action type if its a spell
-        draw_action_type(entity, x, y, 5, 1)
+        draw_action_type(entity, x - 2, y - 2, 5, 1)
     elseif EntityHasTag(entity, "potion") then
         -- Add the color to the potion sprite
         add_potion_color(entity)
-    end
-end
-
-function draw_inventory(gui, entity, level)
-    local active_item = get_active_item()
-    if not keep_tooltip_open then
-        draw_inventory_list[entity] = {}
-    end
-    if is_bag(entity) then
-        local storage_size = get_bag_inventory_size(entity)
-        if not item_per_line then
-            item_per_line = 10
-        end
-        positions[level] = inventory(gui, storage_size, item_per_line, button_pos_x + 25 + (5 * (level - 1)), button_pos_y + (28 * (level - 1)), 10)
-        -- Inventory Options
-        setup_inventory_options_buttons(entity, level, positions[level].positions_x[#positions[level].positions_x] + 25, positions[level].positions_y[#positions[level].positions_y] - 3)
-
-        local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
-        for i = 1, #items do
-            local item = items[i]
-            local position = get_item_position(item)
-            if position == 0 or sort_by_time then
-                position = i
-            end
-            local item_pos_x = positions[level].positions_x[position]
-            local item_pos_y = positions[level].positions_y[position]
-            local sprite_path = get_sprite_file(item)
-
-            
-            if sprite_path then
-                local img_width, img_height = GuiGetImageDimensions(gui, sprite_path, 1)
-                local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
-                item_pos_x = item_pos_x + pad_x
-                item_pos_y = item_pos_y + pad_y
-                
-                -- Invisible dragging button
-                if not sort_by_time then
-                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
-                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
-                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
-                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
-                    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
-                end
-                GuiZSetForNextWidget(gui, 1)
-                local clicked_inv, right_clicked_inv = GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
-                local _, _, hovered_invisible = GuiGetPreviousWidgetInfo(gui)
-                -- WHEN SORTING BY POSITION DRAGGIN IS ALLOWED
-                if not sort_by_time then
-                    local _, _, _, _, _, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
-                    if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= item_pos_x and draw_y ~= item_pos_y then
-                        is_dragging = true
-                        dragging_item = item
-                        item_pos_x = draw_x
-                        item_pos_y = draw_y
-                    elseif dragging_item == item then
-                        dragging_possible_swap = true
-                    end
-                end
-
-
-                -- local clicked, right_clicked, hovered, x, y, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
-                if clicked_inv and not dragging_item then
-                    local draw_item_level = find_item_level_in_draw_list(draw_inventory_list[active_item], item)
-                    if draw_item_level ~= 0 then
-                        remove_draw_list_under_level(draw_inventory_list[active_item], level)
-                    end
-                    remove_item_position(item)
-                    drop_item_from_parent(entity, item)
-                end
-                if right_clicked_inv then
-                    keep_tooltip_open = not keep_tooltip_open
-                    if is_bag(item) then
-                        draw_inventory_list[active_item][level + 1] = item
-                    end
-                end
-                if hovered_invisible then
-                    if not is_dragging then
-                        item_pos_y = item_pos_y - 1
-                        draw_tooltip(item, item_pos_x, item_pos_y, level)
-                        if last_hovered_level[level] ~= item then
-                            remove_draw_list_under_level(draw_inventory_list[active_item], level)
-                        end
-                        last_hovered_level[level] = item
-                        if is_bag(item) then
-                            draw_inventory_list[active_item][level + 1] = item
-                        end
-                    end
-                end
-
-                -- Display the item sprite
-                if item_pos_x <= 100.0 or item_pos_y <= 30.0 then
-                    print("WEIRD " .. tostring(item) .. " POS : ---- > :" ..  tostring(item_pos_x) .. " _ " .. tostring(item_pos_y))
-                end
-                add_item_specifity(item, item_pos_x, item_pos_y)
-                GuiZSetForNextWidget(gui, 4)
-                GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "",sprite_path)
-
-                -- Detect when hovering another item while dragging another one
-                if hovered_invisible and is_dragging and item ~= dragging_item then
-                    dragging_hovered_item = item
-                end
-
-            end
-        end
-    else
     end
 end

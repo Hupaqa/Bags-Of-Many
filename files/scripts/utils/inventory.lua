@@ -7,6 +7,17 @@ function get_player_entity()
 	return players[1]
 end
 
+function get_player_control_component()
+    local player = get_player_entity()
+    local control_comp = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+    return control_comp
+end
+
+function get_entity_velocity_compenent(entity)
+    local velocity_comp = EntityGetFirstComponentIncludingDisabled(entity, "VelocityComponent")
+    return velocity_comp
+end
+
 function has_bag_container( entity_id )
     local childs = EntityGetAllChildren(entity_id)
     if not childs then
@@ -96,20 +107,37 @@ function is_bag_not_full(bag, maximum)
     return #get_bag_inventory_items(bag, false, false) < maximum
 end
 
-function drop_item_from_parent(parent, item)
+function drop_item_from_parent(item, delta_x, delta_y)
+    local root = EntityGetRootEntity(item)
+    local x, y = EntityGetTransform(root)
+    if delta_x and delta_y then
+        x = x + delta_x
+        y = y + delta_y
+    end
     remove_component_pickup_frame(item)
     remove_item_position(item)
     EntityRemoveFromParent(item)
-    parent = EntityGetRootEntity(parent)
-    local x, y = EntityGetTransform(parent)
-    EntityApplyTransform(item, x, y)
+    EntityApplyTransform(item, x, y - 5)
     show_entity(item)
+    local control_comp = get_player_control_component()
+    if control_comp and is_dragging then
+        local aiming_vec_x, aiming_vec_y = ComponentGetValue2(control_comp, "mAimingVector")
+        GameShootProjectile(get_player_entity(), x, y - 5, x + aiming_vec_x,  y - 5 + aiming_vec_y, item)
+    end
 end
 
-function drop_all_inventory(bag)
-    local items = get_bag_inventory_items(bag, false, true)
-    for _, item in ipairs(items or {}) do
-        drop_item_from_parent(bag, item)
+function drop_all_inventory(bag, orderly)
+    local items = get_bag_inventory_items(bag, sort_by_time, sorting_order)
+    if orderly then
+        local spacing = 10
+        local left_most = -spacing * (#items/2)
+        for i, item in ipairs(items or {}) do
+            drop_item_from_parent(item, left_most + (spacing * (i - 1)), 0)
+        end
+    else
+        for _, item in ipairs(items or {}) do
+            drop_item_from_parent(item)
+        end
     end
 end
 
@@ -118,7 +146,7 @@ function get_pickable_items_in_radius(radius)
     local pickable_items = {}
     for i, entity in ipairs(closest_entities) do
         if is_item(entity) then
-            table.insert(pickable_items, entity) 
+            table.insert(pickable_items, entity)
         end
     end
     return pickable_items
@@ -209,35 +237,42 @@ function remove_item_position(entity)
     end
 end
 
-function switch_item_position(bag_one, pos_one, bag_two, pos_two)
-    if bag_one and bag_two then
+function swap_item_to_position(item, position)
+    local var_storage_one = get_var_storage_with_name(item, "bags_of_many_item_position")
+    if var_storage_one then
+        ComponentSetValue2(var_storage_one, "value_int", position)
+    end
+end
+
+function swap_item_position(item_one, item_two)
+    if item_one and item_two then
+        local bag_one = EntityGetParent(EntityGetParent(item_one))
+        local bag_two = EntityGetParent(EntityGetParent(item_two))
         if bag_one == bag_two then
-            local var_storage = get_var_storage_with_name(bag_one, "bags_of_many_positions")
-            if var_storage then
-                local table_positions = ComponentGetValue2(var_storage, "value_string")
-                local map_positions, size = string_to_map(table_positions)
-                local entity_temp = map_positions[pos_one]
-                map_positions[pos_one] = map_positions[pos_two]
-                map_positions[pos_two] = entity_temp
-                local map_stringified = map_to_string(map_positions, size)
-                ComponentSetValue2(var_storage, "value_string", map_stringified)
+            local var_storage_one = get_var_storage_with_name(item_one, "bags_of_many_item_position")
+            local var_storage_two = get_var_storage_with_name(item_two, "bags_of_many_item_position")
+            if var_storage_one and var_storage_two then
+                local position_one = ComponentGetValue2(var_storage_one, "value_int")
+                local position_two = ComponentGetValue2(var_storage_two, "value_int")
+                ComponentSetValue2(var_storage_one, "value_int", position_two)
+                ComponentSetValue2(var_storage_two, "value_int", position_one)
             end
         else
-            local var_storage_one = get_var_storage_with_name(bag_one, "bags_of_many_positions")
-            local var_storage_two = get_var_storage_with_name(bag_two, "bags_of_many_positions")
-            if var_storage_one and var_storage_two then
-                local table_positions_one = ComponentGetValue2(var_storage_one, "value_string")
-                local table_positions_two = ComponentGetValue2(var_storage_two, "value_string")
-                local map_positions_one, size_one = string_to_map(table_positions_one)
-                local map_positions_two, size_two = string_to_map(table_positions_two)
-                local entity_temp = map_positions_one[pos_one]
-                map_positions_one[pos_one] = map_positions_two[pos_two]
-                map_positions_two[pos_two] = entity_temp
-                local map_stringified_one = map_to_string(map_positions_one, size_one)
-                local map_stringified_two = map_to_string(map_positions_two, size_two)
-                ComponentSetValue2(var_storage_one, "value_string", map_stringified_one)
-                ComponentSetValue2(var_storage_two, "value_string", map_stringified_two)
-            end
+            -- local var_storage_one = get_var_storage_with_name(bag_one, "bags_of_many_positions")
+            -- local var_storage_two = get_var_storage_with_name(bag_two, "bags_of_many_positions")
+            -- if var_storage_one and var_storage_two then
+            --     local table_positions_one = ComponentGetValue2(var_storage_one, "value_string")
+            --     local table_positions_two = ComponentGetValue2(var_storage_two, "value_string")
+            --     local map_positions_one, size_one = string_to_map(table_positions_one)
+            --     local map_positions_two, size_two = string_to_map(table_positions_two)
+            --     local entity_temp = map_positions_one[pos_one]
+            --     map_positions_one[pos_one] = map_positions_two[pos_two]
+            --     map_positions_two[pos_two] = entity_temp
+            --     local map_stringified_one = map_to_string(map_positions_one, size_one)
+            --     local map_stringified_two = map_to_string(map_positions_two, size_two)
+            --     ComponentSetValue2(var_storage_one, "value_string", map_stringified_one)
+            --     ComponentSetValue2(var_storage_two, "value_string", map_stringified_two)
+            -- end
         end
     end
 end
@@ -357,6 +392,8 @@ function get_bag_inventory_items(entity_id, sort, order_asc)
     if items then
         if sort then
             sort_entity_by_pickup_frame(items, order_asc)
+        else
+            sort_entity_by_position(items)
         end
         return items
     else
@@ -506,9 +543,26 @@ function sort_entity_by_pickup_frame(inventory, order_asc)
     end
 end
 
+function sort_entity_by_position(inventory)
+    insertion_sort_position(inventory)
+end
+
+function insertion_sort_position(array)
+    local len = #array
+    for j = 2, len do
+        local key = array[j]
+        local i = j - 1
+        while i > 0 and get_item_position(array[i]) > get_item_position(key) do
+            array[i + 1] = array[i]
+            i = i - 1
+        end
+        array[i + 1] = key
+    end
+    return array
+end
+
 function insertion_sort_entityId(array)
     local len = #array
-    local j
     for j = 2, len do
         local key = array[j]
         local i = j - 1
@@ -523,7 +577,6 @@ end
 
 function insertion_sort_frame(array)
     local len = #array
-    local j
     for j = 2, len do
         local key = array[j]
         local i = j - 1
@@ -542,4 +595,4 @@ function revert_table(x)
       x[i], x[n-i+1] = x[n-i+1], x[i]
     end
     return x
-  end
+end
