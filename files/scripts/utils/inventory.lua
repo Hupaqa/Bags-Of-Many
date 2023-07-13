@@ -140,7 +140,12 @@ end
 function drop_all_inventory(bag, orderly)
     local items = get_bag_inventory_items(bag, sort_by_time, sorting_order)
     if orderly then
-        local spacing = 4
+        local spacing = ModSettingGet("BagsOfMany.drop_orderly_distance")
+        if not spacing then
+            spacing = 10
+        else
+            spacing = math.floor(spacing)
+        end
         local left_most = -spacing * (#items/2)
         for i, item in ipairs(items or {}) do
             drop_item_from_parent(item, false, left_most + (spacing * (i - 1)), 0)

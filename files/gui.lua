@@ -15,7 +15,8 @@ local bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
 local bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
 local bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
 local bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
-local dragging_allowed = true
+local dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed")
+local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
 
 -- BAG AND TOOLTIP TOGGLE
 local bag_open = true
@@ -43,7 +44,7 @@ local hovered_invs = {}
 
 -- SORTING FLAG AND OPTION
 local sort_type_change_flag = false
-local sort_by_time = false
+local sort_by_time = ModSettingGet("BagsOfMany.sorting_type")
 local sort_order_change_flag = false
 local sorting_order = ModSettingGet("BagsOfMany.sorting_order")
 -- OPTION CHANGE FLAG
@@ -60,6 +61,19 @@ local function new_id()
 end
 local function reset_id()
     current_id = 1
+end
+
+function update_settings()
+    only_show_bag_button_when_held = ModSettingGet("BagsOfMany.only_show_bag_button_when_held")
+    bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
+    bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
+    bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
+    bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
+    dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed")
+    item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
+    dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed")
+    sort_by_time = ModSettingGet("BagsOfMany.sorting_type")
+    sorting_order = ModSettingGet("BagsOfMany.sorting_order")
 end
 
 -- GUI
@@ -129,19 +143,21 @@ function bag_of_many_setup_gui()
         end
 
         -- Process inventory dragging
-        if not sort_by_time and dragging_possible_swap and dragging_item and hovered_item and dragging_item ~= hovered_item then
-            swap_item_position(dragging_item, hovered_item)
-        elseif not sort_by_time and dragging_possible_swap and dragging_item and hovered_invs.is_hovering and hovered_invs_bag and dragging_item_bag then
-            if hovered_invs_bag == dragging_item_bag then
-                swap_item_to_position(dragging_item, hovered_invs[hovered_invs_level])
-            end
-        elseif dragging_possible_swap and dragging_item and not hovered_invs.is_hovering then
-            drop_item_from_parent(dragging_item, true)
-            local active_item = get_active_item()
-            if active_item then
-                draw_inventory_list[active_item] = remove_draw_list_under_level(draw_inventory_list[active_item], level)
-            else
-                draw_inventory_list = {}
+        if dragging_allowed then
+            if not sort_by_time and dragging_possible_swap and dragging_item and hovered_item and dragging_item ~= hovered_item then
+                swap_item_position(dragging_item, hovered_item)
+            elseif not sort_by_time and dragging_possible_swap and dragging_item and hovered_invs.is_hovering and hovered_invs_bag and dragging_item_bag then
+                if hovered_invs_bag == dragging_item_bag then
+                    swap_item_to_position(dragging_item, hovered_invs[hovered_invs_level])
+                end
+            elseif dragging_possible_swap and dragging_item and not hovered_invs.is_hovering then
+                drop_item_from_parent(dragging_item, true)
+                local active_item = get_active_item()
+                if active_item then
+                    draw_inventory_list[active_item] = remove_draw_list_under_level(draw_inventory_list[active_item], level)
+                else
+                    draw_inventory_list = {}
+                end
             end
         end
     end
@@ -151,10 +167,12 @@ function bag_of_many_setup_gui()
     if sort_order_change_flag then
         sort_order_change_flag = false
         sorting_order = not sorting_order
+        ModSettingSet("BagsOfMany.sorting_order", sorting_order)
     end
     if sort_type_change_flag then
         sort_type_change_flag = false
         sort_by_time = not sort_by_time
+        ModSettingSet("BagsOfMany.sorting_type", sort_by_time)
     end
     reset_drawing_variables()
 end
@@ -182,7 +200,6 @@ end
 
 -- Inventory drawing
 function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
-    local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
     local active_item = get_active_item()
     if not pos_z then
         pos_z = 1
@@ -211,9 +228,6 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
             for i = 1, storage_size do
                 local item_pos_x = positions[level].positions_x[i]
                 local item_pos_y = positions[level].positions_y[i]
-                -- if i == 1 then
-                --     GuiText(gui, item_pos_x - 50, item_pos_y, "LEVEL :" .. tostring(level))
-                -- end
 
                 -- Invisible dragging button
                 if dragging_allowed then
@@ -226,7 +240,6 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                 GuiZSetForNextWidget(gui, 1)
                 GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
                 local clicked_inv, right_clicked_inv, hovered_inv, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
-                -- GuiText(gui, item_pos_x, item_pos_y, tostring(i))
 
                 -- DETECT DRAGGING
                 if dragging_allowed then
@@ -291,7 +304,9 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                             -- RIGHT CLICK: INCEPTION INVENTORY TOGGLE
                             if right_clicked_invs[level] and right_clicked_invs[level] == item_position then
                                 right_clicked_item = item
-                                keep_tooltip_open = not keep_tooltip_open
+                                hovered_invs[level] = {}
+                                draw_inventory_list[active_item] = remove_draw_list_under_level(draw_inventory_list[active_item], level)
+                                drop_item_from_parent(item)
                             end
                             -- HOVERED: DISPLAY TOOLTIP OR ADD BAG TO DISPLAY
                             if hovered_invs[level] and hovered_invs[level] == item_position then

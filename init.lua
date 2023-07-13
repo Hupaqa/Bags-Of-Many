@@ -69,4 +69,5 @@ function OnPausedChanged(is_paused, is_inventory_pause)
         bags_mod_state.button_pos_y = ModSettingGet("BagsOfMany.pos_y")
         print(bags_mod_state.button_pos_x)
 	end
+    update_settings()
 end
