@@ -78,6 +78,15 @@ function find_item_level_in_draw_list(draw_list, item)
     return level_item
 end
 
+function remove_draw_list_up_to_level(draw_list, level)
+    for key, _ in pairs(draw_list) do
+        if key >= level then
+            draw_list[key] = nil
+        end
+    end
+    return draw_list
+end
+
 function remove_draw_list_under_level(draw_list, level)
     for key, _ in pairs(draw_list) do
         if key > level then
@@ -107,32 +116,34 @@ function is_bag_not_full(bag, maximum)
     return #get_bag_inventory_items(bag, false, false) < maximum
 end
 
-function drop_item_from_parent(item, delta_x, delta_y)
-    local root = EntityGetRootEntity(item)
-    local x, y = EntityGetTransform(root)
-    if delta_x and delta_y then
-        x = x + delta_x
-        y = y + delta_y
-    end
-    remove_component_pickup_frame(item)
-    remove_item_position(item)
-    EntityRemoveFromParent(item)
-    EntityApplyTransform(item, x, y - 5)
-    show_entity(item)
-    local control_comp = get_player_control_component()
-    if control_comp and is_dragging then
-        local aiming_vec_x, aiming_vec_y = ComponentGetValue2(control_comp, "mAimingVector")
-        GameShootProjectile(get_player_entity(), x, y - 5, x + aiming_vec_x,  y - 5 + aiming_vec_y, item)
+function drop_item_from_parent(item, with_movement, delta_x, delta_y)
+    if item then
+        local root = EntityGetRootEntity(item)
+        local x, y = EntityGetTransform(root)
+        if delta_x and delta_y then
+            x = x + delta_x
+            y = y + delta_y
+        end
+        remove_component_pickup_frame(item)
+        remove_item_position(item)
+        EntityRemoveFromParent(item)
+        EntityApplyTransform(item, x, y - 5)
+        show_entity(item)
+        local control_comp = get_player_control_component()
+        if control_comp and with_movement then
+            local aiming_vec_x, aiming_vec_y = ComponentGetValue2(control_comp, "mAimingVector")
+            GameShootProjectile(get_player_entity(), x, y - 5, x + aiming_vec_x,  y - 5 + aiming_vec_y, item)
+        end
     end
 end
 
 function drop_all_inventory(bag, orderly)
     local items = get_bag_inventory_items(bag, sort_by_time, sorting_order)
     if orderly then
-        local spacing = 10
+        local spacing = 4
         local left_most = -spacing * (#items/2)
         for i, item in ipairs(items or {}) do
-            drop_item_from_parent(item, left_most + (spacing * (i - 1)), 0)
+            drop_item_from_parent(item, false, left_most + (spacing * (i - 1)), 0)
         end
     else
         for _, item in ipairs(items or {}) do

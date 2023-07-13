@@ -8,7 +8,9 @@ dofile_once( "mods/bags_of_many/files/gui.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
 
 bags_mod_state = {
-    lookup_spells = {}
+    lookup_spells = {},
+    button_pos_x = ModSettingGet("BagsOfMany.pos_x"),
+    button_pos_y = ModSettingGet("BagsOfMany.pos_y")
 }
 
 -- Adding translations
@@ -51,22 +53,17 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
 end
 
 function OnWorldPreUpdate()
-    setup_gui()
+    bag_of_many_setup_gui()
 end
 
 function OnPausedChanged(is_paused, is_inventory_pause)
-    button_locked = ModSettingGet("BagsOfMany.locked")
-	if not button_locked then
-		ModSettingSetNextValue("BagsOfMany.pos_x", button_pos_x, false)
-		ModSettingSetNextValue("BagsOfMany.pos_y", button_pos_y, false)
+    bags_mod_state.button_locked = ModSettingGet("BagsOfMany.locked")
+	if not bags_mod_state.button_locked then
+		ModSettingSetNextValue("BagsOfMany.pos_x", bags_mod_state.button_pos_x, false)
+		ModSettingSetNextValue("BagsOfMany.pos_y", bags_mod_state.button_pos_y, false)
     else
-        button_pos_x = ModSettingGet("BagsOfMany.pos_x")
-        button_pos_y = ModSettingGet("BagsOfMany.pos_y")
+        bags_mod_state.button_pos_x = ModSettingGet("BagsOfMany.pos_x")
+        bags_mod_state.button_pos_y = ModSettingGet("BagsOfMany.pos_y")
+        print(bags_mod_state.button_pos_x)
 	end
-	only_show_bag_button_when_held = ModSettingGet("BagsOfMany.only_show_bag_button_when_held")
-    bag_wrap_number = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
-    bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
-    bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
-    bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
-    bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
 end
