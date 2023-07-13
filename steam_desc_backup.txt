@@ -1,6 +1,6 @@
-[b] Quality of life update dropping tomorrow sneak peek in the steam photos [/b]
-
 A mod that adds different bags you can find in the world of Noita allowing you to carry more of you wizard stuff by expanding your available inventory space.
+
+[b] Quality of life update dropped! Better ui and some quality of life addition. ITEMS CAN BE PUT IN UNIVERSAL BAGS [/b]
 
 To pickup items in the bags you need to hold it in your hands then use your [b]KICK[/b] action near an object you want to pick up. The items you can pick up depends on the type of bag.
 
