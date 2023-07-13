@@ -11,7 +11,6 @@ local positions = {}
 
 -- MOD SETTINGS
 local only_show_bag_button_when_held = ModSettingGet("BagsOfMany.only_show_bag_button_when_held")
-local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
 local bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
 local bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
 local bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
@@ -91,10 +90,10 @@ function bag_of_many_setup_gui()
             draw_inventory(gui, pos_x, pos_y, pos_z, active_item, level)
             if draw_inventory_list[active_item] then
                 for key, value in pairs(draw_inventory_list[active_item]) do
-                    pos_y = positions[key-1].positions_y[#positions[key-1].positions_y]
+                    -- DISPLAY BAG HOVERED AT BEGINNING OF INVENTORY
+                    pos_y = positions[key-1].positions_y[#positions[key-1].positions_y] - (28 * (key - 2))
                     -- DISPLAY BAG HOVERED INVENTORY
                     draw_inventory(gui, pos_x, pos_y, pos_z, value, key)
-                    -- DISPLAY BAG HOVERED AT BEGINNING OF INVENTORY
                     local bag_hovered_sprite = get_sprite_file(value)
                     if bag_hovered_sprite then
                         local bag_display_x, bag_display_y = pos_x + (5 * (key - 1)), pos_y + (28 * (key - 1))
@@ -125,21 +124,25 @@ function bag_of_many_setup_gui()
                             GuiEndAutoBoxNinePiece(gui)
                         end
                     end
-            end
+                end
             end
         end
 
         -- Process inventory dragging
         if not sort_by_time and dragging_possible_swap and dragging_item and hovered_item and dragging_item ~= hovered_item then
-            print("SWAPPING " .. tostring(dragging_item) .. " - ".. tostring(hovered_item))
             swap_item_position(dragging_item, hovered_item)
         elseif not sort_by_time and dragging_possible_swap and dragging_item and hovered_invs.is_hovering and hovered_invs_bag and dragging_item_bag then
             if hovered_invs_bag == dragging_item_bag then
                 swap_item_to_position(dragging_item, hovered_invs[hovered_invs_level])
             end
         elseif dragging_possible_swap and dragging_item and not hovered_invs.is_hovering then
-            print("DROPPING " .. tostring(dragging_item))
             drop_item_from_parent(dragging_item, true)
+            local active_item = get_active_item()
+            if active_item then
+                draw_inventory_list[active_item] = remove_draw_list_under_level(draw_inventory_list[active_item], level)
+            else
+                draw_inventory_list = {}
+            end
         end
     end
 
@@ -179,10 +182,11 @@ end
 
 -- Inventory drawing
 function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
+    local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
+    local active_item = get_active_item()
     if not pos_z then
         pos_z = 1
     end
-    local active_item = get_active_item()
     if not keep_tooltip_open then
         draw_inventory_list[entity] = {}
     end
@@ -226,18 +230,22 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
 
                 -- DETECT DRAGGING
                 if dragging_allowed then
-                    local minimal_move_for_drag = 20
-                    if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= item_pos_x and draw_y ~= item_pos_y and (draw_x >= minimal_move_for_drag or draw_y >= minimal_move_for_drag) then
+                    if dragging_on and dragging_item_position[draggizng_item_level] == i and dragging_item_bag == entity then
+                        drag_item_x = draw_x
+                        drag_item_y = draw_y
+                    end
+                    if not dragging_on and button_is_not_at_zero(draw_x, draw_y) and button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y) then
                         dragging_on = true
                         dragging_item_bag = entity
                         dragging_item_level = level
                         dragging_item_position[level] = i
                         drag_item_x = draw_x
                         drag_item_y = draw_y
-                    elseif draw_x == 0 and draw_y == 0 and dragging_item_position[level] == i then
+                    elseif math.floor(draw_x) == 0 and math.floor(draw_y) == 0 and dragging_item_position[level] == i then
                         dragging_on = true
                         dragging_possible_swap = true
                     end
+
                 end
                 
                 -- LEFT CLICK: DROP ITEM
@@ -255,13 +263,6 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                     hovered_invs_level = level
                     hovered_invs[level] = i
                 end
-                -- -- DRAGGING AND HOVERING DIFFERENT ITEM
-                -- elseif hovered_inv then
-                --     hovered_dragging_invs_position = i
-                -- end
-                -- if hovered_invisible and dragging_on and dragging_item_position ~= i then
-                --     print("HOVERING POSITION " .. tostring(i))
-                -- end
             end
 
             -- LOOP FOR ITEMS
@@ -321,7 +322,7 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                                 item_pos_y = drag_item_y
                             end
                             -- prevent item flash when dragging ends
-                            if not dragging_possible_swap or item ~= dragging_item  then
+                            if not dragging_possible_swap or item ~= dragging_item and button_is_not_at_zero(item_pos_x, item_pos_y) then
                                 local img_width, img_height = GuiGetImageDimensions(gui, sprite_path, 1)
                                 local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
                                 item_pos_x = item_pos_x + pad_x
@@ -337,6 +338,14 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
         end
     else
     end
+end
+
+function button_is_not_at_zero(draw_x, draw_y)
+    return math.floor(draw_x) ~= 0 and math.floor(draw_y) ~= 0
+end
+
+function button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y)
+    return math.ceil(draw_x) ~= math.ceil(item_pos_x) or math.ceil(draw_y) ~= math.ceil(item_pos_y)
 end
 
 function draw_left_bracket(gui, id, pos_x, pos_y, pos_z)
