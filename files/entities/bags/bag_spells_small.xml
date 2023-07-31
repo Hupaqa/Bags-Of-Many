@@ -54,7 +54,7 @@
         value_int=1
     ></VariableStorageComponent>
     <VariableStorageComponent
-        name="bags_of_many_positions"
+        name="bags_of_many_uuid"
     ></VariableStorageComponent>
 
     <Entity name="inventory_quick">

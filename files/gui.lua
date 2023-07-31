@@ -440,6 +440,38 @@ function draw_inventory_button(gui, pos_x, pos_y, active_item)
     end
 end
 
+function setup_inventory_options_buttons(bag, level, pos_x, pos_y, pos_z)
+    local nb_button = 0
+    local length = 2
+    local size = 13
+    local direction = "column"
+    if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_drop_button(bag, pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
+    end
+    if level == 1 and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_multiple_depth_button(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
+    end
+    if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_sorting_option(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
+    end
+    if sort_by_time and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_inventory_sorting_direction(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
+    end
+    if true then
+        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
+        nb_button = nb_button + 1
+        draw_test_button(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
+    end
+end
+
 function draw_inventory_sorting_option(pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
@@ -525,6 +557,25 @@ function draw_inventory_multiple_depth_button(pos_x, pos_y, pos_z)
             txt_hovered = "$bag_button_tooltip_right_click_off"
         end
         GuiText(gui, pos_x + 14, pos_y, GameTextGet(txt_hovered))
+    end
+end
+
+function draw_test_button(pos_x, pos_y, pos_z)
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
+    local test_button_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_testing.png"
+    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", test_button_sprite) then
+        local inventory_storage_entity = EntityGetWithName("bags_of_many_inventory_entity")
+        print("Testing clicked")
+        if inventory_storage_entity then
+            local active_item = get_active_item()
+            EntityRemoveFromParent(active_item)
+            EntityAddChild(inventory_storage_entity, active_item)
+        end
+    end
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+    if hovered then
+        GuiText(gui, pos_x + 14, pos_y, "CLICK TO TEST")
     end
 end
 
@@ -740,33 +791,6 @@ function add_to_sum_height(val_width_sum, val_height_sum, val_width, val_height)
         val_height_sum = val_height
     end
     return val_width_sum + val_width, val_height_sum
-end
-
-function setup_inventory_options_buttons(bag, level, pos_x, pos_y, pos_z)
-    local nb_button = 0
-    local length = 2
-    local size = 13
-    local direction = "column"
-    if ModSettingGet("BagsOfMany.show_drop_all_inventory_button") then
-        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
-        nb_button = nb_button + 1
-        draw_inventory_drop_button(bag, pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
-    end
-    if level == 1 and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
-        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
-        nb_button = nb_button + 1
-        draw_inventory_multiple_depth_button(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
-    end
-    if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
-        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
-        nb_button = nb_button + 1
-        draw_inventory_sorting_option(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
-    end
-    if sort_by_time and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
-        local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
-        nb_button = nb_button + 1
-        draw_inventory_sorting_direction(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
-    end
 end
 
 function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)

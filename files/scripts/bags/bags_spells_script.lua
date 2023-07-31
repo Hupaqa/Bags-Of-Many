@@ -7,6 +7,7 @@ local pickup_distance = 20
 function kick( entity_who_kicked )
     local player_id = get_player()
     local active_item = get_active_item()
+    set_if_empty_uuid(active_item)
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
     -- Checking entity name if contains spells so this script is not called when holding another bag
     if active_item ~= nil and is_bag(active_item) and name_contains(active_item, "spells") then

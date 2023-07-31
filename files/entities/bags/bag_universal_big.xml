@@ -1,9 +1,4 @@
 <Entity name="bag_universal_big" tags="hittable,teleportable_NOT,item_physics,item_pickup" >
-    <ControlsComponent
-        _tags="enabled_in_hand"
-    >
-    </ControlsComponent>
-
 	<!-- physical presence -->
 	
 	<PhysicsBodyComponent 
@@ -59,7 +54,7 @@
         value_int=1
     ></VariableStorageComponent>
     <VariableStorageComponent
-        name="bags_of_many_positions"
+        name="bags_of_many_uuid"
     ></VariableStorageComponent>
 
     <Entity name="inventory_quick">

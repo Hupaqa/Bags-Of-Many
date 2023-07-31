@@ -1,0 +1,19 @@
+<Entity name="bags_of_many_inventory_entity">
+	<!-- storage functionnalities -->
+
+    <Inventory2Component 
+        quick_inventory_slots="0"
+        full_inventory_slots_x="8"
+        full_inventory_slots_y="1"
+    />
+
+    <Entity name="inventory_quick">
+    </Entity>
+    <Entity name="inventory_full"/>
+
+	<ItemComponent
+		_tags="enabled_in_world"
+		is_pickable="0"
+		>
+	</ItemComponent>
+</Entity>

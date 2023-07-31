@@ -31,24 +31,19 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", x + 70, y)
         end
         -- if TESTING then
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", x + 30, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", x + 30, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_medium.xml", x + 70, y)
-            -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_big.xml", x + 70, y)
-        -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
-        -- print(tostring("====================================LOADING WAND===================================="))
-        -- local x, y = get_player_pos()
-        -- EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
-        -- EntityLoad("data/entities/items/wands/wand_good/wand_good_3.xml", x, y)
-        -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
-            -- spawn_spells_for_test(90)
-        --     spawn_bags_for_test()
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", x + 30, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", x + 30, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_medium.xml", x + 70, y)
+        -- EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_big.xml", x + 70, y)
         -- end
+        add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_big.xml")
+        EntityLoad("mods/bags_of_many/files/entities/inventory_storage.xml", x, y)
+        -- spawn_spells_for_test(90)
     end
 
     -- Load a spell table to find their name with their id
@@ -67,7 +62,6 @@ function OnPausedChanged(is_paused, is_inventory_pause)
     else
         bags_mod_state.button_pos_x = ModSettingGet("BagsOfMany.pos_x")
         bags_mod_state.button_pos_y = ModSettingGet("BagsOfMany.pos_y")
-        print(bags_mod_state.button_pos_x)
 	end
     update_settings()
 end

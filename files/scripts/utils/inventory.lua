@@ -18,19 +18,6 @@ function get_entity_velocity_compenent(entity)
     return velocity_comp
 end
 
-function has_bag_container( entity_id )
-    local childs = EntityGetAllChildren(entity_id)
-    if not childs then
-        return false
-    end
-    for _, child in ipairs(childs) do
-        if EntityGetName(child) == "bag_inventory_container" then
-            return true
-        end
-    end
-    return false
-end
-
 function is_inventory_open()
 	local player = get_player_entity()
 	if player then
@@ -118,8 +105,8 @@ end
 
 function drop_item_from_parent(item, with_movement, delta_x, delta_y)
     if item then
-        local root = EntityGetRootEntity(item)
-        local x, y = EntityGetTransform(root)
+        local player = get_player_entity()
+        local x, y = EntityGetTransform(player)
         if delta_x and delta_y then
             x = x + delta_x
             y = y + delta_y
@@ -274,21 +261,6 @@ function swap_item_position(item_one, item_two)
                 ComponentSetValue2(var_storage_two, "value_int", position_one)
             end
         else
-            -- local var_storage_one = get_var_storage_with_name(bag_one, "bags_of_many_positions")
-            -- local var_storage_two = get_var_storage_with_name(bag_two, "bags_of_many_positions")
-            -- if var_storage_one and var_storage_two then
-            --     local table_positions_one = ComponentGetValue2(var_storage_one, "value_string")
-            --     local table_positions_two = ComponentGetValue2(var_storage_two, "value_string")
-            --     local map_positions_one, size_one = string_to_map(table_positions_one)
-            --     local map_positions_two, size_two = string_to_map(table_positions_two)
-            --     local entity_temp = map_positions_one[pos_one]
-            --     map_positions_one[pos_one] = map_positions_two[pos_two]
-            --     map_positions_two[pos_two] = entity_temp
-            --     local map_stringified_one = map_to_string(map_positions_one, size_one)
-            --     local map_stringified_two = map_to_string(map_positions_two, size_two)
-            --     ComponentSetValue2(var_storage_one, "value_string", map_stringified_one)
-            --     ComponentSetValue2(var_storage_two, "value_string", map_stringified_two)
-            -- end
         end
     end
 end
@@ -316,6 +288,51 @@ function add_item_to_inventory(inventory, path)
         GamePrint("Error: Couldn't load the item ["..path.."]!")
     end
     return item
+end
+
+function add_var_storage_component(entity, name, type, value)
+    local var_storage = get_var_storage_with_name(entity, name)
+    if not var_storage then
+        var_storage = EntityAddComponent2(entity, "VariableStorageComponent", {
+            name="bags_of_many_uuid",
+        })
+        if type and value then
+            ComponentSetValue2(var_storage, type, value)
+        end
+        return var_storage
+    end
+end
+
+function add_entity_inventory_components(entity)
+    print("Adding entity inventory")
+    local inv_2_comp = EntityGetComponentIncludingDisabled(entity, "Inventory2Component")
+    if not inv_2_comp then
+        EntityAddComponent2(entity, "Inventory2Component", {
+            quick_inventory_slots=0,
+            full_inventory_slots_x=8,
+            full_inventory_slots_y=1
+        })
+    end
+    local child_entities = EntityGetAllChildren(entity)
+    
+    local inv_quick_found, inv_full_found = false, false
+    for _, child_entity in ipairs(child_entities or {}) do
+        local child_name = EntityGetName(child_entity)
+        if child_name == "inventory_quick" then
+            inv_quick_found = true
+        end
+        if child_name == "inventory_full" then
+            inv_full_found = true
+        end
+    end
+    if not inv_quick_found then
+        local inv_quick = EntityCreateNew("inventory_quick")
+        EntityAddChild(entity, inv_quick)
+    end
+    if not inv_full_found then
+        local inv_full = EntityCreateNew("inventory_full")
+        EntityAddChild(entity, inv_full)
+    end
 end
 
 function add_entity_to_inventory_bag(bag, inventory, entity)
@@ -383,6 +400,46 @@ function add_bags_to_inventory(active_item, inventory, player_id, entities)
                 end
             end
         end
+    end
+end
+
+function get_bag_uuid(entity)
+    local var_storage = get_var_storage_with_name(entity, "bags_of_many_uuid")
+    if var_storage then
+        return ComponentGetValue2(var_storage, "value_string")
+    end
+    print("BAGS OF MANY: Problem with a bag uuid no variable storage")
+end
+
+function set_if_empty_uuid(entity)
+    local var_storage = get_var_storage_with_name(entity, "bags_of_many_uuid")
+    -- Item properly initialized
+    if var_storage then
+        if ComponentGetValue2(var_storage, "value_string") == "" then
+            local uuid = bags_of_many_uuid()
+            ComponentSetValue2(var_storage, "value_string", uuid)
+            return uuid
+        else
+            ComponentGetValue2(var_storage, "value_string")
+        end
+    else
+        local uuid = bags_of_many_uuid()
+        add_var_storage_component(entity, "bags_of_many_uuid", "value_string", uuid)
+        return uuid
+    end
+end
+
+function set_bag_uuid(entity)
+    local var_storage = get_var_storage_with_name(entity, "bags_of_many_uuid")
+    -- Item properly initialized
+    if var_storage then
+        local uuid = bags_of_many_uuid()
+        ComponentSetValue2(var_storage, "value_string", uuid)
+        return uuid
+    else
+        local uuid = bags_of_many_uuid()
+        add_var_storage_component(entity, "bags_of_many_uuid", "value_string", uuid)
+        return uuid
     end
 end
 

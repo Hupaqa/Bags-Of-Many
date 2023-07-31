@@ -181,3 +181,15 @@ function calculate_grid_position(length, px_rows, px_columns, direction, nb_posi
     end
     return pos_x, pos_y
 end
+
+
+local random = Random
+function bags_of_many_uuid()
+    local _, _, day, hour, minute, second = GameGetDateAndTimeLocal()
+    SetRandomSeed(day + hour + second, minute + second)
+    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    return string.gsub(template, '[xy]', function (c)
+        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
+        return string.format('%x', v)
+    end)
+end
