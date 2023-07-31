@@ -162,17 +162,16 @@ function bag_of_many_setup_gui()
         end
     end
 
-    
     -- OPTION CHANGE PROCESSING
     if sort_order_change_flag then
         sort_order_change_flag = false
         sorting_order = not sorting_order
-        ModSettingSet("BagsOfMany.sorting_order", sorting_order)
+        ModSettingSetNextValue("BagsOfMany.sorting_order", sorting_order, false)
     end
     if sort_type_change_flag then
         sort_type_change_flag = false
         sort_by_time = not sort_by_time
-        ModSettingSet("BagsOfMany.sorting_type", sort_by_time)
+        ModSettingSetNextValue("BagsOfMany.sorting_type", sort_by_time, false)
     end
     reset_drawing_variables()
 end
