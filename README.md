@@ -10,6 +10,9 @@ I wanted to add an option for more inventory space that more closely fits the th
 
 Bags of Many on steam: https://steamcommunity.com/sharedfiles/filedetails/?id=2977593393
 
+Ask for features, report bugs or ask any question about the mod! Join the discord server for the mod now !
+https://discord.gg/zf25FMg34M
+
 ---
 
 ### Items
