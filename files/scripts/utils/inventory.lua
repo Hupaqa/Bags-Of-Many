@@ -18,19 +18,6 @@ function get_entity_velocity_compenent(entity)
     return velocity_comp
 end
 
-function has_bag_container( entity_id )
-    local childs = EntityGetAllChildren(entity_id)
-    if not childs then
-        return false
-    end
-    for _, child in ipairs(childs) do
-        if EntityGetName(child) == "bag_inventory_container" then
-            return true
-        end
-    end
-    return false
-end
-
 function is_inventory_open()
 	local player = get_player_entity()
 	if player then
@@ -66,6 +53,55 @@ function is_bag(entity_id)
         return false
     end
     return string.find(EntityGetName(entity_id), "bag_") ~= nil
+end
+
+function is_universal_bag(entity_id)
+    return name_contains(entity_id, "universal")
+end
+
+function is_potion_bag(entity_id)
+    return name_contains(entity_id, "potions")
+end
+
+function is_spell_bag(entity_id)
+    return name_contains(entity_id, "spells")
+end
+
+function is_allowed_in_universal_bag(entity_id)
+    local is_a_spell = false
+    local is_a_wand = false
+    local is_a_potion = false
+    local is_an_item = false
+    local is_a_bag = false
+    -- Pickup spells
+    if ModSettingGet("BagsOfMany.allow_spells") then
+        is_a_spell = is_spell(entity_id)
+    end
+    -- Pickup wands
+    if ModSettingGet("BagsOfMany.allow_wands") then
+        is_a_wand = is_wand(entity_id)
+    end
+    -- Pickup potions
+    if ModSettingGet("BagsOfMany.allow_potions") then
+        is_a_potion = is_potion(entity_id)
+    end
+    -- Pickup items
+    if ModSettingGet("BagsOfMany.allow_items") then
+        is_an_item = is_item(entity_id)
+    end
+    -- Pickup bags
+    if ModSettingGet("BagsOfMany.allow_bags_inception") then
+        is_a_bag = is_bag(entity_id)
+    end
+    return is_a_spell or is_a_wand or is_a_potion or is_an_item or is_a_bag
+end
+
+function is_allowed_in_potions_bag(entity_id)
+    return is_potion(entity_id)
+end
+
+function is_allowed_in_spells_bag(entity_id)
+    return is_spell(entity_id)
 end
 
 function find_item_level_in_draw_list(draw_list, item)
@@ -253,13 +289,25 @@ function remove_item_position(entity)
     end
 end
 
-function swap_item_to_position(item, position)
+-- SWAPS ITEM TO A POSITION
+function swap_item_to_position(item, position, bag)
+    -- Prevent bag being placed inside themselves (will cause CRASH)
+    if item == bag then
+        return
+    end
     local var_storage_one = get_var_storage_with_name(item, "bags_of_many_item_position")
     if var_storage_one then
+        local bag_inventory = get_inventory(bag)
+        local item_inventory = EntityGetParent(item)
+        if bag_inventory ~= item_inventory then
+            EntityRemoveFromParent(item)
+            EntityAddChild(bag_inventory, item)
+        end
         ComponentSetValue2(var_storage_one, "value_int", position)
     end
 end
 
+-- SWAPS ITEM ONE TO ITEM TWO POSITION
 function swap_item_position(item_one, item_two)
     if item_one and item_two then
         local bag_one = EntityGetParent(EntityGetParent(item_one))
@@ -274,21 +322,21 @@ function swap_item_position(item_one, item_two)
                 ComponentSetValue2(var_storage_two, "value_int", position_one)
             end
         else
-            -- local var_storage_one = get_var_storage_with_name(bag_one, "bags_of_many_positions")
-            -- local var_storage_two = get_var_storage_with_name(bag_two, "bags_of_many_positions")
-            -- if var_storage_one and var_storage_two then
-            --     local table_positions_one = ComponentGetValue2(var_storage_one, "value_string")
-            --     local table_positions_two = ComponentGetValue2(var_storage_two, "value_string")
-            --     local map_positions_one, size_one = string_to_map(table_positions_one)
-            --     local map_positions_two, size_two = string_to_map(table_positions_two)
-            --     local entity_temp = map_positions_one[pos_one]
-            --     map_positions_one[pos_one] = map_positions_two[pos_two]
-            --     map_positions_two[pos_two] = entity_temp
-            --     local map_stringified_one = map_to_string(map_positions_one, size_one)
-            --     local map_stringified_two = map_to_string(map_positions_two, size_two)
-            --     ComponentSetValue2(var_storage_one, "value_string", map_stringified_one)
-            --     ComponentSetValue2(var_storage_two, "value_string", map_stringified_two)
-            -- end
+            -- Different bags switching two items
+            local var_storage_one = get_var_storage_with_name(item_one, "bags_of_many_item_position")
+            local var_storage_two = get_var_storage_with_name(item_two, "bags_of_many_item_position")
+            if var_storage_one and var_storage_two then
+                local position_one = ComponentGetValue2(var_storage_one, "value_int")
+                local position_two = ComponentGetValue2(var_storage_two, "value_int")
+                local inventory_one = EntityGetParent(item_one)
+                local inventory_two = EntityGetParent(item_two)
+                ComponentSetValue2(var_storage_one, "value_int", position_two)
+                ComponentSetValue2(var_storage_two, "value_int", position_one)
+                EntityRemoveFromParent(item_one)
+                EntityRemoveFromParent(item_two)
+                EntityAddChild(inventory_one, item_two)
+                EntityAddChild(inventory_two, item_one)
+            end
         end
     end
 end

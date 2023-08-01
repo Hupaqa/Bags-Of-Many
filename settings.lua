@@ -107,6 +107,15 @@ mod_settings =
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
+                id = "show_bags_without_inventory_open",
+                ui_name = "Show bags without inventory open",
+                ui_description = "Show the bags inventory even when the inventory is not open.\n"..
+                    "\n    When having big wand the bag ui gets hidden by\n"..
+                    "\n    the wand inventory so this option allows to show the bags ui.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
                 id = "locked",
                 ui_name = "Lock Inventory",
                 ui_description = "When false, the bag button can be dragged to a new position to display the inventory at a new location",

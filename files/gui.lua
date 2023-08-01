@@ -10,6 +10,7 @@ local gui = gui or GuiCreate()
 local positions = {}
 
 -- MOD SETTINGS
+local show_bags_without_inventory_open = ModSettingGet("BagsOfMany.show_bags_without_inventory_open")
 local only_show_bag_button_when_held = ModSettingGet("BagsOfMany.only_show_bag_button_when_held")
 local bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
 local bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
@@ -64,6 +65,7 @@ local function reset_id()
 end
 
 function update_settings()
+    show_bags_without_inventory_open = ModSettingGet("BagsOfMany.show_bags_without_inventory_open")
     only_show_bag_button_when_held = ModSettingGet("BagsOfMany.only_show_bag_button_when_held")
     bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
     bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
@@ -85,7 +87,7 @@ function bag_of_many_setup_gui()
     GuiStartFrame(gui)
     GuiOptionsAdd(gui, GUI_OPTION.NoPositionTween)
 
-    local inventory_open = is_inventory_open()
+    local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()
 
     -- Setup the inventory button
@@ -147,12 +149,10 @@ function bag_of_many_setup_gui()
             if not sort_by_time and dragging_possible_swap and dragging_item and hovered_item and dragging_item ~= hovered_item then
                 swap_item_position(dragging_item, hovered_item)
             elseif not sort_by_time and dragging_possible_swap and dragging_item and hovered_invs.is_hovering and hovered_invs_bag and dragging_item_bag then
-                if hovered_invs_bag == dragging_item_bag then
-                    swap_item_to_position(dragging_item, hovered_invs[hovered_invs_level])
-                end
+                swap_item_to_position(dragging_item, hovered_invs[hovered_invs_level], hovered_invs_bag)
             elseif dragging_possible_swap and dragging_item and not hovered_invs.is_hovering then
                 drop_item_from_parent(dragging_item, true)
-                local active_item = get_active_item()
+                active_item = get_active_item()
                 if active_item then
                     draw_inventory_list[active_item] = remove_draw_list_under_level(draw_inventory_list[active_item], level)
                 else
@@ -427,15 +427,22 @@ function draw_inventory_button(gui, pos_x, pos_y, active_item)
         bag_open = not bag_open
         GlobalsSetValue("bags_of_many.bag_open", bag_open and 1 or 0)
     end
-    if right_clicked then
-    end
     -- Show tooltip
     if hovered_invisible then
         if not bag_open then
-            GuiText(gui, pos_x, pos_y + 20, GameTextGet("$bag_button_tooltip_closed"))
+            GuiText(gui, pos_x, pos_y + 24, "[LMB]" .. GameTextGet("$bag_button_tooltip_closed"))
         else
-            GuiText(gui, pos_x, pos_y + 20, GameTextGet("$bag_button_tooltip_opened"))
+            GuiText(gui, pos_x, pos_y + 24, "[LMB]" .. GameTextGet("$bag_button_tooltip_opened"))
         end
+        if not show_bags_without_inventory_open then
+            GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_inventory_closed_closed"))
+        else
+            GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_inventory_closed_opened"))
+        end
+    end
+    if right_clicked then
+        show_bags_without_inventory_open = not show_bags_without_inventory_open
+        ModSettingSetNextValue("BagsOfMany.show_bags_without_inventory_open", show_bags_without_inventory_open, false)
     end
 end
 
