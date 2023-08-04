@@ -181,3 +181,10 @@ function calculate_grid_position(length, px_rows, px_columns, direction, nb_posi
     end
     return pos_x, pos_y
 end
+
+function reset_table(table)
+    for key in pairs(table) do
+        table[key] = nil
+    end
+    return table
+end

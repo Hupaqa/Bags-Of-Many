@@ -116,6 +116,14 @@ mod_settings =
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
+                id = "keep_tooltip_open",
+                ui_name = "Keep bag tooltip open",
+                ui_description = "Show the bag inventory when hovered and then keep it open\n"..
+                    "\n    to show items inside and drop them.\n",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
                 id = "locked",
                 ui_name = "Lock Inventory",
                 ui_description = "When false, the bag button can be dragged to a new position to display the inventory at a new location",

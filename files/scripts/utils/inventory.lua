@@ -104,6 +104,19 @@ function is_allowed_in_spells_bag(entity_id)
     return is_spell(entity_id)
 end
 
+function is_allowed_in_bag(item_id, bag_id)
+    if is_universal_bag(bag_id) then
+        return is_allowed_in_universal_bag(item_id)
+    end
+    if is_potion_bag(bag_id) then
+        return is_allowed_in_potions_bag(item_id)
+    end
+    if is_spell_bag(bag_id) then
+        return is_allowed_in_spells_bag(item_id)
+    end
+    return false
+end
+
 function find_item_level_in_draw_list(draw_list, item)
     local level_item = 0
     for key, value in pairs(draw_list) do
@@ -295,6 +308,12 @@ function swap_item_to_position(item, position, bag)
     if item == bag then
         return
     end
+
+    -- Make sure item is allowed in this bag type
+    if not is_allowed_in_bag(item, bag) then
+        return
+    end
+
     local var_storage_one = get_var_storage_with_name(item, "bags_of_many_item_position")
     if var_storage_one then
         local bag_inventory = get_inventory(bag)
@@ -312,6 +331,10 @@ function swap_item_position(item_one, item_two)
     if item_one and item_two then
         local bag_one = EntityGetParent(EntityGetParent(item_one))
         local bag_two = EntityGetParent(EntityGetParent(item_two))
+        -- In case for some reason the item is not in a bag ?
+        if not bag_one or not bag_two then
+            return
+        end
         if bag_one == bag_two then
             local var_storage_one = get_var_storage_with_name(item_one, "bags_of_many_item_position")
             local var_storage_two = get_var_storage_with_name(item_two, "bags_of_many_item_position")
@@ -322,6 +345,10 @@ function swap_item_position(item_one, item_two)
                 ComponentSetValue2(var_storage_two, "value_int", position_one)
             end
         else
+            -- Make sure item can be switched from one bag to the other
+            if not is_allowed_in_bag(item_one, bag_two) or not is_allowed_in_bag(item_two, bag_one) then
+                return
+            end
             -- Different bags switching two items
             local var_storage_one = get_var_storage_with_name(item_one, "bags_of_many_item_position")
             local var_storage_two = get_var_storage_with_name(item_two, "bags_of_many_item_position")
@@ -337,6 +364,27 @@ function swap_item_position(item_one, item_two)
                 EntityAddChild(inventory_one, item_two)
                 EntityAddChild(inventory_two, item_one)
             end
+        end
+    end
+end
+
+function swap_item_to_bag(item, bag)
+    -- Prevent bag being placed inside themselves (will cause CRASH)
+    if item == bag then
+        return
+    end
+
+    -- Make sure item is allowed in this bag type
+    if not is_allowed_in_bag(item, bag) then
+        return
+    end
+
+    if item and bag then
+        local bag_inventory = get_inventory(bag)
+        if bag_inventory and is_bag_not_full(bag, get_bag_inventory_size(bag)) then
+            EntityRemoveFromParent(item)
+            EntityAddChild(bag_inventory, item)
+            add_item_position(item, get_smallest_position_avalaible(bag))
         end
     end
 end
