@@ -153,9 +153,13 @@ function bag_of_many_setup_gui()
         if dragging_allowed and dragging_possible_swap then
             if not sort_by_time then
                 if dragging_item and hovered_item and dragging_item ~= hovered_item then
-                    swap_item_position(dragging_item, hovered_item)
+                    if not is_in_bag_tree(dragging_item, hovered_invs_bag) then
+                        swap_item_position(dragging_item, hovered_item)
+                    end
                 elseif dragging_item and hovered_invs.is_hovering and hovered_invs_bag and dragging_item_bag then
-                    swap_item_to_position(dragging_item, hovered_invs[hovered_invs_level], hovered_invs_bag)
+                    if not is_in_bag_tree(dragging_item, hovered_invs_bag) then
+                        swap_item_to_position(dragging_item, hovered_invs[hovered_invs_level], hovered_invs_bag)
+                    end
                 elseif dragging_item and not hovered_invs.is_hovering then
                     drop_item_from_parent(dragging_item, true)
                     active_item = get_active_item()
@@ -258,7 +262,7 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                 GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
                 GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
                 GuiZSetForNextWidget(gui, 1)
-                GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/visible20x20.png")
+                GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
                 local clicked_inv, right_clicked_inv, hovered_inv, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
 
                 -- DETECT DRAGGING
@@ -279,7 +283,7 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                         dragging_possible_swap = true
                     end
                 end
-                
+
                 -- LEFT CLICK: DROP ITEM
                 if clicked_inv and not dragging_on then
                     clicked_invs[level] = i
@@ -333,8 +337,6 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                                 if last_hover_item[level] ~= item and not dragging_item then
                                     last_hover_item[level] = item
                                     remove_draw_list_under_level(draw_inventory_list[active_item], level)
-                                else
-                                    last_hover_item[level] = item
                                 end
                                 item_pos_y = item_pos_y - 1
                                 hovered_item = item
@@ -346,37 +348,6 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
                                     draw_inventory_list[active_item][level + 1] = item
                                 end
                             end
-
-
-                            -- if not dragging_item_bag and hovered_invs[level] == item_position and hovered_invs_bag == entity then
-                            --     item_pos_y = item_pos_y - 1
-                            --     -- HOVERING: NORMAL ITEM
-                            --     if not is_bag(item) then
-                            --         draw_tooltip(item, item_pos_x, item_pos_y, level)
-                            --     end
-                            --     -- HOVERED: BAG ITEM
-                            --     if is_bag(item) then
-                            --         draw_inventory_list[active_item][level + 1] = item
-                            --     end
-                            --     if last_hovered_level[level] ~= item then
-                            --         remove_draw_list_under_level(draw_inventory_list[active_item], level)
-                            --     end
-                            --     last_hovered_level[level] = item
-                            -- end                      
-                            -- -- TODO: FIX BAG ITEM LEVEL HOVERING BEING MIXED UP
-                            -- if dragging_item_bag and hovered_invs[level] == item_position and hovered_invs_bag == entity then
-                            --     item_pos_y = item_pos_y - 1
-                            --     -- HOVERED: BAG ITEM
-                            --     if is_bag(item) then
-                            --         draw_inventory_list[active_item][level + 1] = item
-                            --     end
-                            -- end
-
-
-                            -- -- FLAG HOVERED ITEM
-                            -- if hovered_invs[level] == item_position then
-                            --     hovered_item = item
-                            -- end
 
                             -- DISPLAY ITEM
                             if dragging_on and dragging_item_position[level] == item_position and dragging_item_level == level and dragging_item_bag == entity then

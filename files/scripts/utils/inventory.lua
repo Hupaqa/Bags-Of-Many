@@ -28,6 +28,17 @@ function is_inventory_open()
 	end
 end
 
+function is_in_bag_tree(bag, item_to_switch)
+    local parent = item_to_switch
+    while parent ~= 0 do
+        if parent == bag then
+            return true
+        end
+        parent = EntityGetParent(EntityGetParent(parent))
+    end
+    return false
+end
+
 function is_wand(entity)
 	local tags = EntityGetTags(entity)
     return string.find(tags, "wand") ~= nil
@@ -302,9 +313,8 @@ function remove_item_position(entity)
     end
 end
 
--- SWAPS ITEM TO A POSITION
-function swap_item_to_position(item, position, bag)
-    -- Prevent bag being placed inside themselves (will cause CRASH)
+-- SWAPS ITEM TO A POSITION (EMPTY POSITION)
+function swap_item_to_position(item, position, bag)    -- Prevent bag being placed inside themselves (will cause CRASH)
     if item == bag then
         return
     end
@@ -326,18 +336,19 @@ function swap_item_to_position(item, position, bag)
     end
 end
 
--- SWAPS ITEM ONE TO ITEM TWO POSITION
-function swap_item_position(item_one, item_two)
-    if item_one and item_two then
-        local bag_one = EntityGetParent(EntityGetParent(item_one))
-        local bag_two = EntityGetParent(EntityGetParent(item_two))
+-- SWAPS ITEM ONE TO ITEM TWO POSITION (SWAP TO NOT EMPTY POSITION)
+function swap_item_position(dragged_item, hovered_item)
+    if dragged_item and hovered_item then
+        local bag_one = EntityGetParent(EntityGetParent(dragged_item))
+        local bag_two = EntityGetParent(EntityGetParent(hovered_item))
         -- In case for some reason the item is not in a bag ?
         if not bag_one or not bag_two then
             return
         end
+
         if bag_one == bag_two then
-            local var_storage_one = get_var_storage_with_name(item_one, "bags_of_many_item_position")
-            local var_storage_two = get_var_storage_with_name(item_two, "bags_of_many_item_position")
+            local var_storage_one = get_var_storage_with_name(dragged_item, "bags_of_many_item_position")
+            local var_storage_two = get_var_storage_with_name(hovered_item, "bags_of_many_item_position")
             if var_storage_one and var_storage_two then
                 local position_one = ComponentGetValue2(var_storage_one, "value_int")
                 local position_two = ComponentGetValue2(var_storage_two, "value_int")
@@ -346,23 +357,24 @@ function swap_item_position(item_one, item_two)
             end
         else
             -- Make sure item can be switched from one bag to the other
-            if not is_allowed_in_bag(item_one, bag_two) or not is_allowed_in_bag(item_two, bag_one) then
+            if not is_allowed_in_bag(dragged_item, bag_two) or not is_allowed_in_bag(hovered_item, bag_one) then
                 return
             end
+
             -- Different bags switching two items
-            local var_storage_one = get_var_storage_with_name(item_one, "bags_of_many_item_position")
-            local var_storage_two = get_var_storage_with_name(item_two, "bags_of_many_item_position")
+            local var_storage_one = get_var_storage_with_name(dragged_item, "bags_of_many_item_position")
+            local var_storage_two = get_var_storage_with_name(hovered_item, "bags_of_many_item_position")
             if var_storage_one and var_storage_two then
                 local position_one = ComponentGetValue2(var_storage_one, "value_int")
                 local position_two = ComponentGetValue2(var_storage_two, "value_int")
-                local inventory_one = EntityGetParent(item_one)
-                local inventory_two = EntityGetParent(item_two)
+                local inventory_one = EntityGetParent(dragged_item)
+                local inventory_two = EntityGetParent(hovered_item)
                 ComponentSetValue2(var_storage_one, "value_int", position_two)
                 ComponentSetValue2(var_storage_two, "value_int", position_one)
-                EntityRemoveFromParent(item_one)
-                EntityRemoveFromParent(item_two)
-                EntityAddChild(inventory_one, item_two)
-                EntityAddChild(inventory_two, item_one)
+                EntityRemoveFromParent(dragged_item)
+                EntityRemoveFromParent(hovered_item)
+                EntityAddChild(inventory_one, hovered_item)
+                EntityAddChild(inventory_two, dragged_item)
             end
         end
     end
@@ -381,7 +393,7 @@ function swap_item_to_bag(item, bag)
 
     if item and bag then
         local bag_inventory = get_inventory(bag)
-        if bag_inventory and is_bag_not_full(bag, get_bag_inventory_size(bag)) then
+        if bag_inventory and bag_inventory ~= bag and is_bag_not_full(bag, get_bag_inventory_size(bag)) then
             EntityRemoveFromParent(item)
             EntityAddChild(bag_inventory, item)
             add_item_position(item, get_smallest_position_avalaible(bag))
