@@ -375,6 +375,40 @@ function draw_inventory(gui, pos_x, pos_y, pos_z, entity, level)
     end
 end
 
+function inventory_dragged(item_pos_x, item_pos_y, entity, level, i)
+    local drag_item_x, drag_item_y = 0,0
+
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+    GuiZSetForNextWidget(gui, 1)
+    GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+    local clicked_inv, right_clicked_inv, hovered_inv, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+
+    -- DETECT DRAGGING
+    if dragging_allowed then
+        if dragging_on and dragging_item_position[dragging_item_level] == i and dragging_item_bag == entity then
+            drag_item_x = draw_x
+            drag_item_y = draw_y
+        end
+        if not dragging_on and button_is_not_at_zero(draw_x, draw_y) and button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y) then
+            dragging_on = true
+            dragging_item_bag = entity
+            dragging_item_level = level
+            dragging_item_position[level] = i
+            drag_item_x = draw_x
+            drag_item_y = draw_y
+        elseif math.floor(draw_x) == 0 and math.floor(draw_y) == 0 and dragging_item_position[level] == i then
+            dragging_on = true
+            
+            dragging_possible_swap = true
+        end
+    end
+
+end
+
 function button_is_not_at_zero(draw_x, draw_y)
     return math.floor(draw_x) ~= 0 and math.floor(draw_y) ~= 0
 end
