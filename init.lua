@@ -49,14 +49,13 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
             -- spawn_spells_for_test(90)
         --     spawn_bags_for_test()
         -- end
-    end
-
+    end	
     -- Load a spell table to find their name with their id
     bags_mod_state.lookup_spells = lookup_spells()
 end
 
 function OnWorldPreUpdate()
-    bag_of_many_setup_gui()
+    bag_of_many_setup_gui_v2()
 end
 
 function OnPausedChanged(is_paused, is_inventory_pause)

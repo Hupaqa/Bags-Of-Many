@@ -693,6 +693,14 @@ mod_settings =
             --     scope = MOD_SETTING_SCOPE_NEW_GAME,
             -- },
         }
+    },
+    {
+        category_id = "bags_of_many_version",
+        foldable = false,
+        _folded = true,
+        ui_name = "Version: 1.2.6",
+        ui_description = "Current version of the mod",
+        settings = {}
     }
 }
 

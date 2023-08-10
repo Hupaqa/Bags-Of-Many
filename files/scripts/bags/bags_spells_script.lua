@@ -12,9 +12,7 @@ function kick( entity_who_kicked )
     if active_item ~= nil and is_bag(active_item) and name_contains(active_item, "spells") then
         local inventory = get_inventory(active_item)
         -- Pickup spells
-        if ModSettingGet("BagsOfMany.allow_spells") then
-            local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "card_action")
-            add_spells_to_inventory(active_item, inventory, player_id, entities)
-        end
+        local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "card_action")
+        add_spells_to_inventory(active_item, inventory, player_id, entities)
     end
 end

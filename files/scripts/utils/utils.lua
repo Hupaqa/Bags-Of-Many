@@ -188,3 +188,9 @@ function reset_table(table)
     end
     return table
 end
+
+function print_table(table)
+    for key in pairs(table) do
+        print(tostring(table[key]))
+    end
+end
