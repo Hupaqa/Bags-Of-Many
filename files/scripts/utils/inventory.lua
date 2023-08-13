@@ -436,10 +436,8 @@ end
 
 function add_spells_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
-        local parent = EntityGetParent(entity)
-        local root_entity = EntityGetRootEntity(entity)
-        if root_entity ~= player_id and not is_bag(root_entity) then
-            if not EntityHasTag(parent, "wand") and is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
+        if EntityGetParent(entity) == 0 then
+            if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                 add_entity_to_inventory_bag(active_item, inventory, entity)
             end
         end
@@ -448,8 +446,7 @@ end
 
 function add_wands_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
-        local root_entity = EntityGetRootEntity(entity)
-        if root_entity ~= player_id and not is_bag(root_entity) then
+        if EntityGetParent(entity) == 0 then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                 add_entity_to_inventory_bag(active_item, inventory, entity)
             end
@@ -459,8 +456,7 @@ end
 
 function add_potions_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
-        local root_entity = EntityGetRootEntity(entity)
-        if root_entity ~= player_id and not is_bag(root_entity) then
+        if EntityGetParent(entity) == 0 then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                 add_entity_to_inventory_bag(active_item, inventory, entity)
             end
@@ -471,8 +467,7 @@ end
 function add_items_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if not is_bag(entity) and entity ~= active_item and not EntityHasTag(entity ,"essence") and item_pickup_is_pickable_in_inventory(entity) then
-            local root_entity = EntityGetRootEntity(entity)
-            if root_entity ~= player_id and not is_bag(root_entity) then
+            if EntityGetParent(entity) == 0 then
                 if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                     add_entity_to_inventory_bag(active_item, inventory, entity)
                 end
@@ -484,8 +479,7 @@ end
 function add_bags_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if is_bag(entity) and entity ~= active_item then
-            local root_entity = EntityGetRootEntity(entity)
-            if root_entity ~= player_id and (root_entity == entity or not is_bag(root_entity)) then
+            if EntityGetParent(entity) == 0 then
                 if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                     add_entity_to_inventory_bag(active_item, inventory, entity)
                 end
@@ -609,19 +603,38 @@ function get_potion_content( entity_id )
 end
 
 function get_sprite_file( entity_id )
+    local sprite = "mods/bags_of_many/files/ui_gfx/inventory/unidentified_item.png"
     -- Sprite for the spells and wands
     if EntityHasTag(entity_id, "card_action") or EntityHasTag(entity_id, "wand") then
         local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
         if item_component then
-            return ComponentGetValue2(item_component[1], "image_file")
+            local wand_sprite = ComponentGetValue2(item_component[1], "image_file")
+            if wand_sprite and wand_sprite ~= "" then
+                sprite = wand_sprite
+            end
         end
     -- Sprite for the other items
     else
         local item_component = EntityGetComponentIncludingDisabled(entity_id, "ItemComponent")
         if item_component then
-            return ComponentGetValue2(item_component[1], "ui_sprite")
+            local item_sprite = ComponentGetValue2(item_component[1], "ui_sprite")
+            if item_sprite and item_sprite ~= "" then
+                sprite = item_sprite
+            end
         end
     end
+
+    -- In case no sprite was found for the item try one last search otherwise will show a unenditified sprite in the bag
+    if sprite == "mods/bags_of_many/files/ui_gfx/inventory/unidentified_item.png" then
+        local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
+        if item_component then
+            local item_sprite = ComponentGetValue2(item_component[1], "image_file")
+            if item_sprite and item_sprite ~= "" then
+                sprite = item_sprite
+            end
+        end
+    end
+    return sprite
 end
 
 function hide_entity( entity_id )

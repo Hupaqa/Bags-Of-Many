@@ -191,6 +191,7 @@ end
 
 function print_table(table)
     for key in pairs(table) do
+        print(tostring(key))
         print(tostring(table[key]))
     end
 end

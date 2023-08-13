@@ -136,6 +136,18 @@ function update_settings()
     keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
 end
 
+function reset_item_table(table)
+    table = {
+        item = nil,
+        position = nil,
+        bag = nil,
+        level = nil,
+        position_x = nil,
+        position_y = nil
+    }
+    return table
+end
+
 function bag_of_many_setup_gui_v2()
     local pos_x = bags_mod_state.button_pos_x
     local pos_y = bags_mod_state.button_pos_y
@@ -174,10 +186,35 @@ function bag_of_many_setup_gui_v2()
     end
 
     if dragging_allowed and dragging_possible_swap then
+        if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
+            print("Swapping")
+            swap_item_position(dragged_item_table.item, hovered_item_table.item)
+        elseif dragged_item_table.item and not hovered_item_table.item and hovered_item_table.bag then
+            print("POSITION")
+            swap_item_to_position(dragged_item_table.item, hovered_item_table.position, hovered_item_table.bag)
+        elseif dragged_item_table.item and not hovered_item_table.item and not hovered_item_table.bag then
+            print("DROPPING")
+            drop_item_from_parent(dragged_item_table.item, true)
+        end
+
+        print_table(dragged_item_table)
         reset_table(dragged_item_table)
+        print_table(dragged_item_table)
         dragging_possible_swap = false
     end
-    reset_table(hovered_item_table)
+    hovered_item_table = reset_item_table(hovered_item_table)
+
+    -- OPTION CHANGE PROCESSING
+    if sort_order_change_flag then
+        sort_order_change_flag = false
+        sorting_order = not sorting_order
+        ModSettingSetNextValue("BagsOfMany.sorting_order", sorting_order, false)
+    end
+    if sort_type_change_flag then
+        sort_type_change_flag = false
+        sort_by_time = not sort_by_time
+        ModSettingSetNextValue("BagsOfMany.sorting_type", sort_by_time, false)
+    end
 end
 
 function multi_layer_bag_image(bag, pos_x, pos_y, pos_z, level)
@@ -470,27 +507,20 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                     end
                     -- HOVERED: DETECT WHICH ITEM IS HOVERED
                     if hovered_item_table.position == item_position and hovered_item_table.level == level and hovered_item_table.bag == bag then
+                        item_pos_y = item_pos_y - 1
+                        hovered_item_table.item = item
                         -- REMOVE DRAW LIST IF NEEDED
                         -- if last_hover_item[level] ~= item and not dragging_item then
                         --     last_hover_item[level] = item
                         --     remove_draw_list_under_level(inventory_bag_table, level)
                         -- end
-                        -- item_pos_y = item_pos_y - 1
-                        -- hovered_item = item
-                        if not is_bag(item) and not dragging_item then
+                        if not is_bag(item) and not dragged_item_table.item then
                             draw_tooltip(item, item_pos_x, item_pos_y, level)
                         end
 
                         if is_bag(item) then
                             inventory_bag_table[level + 1] = item
                         end
-                    end
-
-                    -- HOVERING DETECTION
-                    if hovered_item_table.level == level and hovered_item_table.bag == bag and hovered_item_table.position == i then
-                        -- hovering animation
-                        item_pos_y = item_pos_y - 1
-                        hovered_item_table.item = item
                     end
 
                     if dragged_item_table.level == level and dragged_item_table.bag == bag and dragged_item_table.position == i then
