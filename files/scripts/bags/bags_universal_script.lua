@@ -18,16 +18,16 @@ function kick( entity_who_kicked )
         end
         -- Pickup wands
         if ModSettingGet("BagsOfMany.allow_wands") then
-            local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "wand")
-            if ModIsEnabled("variaAddons") then
-                local shovels = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "shovel")
-                if shovels then
-                    for _, shovel in ipairs(shovels) do
-                        table.insert(entities, shovel)
+            local entities = EntityGetInRadius(pos_x, pos_y, pickup_distance)
+            local wand_entities = {}
+            if entities then
+                for _, entity in ipairs(entities) do
+                    if is_wand(entity) then
+                        table.insert(wand_entities, entity)
                     end
                 end
             end
-            add_wands_to_inventory(active_item, inventory, player_id, entities)
+            add_wands_to_inventory(active_item, inventory, player_id, wand_entities)
         end
         -- Pickup potions
         if ModSettingGet("BagsOfMany.allow_potions") then

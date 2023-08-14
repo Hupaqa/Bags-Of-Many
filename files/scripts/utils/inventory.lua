@@ -40,8 +40,18 @@ function is_in_bag_tree(bag, item_to_switch)
 end
 
 function is_wand(entity)
-	local tags = EntityGetTags(entity)
-    return string.find(tags, "wand") ~= nil
+    local ability_comps = EntityGetComponentIncludingDisabled(entity, "AbilityComponent")
+    if ability_comps then
+        for _, ability_comp in ipairs(ability_comps) do
+            local is_using_gun_script = ComponentGetValue2(ability_comp, "use_gun_script")
+            if is_using_gun_script then
+                return true
+            else
+                return false
+            end
+        end
+    end
+    return false
 end
 
 function is_item(entity)
@@ -76,6 +86,10 @@ end
 
 function is_spell_bag(entity_id)
     return name_contains(entity_id, "spells")
+end
+
+function is_gold_nugget(entity_id)
+    return string.find(EntityGetFilename(entity_id), "goldnugget") ~= nil
 end
 
 function is_allowed_in_universal_bag(entity_id)
@@ -197,7 +211,7 @@ function drop_item_from_parent(item, with_movement, delta_x, delta_y)
     end
 end
 
-function drop_all_inventory(bag, orderly)
+function drop_all_inventory(bag, orderly, sort_by_time, sorting_order)
     local items = get_bag_inventory_items(bag, sort_by_time, sorting_order)
     if orderly then
         local spacing = ModSettingGet("BagsOfMany.drop_orderly_distance")
@@ -605,12 +619,22 @@ end
 function get_sprite_file( entity_id )
     local sprite = "mods/bags_of_many/files/ui_gfx/inventory/unidentified_item.png"
     -- Sprite for the spells and wands
-    if EntityHasTag(entity_id, "card_action") or EntityHasTag(entity_id, "wand") then
+    if EntityHasTag(entity_id, "card_action") or is_wand(entity_id) then
         local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
         if item_component then
             local wand_sprite = ComponentGetValue2(item_component[1], "image_file")
             if wand_sprite and wand_sprite ~= "" then
                 sprite = wand_sprite
+            end
+        end
+    -- Sprite for gold nuggets
+    elseif is_gold_nugget(entity_id) then
+        print("GOLD NUGGY")
+        local item_component = EntityGetComponentIncludingDisabled(entity_id, "PhysicsImageShapeComponent")
+        if item_component then
+            local item_sprite = ComponentGetValue2(item_component[1], "image_file")
+            if item_sprite and item_sprite ~= "" then
+                sprite = item_sprite
             end
         end
     -- Sprite for the other items
