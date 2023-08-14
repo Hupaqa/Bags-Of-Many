@@ -23,30 +23,6 @@ local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
 local bag_open = true
 local keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
 
--- MULTI DEPTH INVENTORY
-local last_hover_item = {}
-local draw_inventory_list = {}
-
--- INVISIBLE ACTION FLAGS 
--- DRAGGING VARIABLES
-local currently_dragging = false
-local dragging_on = false
-local dragging_possible_swap = false
-local dragging_item = nil
-local dragging_item_bag = nil
-local dragging_item_level = nil
-local dragging_item_position = {}
--- CLICK VARIABLES
-local clicked_item = nil
-local clicked_invs = {}
-local right_clicked_item = nil
-local right_clicked_invs = {}
--- HOVERING VARIABLES
-local hovered_item = nil
-local hovered_invs_bag = nil
-local hovered_invs_level = nil
-local hovered_invs = {}
-
 -- SORTING FLAG AND OPTION
 local sort_type_change_flag = false
 local sort_by_time = ModSettingGet("BagsOfMany.sorting_type")
@@ -59,17 +35,9 @@ local drop_no_order = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_d
 local drop_orderly = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop_orderly.png"
 local dropping_button_sprite = drop_orderly
 
--- Dragging inventory cell
-local dragged_ui_id = nil
-local dragged_position = nil
-local dragged_bag = nil
-local dragged_item = nil
-local dragged_position_x = nil
-local dragged_position_y = nil
-
 -- NEW VARIABLES
 local inventory_bag_table = {}
-local dragged_id_reserved = nil
+local dragging_possible_swap = false
 local dragged_item_table = {
     item = nil,
     position = nil,
@@ -106,15 +74,8 @@ local right_click_table = {
 -- GUI ID SECTION
 local current_id = 1
 local function new_id()
-    if dragged_id_reserved == current_id + 1 then
-        current_id = current_id + 2
-    else
-        current_id = current_id + 1
-    end
-    return current_id
-end
-local function skip_id()
     current_id = current_id + 1
+    return current_id
 end
 local function reset_id()
     current_id = 1
@@ -187,6 +148,9 @@ function bag_of_many_setup_gui_v2()
     if dragging_allowed and dragging_possible_swap then
         swapping_inventory_v2()
         dragging_possible_swap = false
+        -- RESET THE GUI TO PREVENT PROBLEM OF DRAWING AFTER DRAGGING
+        GuiDestroy(gui)
+        gui = GuiCreate()
     end
     hovered_item_table = reset_item_table(hovered_item_table)
 
@@ -298,7 +262,6 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
                 dragged_item_table.level = level
                 dragged_item_table.position_x = draw_x
                 dragged_item_table.position_y = draw_y
-                -- dragged_id_reserved = current_id
             end
             if math.floor(draw_x) == 0 and math.floor(draw_y) == 0 and dragged_item_table.level == level and dragged_item_table.bag == bag and dragged_item_table.position == i then
                 dragging_possible_swap = true
