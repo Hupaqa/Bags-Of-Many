@@ -18,7 +18,7 @@ local TRANSLATIONS_FILE = "data/translations/common.csv"
 local translations = ModTextFileGetContent(TRANSLATIONS_FILE) .. ModTextFileGetContent("mods/bags_of_many/translations/common.csv")
 ModTextFileSetContent(TRANSLATIONS_FILE, translations)
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
-TESTING=false
+-- TESTING=true
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
 function OnPlayerSpawned(player_entity) -- This runs when player entity has been created
@@ -34,7 +34,8 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
         --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", x + 30, y)
         --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", x + 30, y)
         --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
+        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
         --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
         --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
         --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)

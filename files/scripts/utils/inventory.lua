@@ -112,7 +112,7 @@ function is_allowed_in_universal_bag(entity_id)
     end
     -- Pickup items
     if ModSettingGet("BagsOfMany.allow_items") then
-        is_an_item = is_item(entity_id)
+        is_an_item = item_pickup_is_pickable_in_inventory(entity_id)
     end
     -- Pickup bags
     if ModSettingGet("BagsOfMany.allow_bags_inception") then
@@ -229,17 +229,6 @@ function drop_all_inventory(bag, orderly, sort_by_time, sorting_order)
             drop_item_from_parent(item)
         end
     end
-end
-
-function get_pickable_items_in_radius(radius)
-    local closest_entities = EntityGetInRadius(pos_x, pos_y, radius)
-    local pickable_items = {}
-    for i, entity in ipairs(closest_entities) do
-        if is_item(entity) then
-            table.insert(pickable_items, entity)
-        end
-    end
-    return pickable_items
 end
 
 function get_player_inventory_quick()
@@ -481,7 +470,7 @@ end
 
 function add_items_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
-        if not is_bag(entity) and entity ~= active_item and not EntityHasTag(entity ,"essence") and item_pickup_is_pickable_in_inventory(entity) then
+        if not is_bag(entity) and entity ~= active_item and item_pickup_is_pickable_in_inventory(entity) then
             if EntityGetParent(entity) == 0 then
                 if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
                     add_entity_to_inventory_bag(active_item, inventory, entity)
@@ -630,7 +619,6 @@ function get_sprite_file( entity_id )
         end
     -- Sprite for gold nuggets
     elseif is_gold_nugget(entity_id) then
-        print("GOLD NUGGY")
         local item_component = EntityGetComponentIncludingDisabled(entity_id, "PhysicsImageShapeComponent")
         if item_component then
             local item_sprite = ComponentGetValue2(item_component[1], "image_file")
@@ -695,6 +683,16 @@ function show_entity( entity_id )
             end
         end
     end
+end
+
+function moved_far_enough(pos_x, pos_y, init_x, init_y, limit_x, limit_y)
+    local moved_enough = false
+    local delta_x = pos_x - init_x
+    local delta_y = pos_y - init_y
+    if delta_x > limit_x or delta_y > limit_y or delta_x < 0 or delta_y < 0 then
+        moved_enough = true
+    end
+    return moved_enough
 end
 
 function sort_entity_by_pickup_frame(inventory, order_asc)
