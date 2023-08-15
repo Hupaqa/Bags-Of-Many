@@ -328,7 +328,8 @@ function remove_item_position(entity)
 end
 
 -- SWAPS ITEM TO A POSITION (EMPTY POSITION)
-function swap_item_to_position(item, position, bag)    -- Prevent bag being placed inside themselves (will cause CRASH)
+function swap_item_to_position(item, position, bag)    
+    -- Prevent bag being placed inside themselves (will cause CRASH)
     if item == bag then
         return
     end
