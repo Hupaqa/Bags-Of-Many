@@ -2,14 +2,11 @@ dofile_once("data/scripts/lib/utilities.lua")
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 
-local pickup_distance = 20
-
 function kick(entity_who_kicked)
-    local player_id = get_player()
     local active_item = get_active_item()
-    local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
     -- Checking entity name if contains uinversal so this script is not called when holding another bag
     if active_item ~= nil and is_bag(active_item) and name_contains(active_item, "universal") then
+        -- BAG OVERRIDE TO CHANGE WHICH BAG IS PICKING UP THE ITEM
         local bag_pickup_override = get_bag_pickup_override(active_item)
         if bag_pickup_override and bag_pickup_override ~= 0 then
             if is_player_root_entity(bag_pickup_override) then
@@ -18,39 +15,6 @@ function kick(entity_who_kicked)
                 toggle_bag_pickup_override(active_item, 0)
             end
         end
-        local inventory = get_inventory(active_item)
-        -- Pickup spells
-        if ModSettingGet("BagsOfMany.allow_spells") then
-            local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "card_action")
-            add_spells_to_inventory(active_item, inventory, player_id, entities)
-        end
-        -- Pickup wands
-        if ModSettingGet("BagsOfMany.allow_wands") then
-            local entities = EntityGetInRadius(pos_x, pos_y, pickup_distance)
-            local wand_entities = {}
-            if entities then
-                for _, entity in ipairs(entities) do
-                    if is_wand(entity) then
-                        table.insert(wand_entities, entity)
-                    end
-                end
-            end
-            add_wands_to_inventory(active_item, inventory, player_id, wand_entities)
-        end
-        -- Pickup potions
-        if ModSettingGet("BagsOfMany.allow_potions") then
-            local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "potion")
-            add_potions_to_inventory(active_item, inventory, player_id, entities)
-        end
-        -- Pickup items
-        if ModSettingGet("BagsOfMany.allow_items") then
-            local entities = EntityGetInRadius(pos_x, pos_y, pickup_distance)
-            add_items_to_inventory(active_item, inventory, player_id, entities)
-        end
-        -- Pickup bags
-        if ModSettingGet("BagsOfMany.allow_bags_inception") then
-            local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "item_pickup")
-            add_bags_to_inventory(active_item, inventory, player_id, entities)
-        end
+        bag_pickup_action(entity_who_kicked, active_item)
     end
 end

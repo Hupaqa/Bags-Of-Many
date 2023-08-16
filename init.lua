@@ -31,18 +31,7 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_small.xml", x + 50, y)
             EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", x + 70, y)
         end
-        -- if TESTING then
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", x + 30, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", x + 30, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_medium.xml", x + 70, y)
-        --     EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_big.xml", x + 70, y)
-        -- end
+        -- spawn_items_testing(x, y)
         -- add_item_to_inventory(player_entity, "mods/bags_of_many/files/entities/bags/bag_universal_medium.xml")
         -- print(tostring("====================================LOADING WAND===================================="))
         -- local x, y = get_player_pos()
@@ -55,6 +44,19 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
     end
     -- Load a spell table to find their name with their id
     bags_mod_state.lookup_spells = lookup_spells()
+end
+
+function spawn_items_testing(x, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", x + 30, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", x + 30, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_medium.xml", x + 70, y)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_big.xml", x + 70, y)
 end
 
 function OnWorldPreUpdate()

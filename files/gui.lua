@@ -224,10 +224,10 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
             GuiLayoutEnd(gui)
             GuiZSetForNextWidget(gui, 1)
             GuiEndAutoBoxNinePiece(gui)
+            GuiText(gui, bag_display_x, bag_display_y + 49, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override"))
         end
         if right_click then
-            local active_item = get_active_item()
-            toggle_bag_pickup_override(active_item, bag)
+            toggle_bag_pickup_override(active_item_bag, bag)
         end
     end
 end
@@ -564,16 +564,10 @@ function draw_inventory_button(pos_x, pos_y, active_item)
         else
             GuiText(gui, pos_x, pos_y + 24, "[LMB]" .. GameTextGet("$bag_button_tooltip_opened"))
         end
-        if not show_bags_without_inventory_open then
-            GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_inventory_closed_closed"))
-        else
-            GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_inventory_closed_opened"))
-        end
+        GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override"))
     end
     if right_clicked then
         toggle_bag_pickup_override(active_item_bag, 0)
-        -- show_bags_without_inventory_open = not show_bags_without_inventory_open
-        -- ModSettingSetNextValue("BagsOfMany.show_bags_without_inventory_open", show_bags_without_inventory_open, false)
     end
 end
 

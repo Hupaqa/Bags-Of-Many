@@ -1,6 +1,7 @@
 ,en,ru,pt-br,es-es,de,fr-fr,it,pl,zh-cn,jp,ko,,NOTES – use \n for newline,max length
 bag_button_tooltip_closed,Open the bag,,,,Ouvrir le sac,,,,,,,,,
 bag_button_tooltip_opened,Close the bag,,,,Fermer le sac,,,,,,,,,
+bag_button_tooltip_bag_override,Use this bag to pickup items,,,,Utiliser ce sac pour ramasser,,,,,,,,,
 bag_button_tooltip_inventory_closed_closed,Show inventory when inventory open,,,,Montrer l'inventaire du sac quand l'inventaire est ouvert,,,,,,,,,
 bag_button_tooltip_inventory_closed_opened,Hide inventory when inventory closed,,,,Cacher l'inventaire quand l'inventaire est fermé,,,,,,,,,
 bag_button_tooltip_multi_depth,Showing multiple inventory depth,,,,Montre plusieurs niveau d'inventaire,,,,,,,,,

@@ -1,5 +1,71 @@
 dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 
+local pickup_distance = 20
+
+function bag_pickup_action(entity_who_kicked, active_item)
+    if is_universal_bag(active_item) then
+        universal_bag_pickup(entity_who_kicked, active_item)
+    elseif is_potion_bag(active_item) then
+        potion_bag_pickup(entity_who_kicked, active_item)
+    elseif is_spell_bag(active_item) then
+        spell_bag_pickup(entity_who_kicked, active_item)
+    end
+end
+
+function universal_bag_pickup(entity_who_kicked, active_item)
+    local inventory = get_inventory(active_item)
+    local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
+    -- Pickup spells
+    if ModSettingGet("BagsOfMany.allow_spells") then
+        local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "card_action")
+        add_spells_to_inventory(active_item, inventory, entity_who_kicked, entities)
+    end
+    -- Pickup wands
+    if ModSettingGet("BagsOfMany.allow_wands") then
+        local entities = EntityGetInRadius(pos_x, pos_y, pickup_distance)
+        local wand_entities = {}
+        if entities then
+            for _, entity in ipairs(entities) do
+                if is_wand(entity) then
+                    table.insert(wand_entities, entity)
+                end
+            end
+        end
+        add_wands_to_inventory(active_item, inventory, entity_who_kicked, wand_entities)
+    end
+    -- Pickup potions
+    if ModSettingGet("BagsOfMany.allow_potions") then
+        local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "potion")
+        add_potions_to_inventory(active_item, inventory, entity_who_kicked, entities)
+    end
+    -- Pickup items
+    if ModSettingGet("BagsOfMany.allow_items") then
+        local entities = EntityGetInRadius(pos_x, pos_y, pickup_distance)
+        add_items_to_inventory(active_item, inventory, entity_who_kicked, entities)
+    end
+    -- Pickup bags
+    if ModSettingGet("BagsOfMany.allow_bags_inception") then
+        local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "item_pickup")
+        add_bags_to_inventory(active_item, inventory, entity_who_kicked, entities)
+    end
+end
+
+function potion_bag_pickup(entity_who_kicked, active_item)
+    local inventory = get_inventory(active_item)
+    local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
+        -- Pickup potions
+    local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "potion")
+    add_potions_to_inventory(active_item, inventory, entity_who_kicked, entities)
+end
+
+function spell_bag_pickup(entity_who_kicked, active_item)
+    local inventory = get_inventory(active_item)
+    local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
+    -- Pickup spells
+    local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "card_action")
+    add_spells_to_inventory(active_item, inventory, entity_who_kicked, entities)
+end
+
 function get_player_entity()
 	local players = EntityGetWithTag("player_unit")
 	if #players == 0 then return end
