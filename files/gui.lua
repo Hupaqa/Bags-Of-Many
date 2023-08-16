@@ -212,18 +212,20 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
         local _, right_click, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
         if hovered_inception_bag then
             local tooltip = generate_tooltip(bag)
-            GuiBeginAutoBox(gui)
-            GuiLayoutBeginHorizontal(gui, bag_display_x, bag_display_y + 30, true)
-            GuiLayoutBeginVertical(gui, 0, 0)
-            local lines = split_string(tooltip, "\n")
-            for _, line in ipairs(lines) do
-                local offset = line == " " and -7 or 0
-                GuiText(gui, 0, offset, line)
+            if tooltip ~= "" then
+                GuiBeginAutoBox(gui)
+                GuiLayoutBeginHorizontal(gui, bag_display_x, bag_display_y + 30, true)
+                GuiLayoutBeginVertical(gui, 0, 0)
+                local lines = split_string(tooltip, "\n")
+                for _, line in ipairs(lines) do
+                    local offset = line == " " and -7 or 0
+                    GuiText(gui, 0, offset, line)
+                end
+                GuiLayoutEnd(gui)
+                GuiLayoutEnd(gui)
+                GuiZSetForNextWidget(gui, 1)
+                GuiEndAutoBoxNinePiece(gui)
             end
-            GuiLayoutEnd(gui)
-            GuiLayoutEnd(gui)
-            GuiZSetForNextWidget(gui, 1)
-            GuiEndAutoBoxNinePiece(gui)
             if get_bag_pickup_override(active_item_bag) == bag then
                 GuiText(gui, bag_display_x, bag_display_y + 49, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override"))
             else
@@ -678,7 +680,7 @@ function draw_inventory_multiple_depth_button(pos_x, pos_y, pos_z)
 end
 
 function generate_tooltip(item)
-    local tooltip
+    local tooltip = ""
     -- Spell tooltip
     if EntityHasTag(item, "card_action") then
         local action_id = get_spell_action_id(item)
@@ -693,9 +695,31 @@ function generate_tooltip(item)
             end
         end
     elseif EntityHasTag(item, "potion") then
-        local material = get_potion_content(item)
-        if material then
-            tooltip = string.upper(GameTextGet(material.name)) .. " " .. "POTION" .. " ( " .. material.amount .. "% FULL )"
+        local materials = get_potion_contents(item)
+        -- local material_list = get_potion_materials(item)
+        -- local material_string = ""
+        -- if material_list then
+        --     for i = 1, #material_list do
+        --         if i ~= 1 then
+        --             material_string = material_string .. "+"
+        --         end
+        --         if material_list[i] then
+        --             material_string = material_string .. GameTextGet(material_list[i])
+        --         end
+        --     end
+        -- end
+        local first_line_length = 0
+        if materials then
+            for i = 1, #materials do
+                if materials[i].amount > 1 then
+                    if i == 1 then
+                        tooltip = tooltip .. string.upper(GameTextGet(materials[i].name)) .. " " .. "POTION" .. " ( " .. string.format("%.2f", materials[i].amount) .. "% FULL )" .. "\n"
+                    else
+                        local text_to_add = " - " .. GameTextGet(materials[i].name) .. " " .. " ( " .. string.format("%.2f", materials[i].amount) .. "% )"
+                        tooltip = tooltip .. text_to_add .. "\n"
+                    end
+                end
+            end
         end
     else
         local item_component = EntityGetComponentIncludingDisabled(item, "ItemComponent")
@@ -712,7 +736,7 @@ end
 function draw_tooltip(item, pos_x, pos_y, level)
     pos_x = pos_x + (5 * (level - 1))
     local tooltip = generate_tooltip(item)
-    if tooltip and not is_bag(item) and not is_wand(item) then
+    if tooltip ~= "" and not is_bag(item) and not is_wand(item) then
         GuiBeginAutoBox(gui)
         GuiLayoutBeginHorizontal(gui, pos_x, pos_y + 30, true)
         GuiLayoutBeginVertical(gui, 0, 0)
@@ -728,9 +752,11 @@ function draw_tooltip(item, pos_x, pos_y, level)
     elseif is_wand(item) then
         local tooltip_x = pos_x
         local tooltip_y = pos_y+31
+        -- local spells_per_line = 10
         local spells_per_line = tonumber(ModSettingGet("BagsOfMany.spells_slots_inventory_wrap"))
         local wand_capacity = EntityGetWandCapacity(item)
         local wand_spells = EntityGetAllChildren(item)
+        local always_cast, normal_cast = filter_wand_spells(wand_spells)
         local wand_info = get_wand_info(item)
         -- Background
         local slot_size_x, slot_size_y = GuiGetImageDimensions(gui, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png")
@@ -744,33 +770,81 @@ function draw_tooltip(item, pos_x, pos_y, level)
             spell_tooltip_size_x = text_width
         end
         spell_tooltip_size_y = spell_tooltip_size_y + text_height
+        local tooltip_y_always_cast_space = 0
+        if #always_cast > 0 then
+            local number_of_always_cast_lines, _, draw_w = draw_wand_always_cast_spells(always_cast, tooltip_x, tooltip_y + text_height)
+            local space_occupied_by_always_cast = ((number_of_always_cast_lines + 1) * draw_w) - 4
+            tooltip_y_always_cast_space = space_occupied_by_always_cast + 8
+            spell_tooltip_size_y = spell_tooltip_size_y + space_occupied_by_always_cast + 8
+        end
+        draw_wand_spells(wand_capacity, normal_cast, spells_per_line, tooltip_x, tooltip_y + text_height + tooltip_y_always_cast_space)
         draw_background_box(gui, tooltip_x, tooltip_y, 4, spell_tooltip_size_x, spell_tooltip_size_y, 8, 10, 10, 8)
-        tooltip_y = tooltip_y + text_height
-        local alpha = 1
-        for i = 1, wand_capacity do
-            -- Spell background
-            local background_pos_x = tooltip_x+(20*((i-1)%spells_per_line))
-            local background_pos_y = tooltip_y+(math.floor((i-1)/spells_per_line)*20)
-            GuiZSetForNextWidget(gui, 3)
-            GuiImage(gui, new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/inventory_box_inactive_overlay.png", alpha, 1, 1)
-            -- Spell sprite
-            if wand_spells and wand_spells[i] then
-                local spell_sprite = get_sprite_file(wand_spells[i])
-                if spell_sprite then
-                    GuiZSetForNextWidget(gui, 1)
-                    GuiImage(gui, new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, alpha, 1, 1)
-                    draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha)
-                end
+    end
+end
+
+function filter_wand_spells(wand_spells)
+    local always_cast = {}
+    local normal_cast = {}
+    for i = 1, #wand_spells do
+        if is_spell_permanently_attached(wand_spells[i]) then
+            table.insert(always_cast, wand_spells[i])
+        else
+            table.insert(normal_cast, wand_spells[i])
+        end
+    end
+    return always_cast, normal_cast
+end
+
+function draw_wand_spells(wand_capacity, wand_spells, spells_per_line,  pos_x, pos_y)
+    local alpha = 1
+    for i = 1, wand_capacity do
+        -- Spell background
+        local background_pos_x = pos_x+(20*((i-1)%spells_per_line))
+        local background_pos_y = pos_y+(math.floor((i-1)/spells_per_line)*20)
+        GuiZSetForNextWidget(gui, 3)
+        GuiImage(gui, new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/inventory_box_inactive_overlay.png", alpha, 1, 1)
+        -- Spell sprite
+        if wand_spells and wand_spells[i] then
+            local spell_sprite = get_sprite_file(wand_spells[i])
+            if spell_sprite then
+                GuiZSetForNextWidget(gui, 1)
+                GuiImage(gui, new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, alpha, 1, 1)
+                draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha, 1)
             end
         end
     end
 end
 
-function draw_action_type(entity, pos_x, pos_y, pos_z, alpha)
+function draw_wand_always_cast_spells(wand_spells, pos_x, pos_y)
+    local alpha = 1
+    GuiImage(gui, new_id(), pos_x, pos_y + 1, "data/ui_gfx/inventory/icon_gun_permanent_actions.png", alpha, 1, 1)
+    GuiText(gui, pos_x + 14, pos_y, "Always cast")
+    local width = GuiGetTextDimensions(gui, "ALWAYS CAST", 1)
+    local always_cast_per_line = 5
+    local draw_w, draw_h = 0,0
+    local number_of_always_cast_lines = math.floor((#wand_spells-1)/always_cast_per_line)
+    for i = 1, #wand_spells do
+        local background_pos_x = pos_x+(13*((i-1)%always_cast_per_line)) + width
+        local background_pos_y = pos_y+(math.floor((i-1)/always_cast_per_line)*13) - 4
+        -- Spell sprite
+        if wand_spells and wand_spells[i] then
+            local spell_sprite = get_sprite_file(wand_spells[i])
+            if spell_sprite then
+                GuiZSetForNextWidget(gui, 1)
+                GuiImage(gui, new_id(), background_pos_x+3, background_pos_y+3, spell_sprite, alpha, 0.65)
+                _, _, _, _, _, draw_w, draw_h = GuiGetPreviousWidgetInfo(gui)
+                draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha, 0.8)
+            end
+        end
+    end
+    return number_of_always_cast_lines, draw_w, draw_h
+end
+
+function draw_action_type(entity, pos_x, pos_y, pos_z, alpha, scale)
     local sprite = get_spell_type_sprite(entity)
     if sprite then
         GuiZSetForNextWidget(gui, pos_z)
-        GuiImage(gui, new_id(), pos_x, pos_y, sprite, alpha, 1, 1)
+        GuiImage(gui, new_id(), pos_x, pos_y, sprite, alpha, scale)
     end
 end
 
@@ -828,7 +902,7 @@ function draw_wand_infos(pos_x, pos_y, wand)
     end
     draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_shuffle.png", "Shuffle", wand_shuffle)
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_actions_per_round.png", "Spells/Cast", tostring(wand.actions_per_round))
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_actions_per_round.png", "Spells/Cast", string.format("%.0f", wand.actions_per_round))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
     draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_fire_rate_wait.png", "Cast delay", string.format("%.2f s", wand.cast_delay / 60))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
@@ -838,9 +912,9 @@ function draw_wand_infos(pos_x, pos_y, wand)
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
     draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_mana_charge_speed.png", "Mana chg. Spd", string.format("%.0f", wand.mana_charge_speed))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_capacity.png", "Capacity", tostring(wand.capacity))
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_gun_capacity.png", "Capacity", string.format("%.0f", wand.capacity))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height)
-    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_spread_degrees.png", "Spread", tostring(wand.spread) .. " DEG")
+    draw_width, draw_height = draw_info_line(pos_x, pos_y + draw_height_sum, "data/ui_gfx/inventory/icon_spread_degrees.png", "Spread", string.format("%.0f DEG", wand.spread))
     draw_width_sum, draw_height_sum = add_to_sum_width(draw_width_sum, draw_height_sum, draw_width, draw_height + 5)
     return draw_width_sum, draw_height_sum
 end
@@ -974,7 +1048,7 @@ function add_item_specifity(entity, x, y, z)
     -- Draw the item
     if EntityHasTag(entity, "card_action") then
         --Draw the action type if its a spell
-        draw_action_type(entity, x - 2, y - 2, z, 1)
+        draw_action_type(entity, x - 2, y - 2, z, 1, 1)
     elseif EntityHasTag(entity, "potion") then
         -- Add the color to the potion sprite
         add_potion_color(entity)

@@ -94,6 +94,15 @@ function is_inventory_open()
 	end
 end
 
+function is_spell_permanently_attached(entity)
+    local item_comps = EntityGetComponentIncludingDisabled(entity, "ItemComponent")
+    if item_comps then
+        for i = 1, #item_comps do
+            return ComponentGetValue2(item_comps[i], "permanently_attached")
+        end
+    end
+end
+
 function is_in_bag_tree(bag, item_to_switch)
     local parent = item_to_switch
     while parent ~= 0 do
@@ -281,8 +290,24 @@ function drop_item_from_parent(item, with_movement, delta_x, delta_y)
         show_entity(item)
         local control_comp = get_player_control_component()
         if control_comp and with_movement then
+            local player = get_player_entity()
             local aiming_vec_x, aiming_vec_y = ComponentGetValue2(control_comp, "mAimingVector")
-            GameShootProjectile(get_player_entity(), x, y - 5, x + aiming_vec_x,  y - 5 + aiming_vec_y, item)
+            local physic_comp = EntityGetFirstComponentIncludingDisabled(item, "PhysicsBodyComponent")
+            if aiming_vec_x and aiming_vec_y then
+                if physic_comp and player then
+                    GameShootProjectile(player, x, y - 5, x + aiming_vec_x,  y - 5 + aiming_vec_y, item)
+                else
+                    local velocity_comp = EntityGetFirstComponentIncludingDisabled(item, "VelocityComponent")
+                    local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                    if item_comp then
+                        ComponentSetValue2(item_comp, "has_been_picked_by_player", true)
+                        ComponentSetValue2(item_comp, "play_hover_animation", false)
+                    end
+                    if velocity_comp then
+                        ComponentSetValueVector2(velocity_comp, "mVelocity", aiming_vec_x, aiming_vec_y)
+                    end
+                end
+            end
         end
     end
 end
@@ -668,7 +693,7 @@ function get_bag_inventory_size( entity_id )
     end
 end
 
-function get_potion_content( entity_id )
+function get_biggest_potion_content( entity_id )
     local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
     local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
     if suc_component ~= nil and inv_component ~= nil then
@@ -694,6 +719,50 @@ function get_potion_content( entity_id )
         end
         return biggest_percent_mat
     end
+end
+
+function get_potion_contents( entity_id )
+    local materials = {}
+    local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    if suc_component ~= nil and inv_component ~= nil then
+        local capacity = ComponentGetValue2(suc_component, "barrel_size")
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        for i = 1, #counts do
+            if counts[i] > 0 then
+                local material = {
+                    name = CellFactory_GetUIName(i - 1),
+                    amount = (counts[i]/capacity) * (capacity/10)
+                }
+                table.insert(materials, material)
+            end
+        end
+    end
+    for i = 1, #materials do
+        for j = i + 1, #materials do
+            if materials[i].amount < materials[j].amount then
+                local temp_mat = materials[i]
+                materials[i] = materials[j]
+                materials[j] = temp_mat
+            end
+        end
+    end
+    return materials
+end
+
+function get_potion_materials(entity_id)
+    local material_list = {}
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    if inv_component ~= nil then
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        for material_id, amount in pairs(counts) do
+            if amount > 0 then
+                local material_name = CellFactory_GetUIName(material_id - 1)
+                table.insert(material_list, material_name)
+            end
+        end
+    end
+    return material_list
 end
 
 function get_sprite_file( entity_id )
