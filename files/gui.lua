@@ -197,7 +197,7 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
         local bag_display_x, bag_display_y = pos_x + (5 * (level - 1)), pos_y + (28 * (level - 1))
         if bag_pickup_override_local == bag then
             GuiZSetForNextWidget(gui, pos_z + 1)
-            GuiImage(gui, new_id(), bag_display_x, bag_display_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory_multi_layer.png", 1, 1)
+            GuiImage(gui, new_id(), bag_display_x, bag_display_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
         end
         -- Background for bag inception display
         local gui_button_image = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button.png"
@@ -209,7 +209,7 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
         local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
         GuiZSetForNextWidget(gui, pos_z)
         GuiImage(gui, new_id(), bag_display_x + pad_x, bag_display_y + pad_y, bag_hovered_sprite, 1, 1, 1)
-        local left_click, _, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
+        local _, right_click, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
         if hovered_inception_bag then
             local tooltip = generate_tooltip(bag)
             GuiBeginAutoBox(gui)
@@ -225,7 +225,7 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
             GuiZSetForNextWidget(gui, 1)
             GuiEndAutoBoxNinePiece(gui)
         end
-        if left_click then
+        if right_click then
             local active_item = get_active_item()
             toggle_bag_pickup_override(active_item, bag)
         end
@@ -571,8 +571,9 @@ function draw_inventory_button(pos_x, pos_y, active_item)
         end
     end
     if right_clicked then
-        show_bags_without_inventory_open = not show_bags_without_inventory_open
-        ModSettingSetNextValue("BagsOfMany.show_bags_without_inventory_open", show_bags_without_inventory_open, false)
+        toggle_bag_pickup_override(active_item_bag, 0)
+        -- show_bags_without_inventory_open = not show_bags_without_inventory_open
+        -- ModSettingSetNextValue("BagsOfMany.show_bags_without_inventory_open", show_bags_without_inventory_open, false)
     end
 end
 

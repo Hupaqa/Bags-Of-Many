@@ -53,11 +53,6 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
         --     spawn_bags_for_test()
         -- end
     end
-    local active_item = get_active_item()
-    local bag_pickup_override = get_bag_pickup_override()
-    if bag_pickup_override or bag_pickup_override == 0 then
-        toggle_bag_pickup_override(active_item, 0)
-    end
     -- Load a spell table to find their name with their id
     bags_mod_state.lookup_spells = lookup_spells()
 end
