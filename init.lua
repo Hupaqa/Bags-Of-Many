@@ -19,7 +19,6 @@ local TRANSLATIONS_FILE = "data/translations/common.csv"
 local translations = ModTextFileGetContent(TRANSLATIONS_FILE) .. ModTextFileGetContent("mods/bags_of_many/translations/common.csv")
 ModTextFileSetContent(TRANSLATIONS_FILE, translations)
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
--- TESTING=true
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
 function OnPlayerSpawned(player_entity) -- This runs when player entity has been created

@@ -224,7 +224,11 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
             GuiLayoutEnd(gui)
             GuiZSetForNextWidget(gui, 1)
             GuiEndAutoBoxNinePiece(gui)
-            GuiText(gui, bag_display_x, bag_display_y + 49, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override"))
+            if get_bag_pickup_override(active_item_bag) == bag then
+                GuiText(gui, bag_display_x, bag_display_y + 49, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override"))
+            else
+                GuiText(gui, bag_display_x, bag_display_y + 49, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override_not_current"))
+            end
         end
         if right_click then
             toggle_bag_pickup_override(active_item_bag, bag)
@@ -564,7 +568,9 @@ function draw_inventory_button(pos_x, pos_y, active_item)
         else
             GuiText(gui, pos_x, pos_y + 24, "[LMB]" .. GameTextGet("$bag_button_tooltip_opened"))
         end
-        GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override"))
+        if bag_pickup_override_local then
+            GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override_not_current"))
+        end
     end
     if right_clicked then
         toggle_bag_pickup_override(active_item_bag, 0)
