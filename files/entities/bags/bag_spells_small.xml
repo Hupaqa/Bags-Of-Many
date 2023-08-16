@@ -56,6 +56,10 @@
     <VariableStorageComponent
         name="bags_of_many_positions"
     ></VariableStorageComponent>
+    <VariableStorageComponent
+        name="bags_of_many_bag_pickup_override"
+        value_int=1
+    ></VariableStorageComponent>
 
     <Entity name="inventory_quick">
     </Entity>

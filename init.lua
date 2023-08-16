@@ -9,6 +9,7 @@ print("Bags of many enabled start a new run to have the items spawn in your worl
 
 bags_mod_state = {
     lookup_spells = {},
+    bag_pickup_override = nil,
     button_pos_x = ModSettingGet("BagsOfMany.pos_x"),
     button_pos_y = ModSettingGet("BagsOfMany.pos_y")
 }
@@ -51,7 +52,12 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
             -- spawn_spells_for_test(90)
         --     spawn_bags_for_test()
         -- end
-    end	
+    end
+    local active_item = get_active_item()
+    local bag_pickup_override = get_bag_pickup_override()
+    if bag_pickup_override or bag_pickup_override == 0 then
+        toggle_bag_pickup_override(active_item, 0)
+    end
     -- Load a spell table to find their name with their id
     bags_mod_state.lookup_spells = lookup_spells()
 end

@@ -38,6 +38,7 @@ local dropping_button_sprite = drop_orderly
 
 -- NEW VARIABLES
 local active_item_bag = nil
+local bag_pickup_override_local = nil
 local inventory_bag_table = {}
 local dragging_possible_swap = false
 local dragged_invis_gui_id = nil
@@ -135,6 +136,7 @@ function bag_of_many_setup_gui_v2()
 
     local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()
+    bag_pickup_override_local = get_bag_pickup_override(active_item)
 
     -- Setup the inventory button
     if inventory_open and ((not only_show_bag_button_when_held) or (is_bag(active_item) and only_show_bag_button_when_held)) then
@@ -193,24 +195,27 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
     local bag_hovered_sprite = get_sprite_file(bag)
     if bag_hovered_sprite then
         local bag_display_x, bag_display_y = pos_x + (5 * (level - 1)), pos_y + (28 * (level - 1))
+        if bag_pickup_override_local == bag then
+            GuiZSetForNextWidget(gui, pos_z + 1)
+            GuiImage(gui, new_id(), bag_display_x, bag_display_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory_multi_layer.png", 1, 1)
+        end
         -- Background for bag inception display
         local gui_button_image = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button.png"
         local width_background, height_background = GuiGetImageDimensions(gui, gui_button_image, 1)
         local width_img, height_img = GuiGetImageDimensions(gui, bag_hovered_sprite, 1)
-        GuiZSetForNextWidget(gui, pos_z+1)
+        GuiZSetForNextWidget(gui, pos_z+2)
         GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
         GuiImage(gui, new_id(), bag_display_x, bag_display_y, gui_button_image, 1, 1 ,1)
         local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
         GuiZSetForNextWidget(gui, pos_z)
         GuiImage(gui, new_id(), bag_display_x + pad_x, bag_display_y + pad_y, bag_hovered_sprite, 1, 1, 1)
-        local _, _, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
+        local left_click, _, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
         if hovered_inception_bag then
             local tooltip = generate_tooltip(bag)
             GuiBeginAutoBox(gui)
             GuiLayoutBeginHorizontal(gui, bag_display_x, bag_display_y + 30, true)
             GuiLayoutBeginVertical(gui, 0, 0)
             local lines = split_string(tooltip, "\n")
-            print(tostring(tooltip))
             for _, line in ipairs(lines) do
                 local offset = line == " " and -7 or 0
                 GuiText(gui, 0, offset, line)
@@ -219,6 +224,10 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
             GuiLayoutEnd(gui)
             GuiZSetForNextWidget(gui, 1)
             GuiEndAutoBoxNinePiece(gui)
+        end
+        if left_click then
+            local active_item = get_active_item()
+            toggle_bag_pickup_override(active_item, bag)
         end
     end
 end
@@ -358,7 +367,7 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                             end
                         else
                             drop_item_from_parent(item)
-                            remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+                            remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)              
                         end
                     end
                     local hover_animation = 0
@@ -394,8 +403,11 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                         GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", sprite_path)
                         if inventory_bag_table[active_item_bag][level+1] == item then
                             GuiZSetForNextWidget(gui, pos_z + 2)
-                            -- GuiColorSetForNextWidget(gui, 1, 0, 0, 1)
-                            GuiImage(gui, new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_open_inventory_alt.png", 0.8, 1)
+                            GuiImage(gui, new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_open_inventory.png", 1, 1)
+                        end
+                        if bag_pickup_override_local == item then
+                            GuiZSetForNextWidget(gui, pos_z + 8)
+                            GuiImage(gui, new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
                         end
                     end
                 end
@@ -451,6 +463,7 @@ function swapping_inventory_v2(sort_by_time)
             if moved_far_enough(dragged_item_table.position_x, dragged_item_table.position_y, dragged_item_table.initial_position_x, dragged_item_table.initial_position_y, 20, 20) then
                 drop_item_from_parent(dragged_item_table.item, true)
                 remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
+                
             end
         end
     else
@@ -461,6 +474,7 @@ function swapping_inventory_v2(sort_by_time)
         elseif dragged_item_table.item and not hovered_item_table.item and not hovered_item_table.bag then
             drop_item_from_parent(dragged_item_table.item, true)
             remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
+            
         end
     end
     dragged_item_table = reset_table(dragged_item_table)
@@ -496,6 +510,10 @@ function draw_inventory_button(pos_x, pos_y, active_item)
     -- Invisible button overlay
     local clicked, hovered_invisible, right_clicked
     if not ModSettingGet("BagsOfMany.locked") then
+        if not bag_pickup_override_local or bag_pickup_override_local == 0 then
+            GuiZSetForNextWidget(gui, 2)
+            GuiImage(gui, new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
+        end
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
@@ -606,6 +624,7 @@ function draw_inventory_drop_button(bag, pos_x, pos_y, pos_z, level)
             drop_all_inventory(bag, false, sort_by_time, sorting_order)
         end
         remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+        
     elseif r_clk then
         if dropping_button_sprite == "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop_orderly.png" then
             dropping_button_sprite = drop_no_order

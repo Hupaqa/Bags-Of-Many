@@ -39,6 +39,16 @@ function is_in_bag_tree(bag, item_to_switch)
     return false
 end
 
+function is_player_root_entity(entity)
+    local player = get_player_entity()
+    if player then
+        local root = EntityGetRootEntity(entity)
+        if root then
+            return root == player
+        end
+    end
+end
+
 function is_wand(entity)
     local ability_comps = EntityGetComponentIncludingDisabled(entity, "AbilityComponent")
     if ability_comps then
@@ -257,6 +267,34 @@ function get_item_pickup_frame(entity)
     return 0
 end
 
+function get_bag_pickup_override(bag)
+    local bag_pickup_override_storage = get_var_storage_with_name(bag, "bags_of_many_bag_pickup_override")
+    if bag_pickup_override_storage then
+        local bag_pickup_override = ComponentGetValue2(bag_pickup_override_storage, "value_int")
+        if bag_pickup_override == 0 then
+            return nil
+        end
+        return bag_pickup_override
+    end
+end
+
+function toggle_bag_pickup_override(main_bag, secondary_bag)
+    local bag_pickup_override_storage = get_var_storage_with_name(main_bag, "bags_of_many_bag_pickup_override")
+    if not bag_pickup_override_storage then
+        bag_pickup_override_storage = EntityAddComponent2(main_bag, "VariableStorageComponent", {
+            name="bags_of_many_bag_pickup_override",
+        })
+    end
+    if bag_pickup_override_storage then
+        local bag_pickup_override = ComponentGetValue2(bag_pickup_override_storage, "value_int")
+        if bag_pickup_override and bag_pickup_override == secondary_bag then
+            ComponentSetValue2(bag_pickup_override_storage, "value_int", 0)
+        else
+            ComponentSetValue2(bag_pickup_override_storage, "value_int", secondary_bag)
+        end
+    end
+end
+
 function add_component_pickup_frame(entity)
     local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
     local item_has_item_pickup_frame = false
@@ -279,20 +317,6 @@ function remove_component_pickup_frame(entity)
     for _, var_storage in ipairs(var_storages or {}) do
         if ComponentGetValue2(var_storage, "name") == "item_pickup_frame" then
             EntityRemoveComponent(entity, var_storage)
-        end
-    end
-end
-
-function add_entity_to_var_storage(bag, entity)
-    if bag then
-        local variable_storages = EntityGetComponentIncludingDisabled(bag, "VariableStorageComponent")
-        for _, var_storage in ipairs(variable_storages or {}) do
-            if var_storage then
-                local initial_val = ComponentGetValue2(var_storage, "value_string")
-                local t = string_table_to_table(initial_val)
-                table.insert(t, tostring(entity))
-                ComponentSetValue2(var_storage, "value_string", table_to_string_table(t))
-            end
         end
     end
 end

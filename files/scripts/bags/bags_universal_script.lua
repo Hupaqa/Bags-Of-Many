@@ -4,12 +4,20 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 
 local pickup_distance = 20
 
-function kick( entity_who_kicked )
+function kick(entity_who_kicked)
     local player_id = get_player()
     local active_item = get_active_item()
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
     -- Checking entity name if contains uinversal so this script is not called when holding another bag
     if active_item ~= nil and is_bag(active_item) and name_contains(active_item, "universal") then
+        local bag_pickup_override = get_bag_pickup_override(active_item)
+        if bag_pickup_override and bag_pickup_override ~= 0 then
+            if is_player_root_entity(bag_pickup_override) then
+                active_item = bag_pickup_override
+            else
+                toggle_bag_pickup_override(active_item, 0)
+            end
+        end
         local inventory = get_inventory(active_item)
         -- Pickup spells
         if ModSettingGet("BagsOfMany.allow_spells") then
