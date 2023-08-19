@@ -1,4 +1,4 @@
-<Entity name="bag_universal_big" tags="hittable,teleportable_NOT,item_physics,item_pickup" >
+<Entity name="bag_universal_big" tags="hittable,teleportable_NOT,item_physics,item_pickup,bags_of_many" >
     <ControlsComponent
         _tags="enabled_in_hand"
     >

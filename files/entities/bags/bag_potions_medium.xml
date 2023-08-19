@@ -1,4 +1,4 @@
-<Entity name="bag_potions_medium" tags="hittable,teleportable_NOT,item_pickup" >
+<Entity name="bag_potions_medium" tags="hittable,teleportable_NOT,item_pickup,bags_of_many" >
 	<!-- physical presence -->
 	
 	<PhysicsBodyComponent 

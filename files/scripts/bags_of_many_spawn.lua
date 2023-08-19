@@ -50,6 +50,9 @@ end
 
 local bags_chance = lower_bound.max * bags_percent_of_potion
 
+-- print(tostring("BAGS SPAWN CHANCE"))
+-- print(tostring((bags_chance/65)*100))
+
 local bags_spawn = {
     value_min = 1,
     value_max = math.floor((bags_chance)-1),

@@ -206,6 +206,56 @@ function is_allowed_in_universal_bag(entity_id)
     return is_a_spell or is_a_wand or is_a_potion or is_an_item or is_a_bag
 end
 
+function is_shop_item(entity)
+    local item_cost_comp = EntityGetFirstComponentIncludingDisabled(entity,"ItemCostComponent")
+    if item_cost_comp then
+        return true
+    end
+    return false
+end
+
+function is_stealable (entity)
+    local item_cost_comp = EntityGetFirstComponentIncludingDisabled(entity,"ItemCostComponent")
+    if item_cost_comp then
+        return ComponentGetValue2(item_cost_comp, "stealable")
+    end
+    return true
+end
+
+function is_bag_one_smaller_than_bag_two(bag_one, bag_two)
+    local first_bag_size = get_bag_size(bag_one)
+    local second_bag_size = get_bag_size(bag_two)
+    if first_bag_size and second_bag_size then
+        return first_bag_size < second_bag_size
+    end
+    return false
+end
+
+function is_small_bag(entity)
+    return name_contains(entity, "small")
+end
+
+function is_medium_bag(entity)
+    return name_contains(entity, "medium")
+end
+
+function is_big_bag(entity)
+    return name_contains(entity, "big")
+end
+
+-- 1 is small, 2 is medium, 3 is big, nil is error its not a bag
+function get_bag_size(entity)
+    if is_small_bag(entity) then
+        return 1
+    end
+    if is_medium_bag(entity) then
+        return 2
+    end
+    if is_big_bag(entity) then
+        return 3
+    end
+end
+
 function is_allowed_in_potions_bag(entity_id)
     return is_potion(entity_id)
 end
@@ -216,7 +266,19 @@ end
 
 function is_allowed_in_bag(item_id, bag_id)
     if is_universal_bag(bag_id) then
-        return is_allowed_in_universal_bag(item_id)
+        local entity_allowed_in_bag = false
+        entity_allowed_in_bag = is_allowed_in_universal_bag(item_id)
+        if ModSettingGet("BagsOfMany.allow_bags_inception_potion_bag") and is_potion_bag(item_id) then
+            entity_allowed_in_bag = true
+        elseif ModSettingGet("BagsOfMany.allow_bags_inception_spell_bag") and is_spell_bag(item_id) then
+            entity_allowed_in_bag = true
+        elseif ModSettingGet("BagsOfMany.allow_bags_inception_universal_bag") and is_universal_bag(item_id) then
+            entity_allowed_in_bag = true
+        end
+        if not ModSettingGet("BagsOfMany.allow_big_bag_in_small_bag") then
+            entity_allowed_in_bag = is_bag_one_smaller_than_bag_two(item_id, bag_id)
+        end
+        return entity_allowed_in_bag
     end
     if is_potion_bag(bag_id) then
         return is_allowed_in_potions_bag(item_id)
@@ -557,7 +619,13 @@ function add_spells_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if EntityGetParent(entity) == 0 then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                add_entity_to_inventory_bag(active_item, inventory, entity)
+                if not ModSettingGet("BagsOfMany.allow_holy_mountain_spell_stealing") then
+                    if not is_shop_item(entity) then
+                        add_entity_to_inventory_bag(active_item, inventory, entity)
+                    end
+                else
+                    add_entity_to_inventory_bag(active_item, inventory, entity)
+                end
             end
         end
     end
@@ -567,7 +635,13 @@ function add_wands_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if EntityGetParent(entity) == 0 then
             if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                add_entity_to_inventory_bag(active_item, inventory, entity)
+                if not ModSettingGet("BagsOfMany.allow_holy_mountain_wand_stealing") then
+                    if not is_shop_item(entity) then
+                        add_entity_to_inventory_bag(active_item, inventory, entity)
+                    end
+                else
+                    add_entity_to_inventory_bag(active_item, inventory, entity)
+                end
             end
         end
     end
@@ -597,12 +671,25 @@ end
 
 function add_bags_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
+        local entity_allowed_in_bag = false
         if is_bag(entity) and entity ~= active_item then
             if EntityGetParent(entity) == 0 then
                 if is_bag_not_full(active_item, get_bag_inventory_size(active_item)) then
-                    add_entity_to_inventory_bag(active_item, inventory, entity)
+                    if ModSettingGet("BagsOfMany.allow_bags_inception_potion_bag") and is_potion_bag(entity) then
+                        entity_allowed_in_bag = true
+                    elseif ModSettingGet("BagsOfMany.allow_bags_inception_spell_bag") and is_spell_bag(entity) then
+                        entity_allowed_in_bag = true
+                    elseif ModSettingGet("BagsOfMany.allow_bags_inception_universal_bag") and is_universal_bag(entity) then
+                        entity_allowed_in_bag = true
+                    end
+                    if not ModSettingGet("BagsOfMany.allow_big_bag_in_small_bag") then
+                        entity_allowed_in_bag = is_bag_one_smaller_than_bag_two(entity, active_item)
+                    end
                 end
             end
+        end
+        if entity_allowed_in_bag then
+            add_entity_to_inventory_bag(active_item, inventory, entity)
         end
     end
 end
