@@ -339,6 +339,13 @@ end
 
 function drop_item_from_parent(item, with_movement, delta_x, delta_y)
     if item then
+        local active_item = get_active_item()
+        if active_item then
+            local override_bag = get_bag_pickup_override(active_item)
+            if override_bag == item then
+                toggle_bag_pickup_override(active_item, 0)
+            end
+        end
         local root = EntityGetRootEntity(item)
         local x, y = EntityGetTransform(root)
         if delta_x and delta_y then

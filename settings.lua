@@ -124,6 +124,14 @@ mod_settings =
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
+                id = "dropdown_style",
+                ui_name = "Bag navigation dropdown style",
+                ui_description = "When set to true will automatically change the bag displayed when hovering it.\n"..
+                    "When set to false will need a right click on a bag item to open its display.\n     This helps in switching items from one bag to another.\n",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
                 id = "locked",
                 ui_name = "Lock Inventory",
                 ui_description = "When false, the bag button can be dragged to a new position to display the inventory at a new location",

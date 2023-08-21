@@ -22,7 +22,7 @@ local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
 -- BAG AND TOOLTIP TOGGLE
 local bag_open = true
 local keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
-local dropdown_style = true
+local dropdown_style = ModSettingGet("BagsOfMany.dropdown_style")
 
 -- SORTING FLAG AND OPTION
 local sort_type_change_flag = false
@@ -161,7 +161,7 @@ function bag_of_many_setup_gui_v2()
                 if bag_level ~= 1 then
                     pos_y = positions[bag_level - 1].positions_y[#positions[bag_level - 1].positions_y] - (28 * (bag_level - 2))
                 end
-                draw_inventory_v2(pos_x, pos_y, pos_z, bag, bag_level)
+                draw_inventory_v2(active_item, pos_x, pos_y, pos_z, bag, bag_level)
                 multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, bag_level)
             end
         end
@@ -189,6 +189,7 @@ function bag_of_many_setup_gui_v2()
         sort_by_time = not sort_by_time
         ModSettingSetNextValue("BagsOfMany.sorting_type", sort_by_time, false)
     end
+    reset_table(left_click_table)
 end
 
 function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
@@ -239,8 +240,7 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
 end
 
 -- Inventory drawing
-function draw_inventory_v2(pos_x, pos_y, pos_z, entity, level)
-    local active_item = get_active_item()
+function draw_inventory_v2(active_item, pos_x, pos_y, pos_z, entity, level)
     if not pos_z then
         pos_z = 1
     end
@@ -356,9 +356,10 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                     -- LEFT CLICK: DROP ITEM
                     if left_click_table.position == item_position and left_click_table.level == level and left_click_table.bag == bag then
                         left_click_table.item = item
-                        reset_table(left_click_table)
                         drop_item_from_parent(item)
                         remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+                        print("dropping")
+                        print(tostring(level))
                     end
                     -- RIGHT CLICK: DROP ITEM
                     if right_click_table.position == item_position and right_click_table.level == level and right_click_table.bag == bag then
@@ -378,7 +379,7 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                     end
                     local hover_animation = 0
                     -- HOVERED: DETECT WHICH ITEM IS HOVERED
-                    if hovered_item_table.position == item_position and hovered_item_table.level == level and hovered_item_table.bag == bag then
+                    if hovered_item_table.position == item_position and hovered_item_table.level == level and hovered_item_table.bag == bag and not left_click_table.item then
                         hover_animation = 1
                         hovered_item_table.item = item
                         if not is_bag(item) and not dragged_item_table.item then
@@ -469,7 +470,7 @@ function swapping_inventory_v2(sort_by_time)
             if moved_far_enough(dragged_item_table.position_x, dragged_item_table.position_y, dragged_item_table.initial_position_x, dragged_item_table.initial_position_y, 20, 20) then
                 drop_item_from_parent(dragged_item_table.item, true)
                 remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
-                
+                print("dropping")
             end
         end
     else
@@ -480,7 +481,6 @@ function swapping_inventory_v2(sort_by_time)
         elseif dragged_item_table.item and not hovered_item_table.item and not hovered_item_table.bag then
             drop_item_from_parent(dragged_item_table.item, true)
             remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
-            
         end
     end
     dragged_item_table = reset_table(dragged_item_table)
@@ -650,12 +650,17 @@ function draw_inventory_multiple_depth_button(pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local order_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_multi_depth_display.png"
-    if not keep_tooltip_open then
+    if not keep_tooltip_open and dropdown_style then
         order_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_one_depth_display.png"
     end
+    if not dropdown_style then
+        order_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_right_click_nav.png"
+    end
     if GuiImageButton(gui, new_id(), pos_x, pos_y, "", order_sprite) then
-        keep_tooltip_open = not keep_tooltip_open
-        ModSettingSetNextValue("BagsOfMany.keep_tooltip_open", keep_tooltip_open, false)
+        if dropdown_style then
+            keep_tooltip_open = not keep_tooltip_open
+            ModSettingSetNextValue("BagsOfMany.keep_tooltip_open", keep_tooltip_open, false)
+        end
     end
     local _, right_clicked, hovered = GuiGetPreviousWidgetInfo(gui)
     if hovered then
@@ -676,6 +681,7 @@ function draw_inventory_multiple_depth_button(pos_x, pos_y, pos_z)
     end
     if right_clicked then
         dropdown_style = not dropdown_style
+        ModSettingSetNextValue("BagsOfMany.dropdown_style", dropdown_style, false)
     end
 end
 
