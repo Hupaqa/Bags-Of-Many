@@ -75,6 +75,13 @@ mod_settings =
                 scope = MOD_SETTING_SCOPE_NEW_GAME,
             },
             {
+                id = "showcase_loadout",
+                ui_name = "Showcase loadout",
+                ui_description = "When true will spawn all the bags of the mod in the mountain at the start.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_NEW_GAME,
+            },
+            {
                 ui_fn = mod_setting_vertical_spacing,
                 not_setting = true,
             },
@@ -110,24 +117,8 @@ mod_settings =
                 id = "show_bags_without_inventory_open",
                 ui_name = "Show bags without inventory open",
                 ui_description = "Show the bags inventory even when the inventory is not open.\n"..
-                    "\n    When having big wand the bag ui gets hidden by\n"..
-                    "\n    the wand inventory so this option allows to show the bags ui.",
-                value_default = false,
-                scope = MOD_SETTING_SCOPE_RUNTIME,
-            },
-            {
-                id = "keep_tooltip_open",
-                ui_name = "Keep bag tooltip open",
-                ui_description = "Show the bag inventory when hovered and then keep it open\n"..
-                    "\n    to show items inside and drop them.\n",
-                value_default = false,
-                scope = MOD_SETTING_SCOPE_RUNTIME,
-            },
-            {
-                id = "dropdown_style",
-                ui_name = "Bag navigation dropdown style",
-                ui_description = "When set to true will automatically change the bag displayed when hovering it.\n"..
-                    "When set to false will need a right click on a bag item to open its display.\n     This helps in switching items from one bag to another.\n",
+                    "\n    With big wand the bag ui gets hidden by the wand inventory\n"..
+                    "\n    so this option allows to show the bags ui without having to open the inventory.",
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
@@ -146,6 +137,32 @@ mod_settings =
                     "\n   If you want to move the inventory position with"..
                     "\n   the sliders first lock the bag position.",
                 not_setting = true,
+            },
+            {
+                ui_fn = mod_setting_vertical_spacing,
+                not_setting = true,
+            },
+            {
+                ui_fn = mod_setting_section,
+                ui_name = "Gui general options",
+                ui_description = "",
+                not_setting = true,
+            },
+            {
+                id = "keep_tooltip_open",
+                ui_name = "Keep bag tooltip open",
+                ui_description = "Show the bag inventory when hovered and then keep it open\n"..
+                    "\n    to show items inside and drop them.\n",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "dropdown_style",
+                ui_name = "Bag navigation style",
+                ui_description = "When set to true will automatically change the bag displayed when hovering it:\n    This allows to quickly check what is inside a bag without cluttering the screen.\n"..
+                    "When set to false will need to right click on a bag item to open its display:\n    This helps in switching items from one bag to another.\n",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
                 ui_fn = mod_setting_vertical_spacing,
@@ -307,7 +324,7 @@ mod_settings =
             {
                 id = "dragging_allowed",
                 ui_name = "Dragging in inventory allowed",
-                ui_description = "(EXPERIMENTAL-butquitesafe USE AT YOUR OWN RISK)\n Allows to drag items in the inventory bag.\n When sorting by positions will act similarly to the normal inventory. \n When sorting by time of pickup will only allow dropping.",
+                ui_description = "Allows to drag items in the inventory bag.\n When sorting by positions the inventory will act similarly to the normal inventory. \n When sorting by time of pickup will allow dropping and changing bags.",
                 value_default = true,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },

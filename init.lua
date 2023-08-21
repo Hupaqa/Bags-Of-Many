@@ -21,6 +21,7 @@ ModTextFileSetContent(TRANSLATIONS_FILE, translations)
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
+local SHOWCASE_LOAD_KEY = "BAGS_OF_MANY_SHOWCASE_LOAD_DONE"
 function OnPlayerSpawned(player_entity) -- This runs when player entity has been created
     if not GameHasFlagRun(LOAD_KEY) then
         GameAddFlagRun(LOAD_KEY)
@@ -41,6 +42,13 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
         --     spawn_bags_for_test()
         -- end
     end
+    if not GameHasFlagRun(SHOWCASE_LOAD_KEY) then
+        GameAddFlagRun(SHOWCASE_LOAD_KEY)
+        local x, y = get_player_pos()
+        if ModSettingGet("BagsOfMany.showcase_loadout") then
+            spawn_items_showcase(x, y)
+        end
+    end
     -- Load a spell table to find their name with their id
     bags_mod_state.lookup_spells = lookup_spells()
 end
@@ -49,13 +57,23 @@ function spawn_items_testing(x, y)
     EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", x + 30, y)
     EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", x + 30, y)
     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", x + 50, y)
-    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
-    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
     EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", x + 50, y)
     EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_medium.xml", x + 70, y)
     EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_big.xml", x + 70, y)
+end
+
+function spawn_items_showcase(x, y)
+    local height = -120
+    local position_x = 400
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_small.xml", position_x - 20, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_medium.xml", position_x - 10, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_spells_big.xml", position_x, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_small.xml", position_x + 40, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_medium.xml", position_x + 50, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_potions_big.xml", position_x + 60, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_small.xml", position_x + 100, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_medium.xml", position_x + 110, height)
+    EntityLoad("mods/bags_of_many/files/entities/bags/bag_universal_big.xml", position_x + 120, height)
 end
 
 function OnWorldPreUpdate()
