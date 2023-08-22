@@ -1,14 +1,15 @@
 A mod that adds different bags you can find in the world of Noita allowing you to carry more of you wizard stuff by expanding your available inventory space.
 
-[b] Quality of life update dropped! Better ui and some quality of life addition. ITEMS CAN BE PUT IN UNIVERSAL BAGS [/b]
+[b] Better inventory dragging now available you can now move items between bags if you allowed bag inception. [/b]
 
 To pickup items in the bags you need to hold it in your hands then use your [b]KICK[/b] action near an object you want to pick up. The items you can pick up depends on the type of bag.
 
 To drop items you use the inventory ui that appears when you open you inventory and [b]CLICK[/b] on the object you want to drop.
+If you have enabled inventory dragging you can also throw items by dragging them vanilla style.
 
 I wanted to add an option for more inventory space that more closely fits the theme of the game and is more balanced.
 
-[b] Checkout the mod settings there is a lot of options to tailor the mod to your liking [/b]
+[b] Checkout the mod settings there is a lot of options to tailor the mod to your liking, LIKE A LOT OF SETTINGS [/b]
 
 [h2] Items [/h2]
 [b] Pickup item: KICK [/b]
@@ -16,9 +17,9 @@ I wanted to add an option for more inventory space that more closely fits the th
 
 Three types of bags exist:
 [list]
- [*] Universal [img]https://i.imgur.com/CV8C5PQ.png[/img]
- [*] Binder [img]https://i.imgur.com/j3S9itl.png[/img]
- [*] Pouch [img]https://i.imgur.com/PIc8krn.png[/img]
+ [*] Universal [img]https://i.imgur.com/WZQcp8X.png[/img]
+ [*] Binder [img]https://i.imgur.com/Meworlb.png[/img]
+ [*] Pouch [img]https://i.imgur.com/YmdSPcj.png[/img]
 [/list]
 The universal bag allows you to carry wands, potions and spells.
 The spell binder allows you to carry spells.
@@ -26,9 +27,9 @@ The potion pouch allows you to carry potions.
 
 Three sizes exist by type of bags:
 [list]
- [*] Small [img]https://i.imgur.com/CV8C5PQ.png[/img]
- [*] Medium [img]https://i.imgur.com/hQRjUf7.png[/img]
- [*] Big [img]https://i.imgur.com/gCWmrHd.png[/img]
+ [*] Small [img]https://i.imgur.com/IWrbMtI.png[/img]
+ [*] Medium [img]https://i.imgur.com/SnDl8xD.png[/img]
+ [*] Big [img]https://i.imgur.com/WZQcp8X.png[/img]
 [/list]
 Each of these size give a progressively larger inventory space. The space is dependant on the type of bags you are using and so is the inventory size increase.
 
