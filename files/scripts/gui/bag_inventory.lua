@@ -4,8 +4,9 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/wand_and_spells.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/gui/common_gui.lua" )
 
--- GUI
+-- GUI SECTION
 local gui = gui or GuiCreate()
 local positions = {}
 
@@ -36,7 +37,7 @@ local drop_no_order = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_d
 local drop_orderly = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_drop_orderly.png"
 local dropping_button_sprite = drop_orderly
 
--- NEW VARIABLES
+-- BAG VARIABLES
 local active_item_bag = nil
 local bag_pickup_override_local = nil
 local inventory_bag_table = {}
@@ -84,21 +85,22 @@ local right_click_table = {
     initial_position_y = nil,
 }
 
--- GUI ID SECTION
-local current_id = 1
-local function new_id()
-    if current_id + 1 == dragged_invis_gui_id or current_id + 1 == dragged_item_gui_id then
-        current_id = current_id + 1
-    end
-    current_id = current_id + 1
-    return current_id
-end
-local function reset_id()
-    current_id = 1
-end
+-- ALCHEMY TABLE SPOTS VARIABLES
+local left_spot_alchemy = {
+    item = nil,
+    bag = nil,
+}
+local right_spot_alchemy = {
+    item = nil,
+    bag = nil,
+}
+local combined_spot_alchemy = {
+    item = nil,
+    bag = nil,
+}
 
 -- UPDATE THE VALUE OF THE SETTINGS IN THE CODE
-function update_settings()
+local function update_settings()
     show_bags_without_inventory_open = ModSettingGet("BagsOfMany.show_bags_without_inventory_open")
     only_show_bag_button_when_held = ModSettingGet("BagsOfMany.only_show_bag_button_when_held")
     bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
@@ -107,30 +109,20 @@ function update_settings()
     bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
     dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed")
     item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
-    dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed")
     sort_by_time = ModSettingGet("BagsOfMany.sorting_type")
     sorting_order = ModSettingGet("BagsOfMany.sorting_order")
     keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
 end
 
+
 function reset_item_table(table)
-    table = {
-        item = nil,
-        position = nil,
-        bag = nil,
-        level = nil,
-        position_x = nil,
-        position_y = nil,
-        initial_position_x = nil,
-        initial_position_y = nil,
-    }
+    for key, _ in pairs(table) do
+        table[key] = nil
+    end
     return table
 end
 
-function bag_of_many_setup_gui_v2()
-    local pos_x = bags_mod_state.button_pos_x
-    local pos_y = bags_mod_state.button_pos_y
-    reset_id()
+function bags_of_many_bag_gui(pos_x, pos_y)
     GuiStartFrame(gui)
     GuiOptionsAdd(gui, GUI_OPTION.NoPositionTween)
 
@@ -164,7 +156,11 @@ function bag_of_many_setup_gui_v2()
                 draw_inventory_v2(active_item, pos_x, pos_y, pos_z, bag, bag_level)
                 multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, bag_level)
             end
+            -- if is_potion_bag(active_item_bag) then
+            --     potion_mixing_gui(bags_mod_state.alchemy_pos_x, bags_mod_state.alchemy_pos_y, pos_z)
+            -- end
         end
+        -- potion_mixing_gui(pos_x+10, pos_y+100)
     end
 
     if dragging_allowed and dragging_possible_swap then
@@ -172,6 +168,7 @@ function bag_of_many_setup_gui_v2()
         dragging_possible_swap = false
         dragged_invis_gui_id = nil
         dragged_item_gui_id = nil
+        bags_of_many_reset_reserved_ids()
         -- RESET THE GUI TO PREVENT PROBLEM OF DRAWING AFTER DRAGGING
         GuiDestroy(gui)
         gui = GuiCreate()
@@ -190,6 +187,8 @@ function bag_of_many_setup_gui_v2()
         ModSettingSetNextValue("BagsOfMany.sorting_type", sort_by_time, false)
     end
     reset_table(left_click_table)
+    update_settings()
+    bags_of_many_reset_id()
 end
 
 function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
@@ -198,7 +197,7 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
         local bag_display_x, bag_display_y = pos_x + (5 * (level - 1)), pos_y + (28 * (level - 1))
         if bag_pickup_override_local == bag then
             GuiZSetForNextWidget(gui, pos_z + 1)
-            GuiImage(gui, new_id(), bag_display_x, bag_display_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
+            GuiImage(gui, bags_of_many_new_id(), bag_display_x, bag_display_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
         end
         -- Background for bag inception display
         local gui_button_image = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button.png"
@@ -206,10 +205,10 @@ function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
         local width_img, height_img = GuiGetImageDimensions(gui, bag_hovered_sprite, 1)
         GuiZSetForNextWidget(gui, pos_z+2)
         GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
-        GuiImage(gui, new_id(), bag_display_x, bag_display_y, gui_button_image, 1, 1 ,1)
+        GuiImage(gui, bags_of_many_new_id(), bag_display_x, bag_display_y, gui_button_image, 1, 1 ,1)
         local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
         GuiZSetForNextWidget(gui, pos_z)
-        GuiImage(gui, new_id(), bag_display_x + pad_x, bag_display_y + pad_y, bag_hovered_sprite, 1, 1, 1)
+        GuiImage(gui, bags_of_many_new_id(), bag_display_x + pad_x, bag_display_y + pad_y, bag_hovered_sprite, 1, 1, 1)
         local _, right_click, hovered_inception_bag = GuiGetPreviousWidgetInfo(gui)
         if hovered_inception_bag then
             local tooltip = generate_tooltip(bag)
@@ -286,7 +285,7 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
             GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
             GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
             GuiZSetForNextWidget(gui, 1)
-            GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+            GuiImageButton(gui, bags_of_many_new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
             local clicked_inv, right_clicked_inv, hovered_inv, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
 
                 -- DETECT DRAGGING
@@ -303,7 +302,8 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
                     dragged_item_table.position_y = draw_y
                     dragged_item_table.initial_position_x = item_pos_x
                     dragged_item_table.initial_position_y = item_pos_y
-                    dragged_invis_gui_id = current_id
+                    dragged_invis_gui_id = bags_of_many_current_id()
+                    bags_of_many_reserve_id(dragged_invis_gui_id)
                 end
                 if math.floor(draw_x) == 0 and math.floor(draw_y) == 0 and dragged_item_table.level == level and dragged_item_table.bag == bag and dragged_item_table.position == i then
                     dragging_possible_swap = true
@@ -329,7 +329,7 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
                 hovered_item_table.level = level
                 if dragged_item_table.item and is_allowed_in_bag(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
                     GuiZSetForNextWidget(gui, 20)
-                    GuiImage(gui, new_id(), item_pos_x, item_pos_y, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1)
+                    GuiImage(gui, bags_of_many_new_id(), item_pos_x, item_pos_y, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1)
                 end
             end
         end
@@ -358,8 +358,6 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                         left_click_table.item = item
                         drop_item_from_parent(item)
                         remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
-                        print("dropping")
-                        print(tostring(level))
                     end
                     -- RIGHT CLICK: DROP ITEM
                     if right_click_table.position == item_position and right_click_table.level == level and right_click_table.bag == bag then
@@ -397,7 +395,8 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
 
                     if dragged_item_table.level == level and dragged_item_table.bag == bag and dragged_item_table.position == item_position then
                         dragged_item_table.item = item
-                        dragged_item_gui_id = new_id()
+                        dragged_item_gui_id = bags_of_many_new_id()
+                        bags_of_many_reserve_id(dragged_item_gui_id)
                     end
                     -- prevent item flash when dragging ends
                     if sprite_path and not(dragged_item_table.item == item) then
@@ -407,14 +406,14 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                         item_pos_y = item_pos_y + pad_y - hover_animation
                         add_item_specifity(item, item_pos_x, item_pos_y, pos_z + 2)
                         GuiZSetForNextWidget(gui, pos_z + 1)
-                        GuiImageButton(gui, new_id(), item_pos_x, item_pos_y, "", sprite_path)
+                        GuiImageButton(gui, bags_of_many_new_id(), item_pos_x, item_pos_y, "", sprite_path)
                         if inventory_bag_table[active_item_bag][level+1] == item then
                             GuiZSetForNextWidget(gui, pos_z + 2)
-                            GuiImage(gui, new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_open_inventory.png", 1, 1)
+                            GuiImage(gui, bags_of_many_new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_open_inventory.png", 1, 1)
                         end
                         if bag_pickup_override_local == item then
                             GuiZSetForNextWidget(gui, pos_z + 8)
-                            GuiImage(gui, new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
+                            GuiImage(gui, bags_of_many_new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
                         end
                     end
                 end
@@ -470,7 +469,6 @@ function swapping_inventory_v2(sort_by_time)
             if moved_far_enough(dragged_item_table.position_x, dragged_item_table.position_y, dragged_item_table.initial_position_x, dragged_item_table.initial_position_y, 20, 20) then
                 drop_item_from_parent(dragged_item_table.item, true)
                 remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
-                print("dropping")
             end
         end
     else
@@ -518,7 +516,7 @@ function draw_inventory_button(pos_x, pos_y, active_item)
     if not ModSettingGet("BagsOfMany.locked") then
         if not bag_pickup_override_local or bag_pickup_override_local == 0 then
             GuiZSetForNextWidget(gui, 2)
-            GuiImage(gui, new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
+            GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
         end
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
@@ -526,7 +524,7 @@ function draw_inventory_button(pos_x, pos_y, active_item)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.IsExtraDraggable)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
         GuiZSetForNextWidget(gui, 1)
-        clicked, right_clicked = GuiImageButton(gui, new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+        clicked, right_clicked = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
         _, _, hovered_invisible = GuiGetPreviousWidgetInfo(gui)
         local _, _, _, _, _, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
         if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= pos_x and draw_y ~= pos_y then
@@ -537,7 +535,7 @@ function draw_inventory_button(pos_x, pos_y, active_item)
         end
     else
         GuiZSetForNextWidget(gui, 1)
-        clicked, right_clicked = GuiImageButton(gui, new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+        clicked, right_clicked = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
         _, _, hovered_invisible = GuiGetPreviousWidgetInfo(gui)
     end
 
@@ -546,7 +544,7 @@ function draw_inventory_button(pos_x, pos_y, active_item)
     local width_background, height_background = GuiGetImageDimensions(gui, gui_button_image, 1)
     GuiZSetForNextWidget(gui, 3)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
-    local background_button = GuiImage(gui, new_id(), pos_x, pos_y, gui_button_image, 1, 1 ,1)
+    local background_button = GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, gui_button_image, 1, 1 ,1)
 
     -- Bag button
     local bag_sprite = "mods/bags_of_many/files/ui_gfx/inventory/drag_icon.png"
@@ -556,7 +554,7 @@ function draw_inventory_button(pos_x, pos_y, active_item)
     local width_img, height_img = GuiGetImageDimensions(gui, bag_sprite, 1)
     local pad_x, pad_y = padding_to_center(width_background, height_background, width_img, height_img)
     GuiZSetForNextWidget(gui, 2)
-    local bag_button = GuiImage(gui, new_id(), pos_x + pad_x, pos_y + pad_y, bag_sprite, 1, 1, 1)
+    local bag_button = GuiImage(gui, bags_of_many_new_id(), pos_x + pad_x, pos_y + pad_y, bag_sprite, 1, 1, 1)
 
     -- Open or close bag
     if clicked then
@@ -588,7 +586,7 @@ function draw_inventory_sorting_option(pos_x, pos_y, pos_z)
         sorting_option_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sorting_by_time.png"
         sorting_option_tooltip = "$bag_button_sorting_by_time_tooltip"
     end
-    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", sorting_option_sprite) then
+    if GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", sorting_option_sprite) then
         sort_type_change_flag = true
         option_changed = true
     end
@@ -607,7 +605,7 @@ function draw_inventory_sorting_direction(pos_x, pos_y, pos_z)
         sorting_direction_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sort_asc.png"
         sorting_direction_tooltip = "$bag_button_tooltip_asc_sort"
     end
-    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", sorting_direction_sprite) then
+    if GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", sorting_direction_sprite) then
         sort_order_change_flag = true
     end
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
@@ -619,7 +617,7 @@ end
 function draw_inventory_drop_button(bag, pos_x, pos_y, pos_z, level)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
-    local l_clk, r_clk = GuiImageButton(gui, new_id(), pos_x, pos_y, "", dropping_button_sprite)
+    local l_clk, r_clk = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", dropping_button_sprite)
     if l_clk then
         if dropping_button_sprite == drop_orderly then
             drop_all_inventory(bag, true, sort_by_time, sorting_order)
@@ -656,7 +654,7 @@ function draw_inventory_multiple_depth_button(pos_x, pos_y, pos_z)
     if not dropdown_style then
         order_sprite = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_right_click_nav.png"
     end
-    if GuiImageButton(gui, new_id(), pos_x, pos_y, "", order_sprite) then
+    if GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", order_sprite) then
         if dropdown_style then
             keep_tooltip_open = not keep_tooltip_open
             ModSettingSetNextValue("BagsOfMany.keep_tooltip_open", keep_tooltip_open, false)
@@ -702,18 +700,6 @@ function generate_tooltip(item)
         end
     elseif EntityHasTag(item, "potion") then
         local materials = get_potion_contents(item)
-        -- local material_list = get_potion_materials(item)
-        -- local material_string = ""
-        -- if material_list then
-        --     for i = 1, #material_list do
-        --         if i ~= 1 then
-        --             material_string = material_string .. "+"
-        --         end
-        --         if material_list[i] then
-        --             material_string = material_string .. GameTextGet(material_list[i])
-        --         end
-        --     end
-        -- end
         local first_line_length = 0
         if materials then
             for i = 1, #materials do
@@ -808,13 +794,13 @@ function draw_wand_spells(wand_capacity, wand_spells, spells_per_line,  pos_x, p
         local background_pos_x = pos_x+(20*((i-1)%spells_per_line))
         local background_pos_y = pos_y+(math.floor((i-1)/spells_per_line)*20)
         GuiZSetForNextWidget(gui, 3)
-        GuiImage(gui, new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/inventory_box_inactive_overlay.png", alpha, 1, 1)
+        GuiImage(gui, bags_of_many_new_id(), background_pos_x, background_pos_y, "mods/bags_of_many/files/ui_gfx/inventory/inventory_box_inactive_overlay.png", alpha, 1, 1)
         -- Spell sprite
         if wand_spells and wand_spells[i] then
             local spell_sprite = get_sprite_file(wand_spells[i])
             if spell_sprite then
                 GuiZSetForNextWidget(gui, 1)
-                GuiImage(gui, new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, alpha, 1, 1)
+                GuiImage(gui, bags_of_many_new_id(), background_pos_x+2, background_pos_y+2, spell_sprite, alpha, 1, 1)
                 draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha, 1)
             end
         end
@@ -823,7 +809,7 @@ end
 
 function draw_wand_always_cast_spells(wand_spells, pos_x, pos_y)
     local alpha = 1
-    GuiImage(gui, new_id(), pos_x, pos_y + 1, "data/ui_gfx/inventory/icon_gun_permanent_actions.png", alpha, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y + 1, "data/ui_gfx/inventory/icon_gun_permanent_actions.png", alpha, 1, 1)
     GuiText(gui, pos_x + 14, pos_y, "Always cast")
     local width = GuiGetTextDimensions(gui, "ALWAYS CAST", 1)
     local always_cast_per_line = 5
@@ -837,7 +823,7 @@ function draw_wand_always_cast_spells(wand_spells, pos_x, pos_y)
             local spell_sprite = get_sprite_file(wand_spells[i])
             if spell_sprite then
                 GuiZSetForNextWidget(gui, 1)
-                GuiImage(gui, new_id(), background_pos_x+3, background_pos_y+3, spell_sprite, alpha, 0.65)
+                GuiImage(gui, bags_of_many_new_id(), background_pos_x+3, background_pos_y+3, spell_sprite, alpha, 0.65)
                 _, _, _, _, _, draw_w, draw_h = GuiGetPreviousWidgetInfo(gui)
                 draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha, 0.8)
             end
@@ -850,14 +836,14 @@ function draw_action_type(entity, pos_x, pos_y, pos_z, alpha, scale)
     local sprite = get_spell_type_sprite(entity)
     if sprite then
         GuiZSetForNextWidget(gui, pos_z)
-        GuiImage(gui, new_id(), pos_x, pos_y, sprite, alpha, scale)
+        GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, sprite, alpha, scale)
     end
 end
 
 function inventory_slot(gui, pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
-    GuiImage(gui, new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png", bag_ui_alpha, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png", bag_ui_alpha, 1, 1)
 end
 
 function inventory(gui, size, item_per_line, pos_x, pos_y, pos_z)
@@ -873,28 +859,59 @@ function inventory(gui, size, item_per_line, pos_x, pos_y, pos_z)
 
         -- only 1
         if (pos_in_line == 0 and i == size-1) or (pos_in_line == 0 and pos_in_line == item_per_line-1) then
-            draw_left_bracket(gui, new_id(), x, y, pos_z + 1)
-            draw_middle(gui, new_id(), x, y, pos_z + 1)
-            draw_right_bracket(gui, new_id(), x, y, pos_z + 1)
+            draw_left_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
         -- 1 and more
         elseif pos_in_line == 0 then
-            draw_left_bracket(gui, new_id(), x, y, pos_z + 1)
-            draw_middle(gui, new_id(), x, y, pos_z + 1)
+            draw_left_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
         -- last for line
         elseif pos_in_line == item_per_line-1 then
-            draw_middle(gui, new_id(), x, y, pos_z + 1)
-            draw_right_bracket(gui, new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
         -- middle end
         elseif i == size-1 then
-            draw_middle(gui, new_id(), x, y, pos_z + 1)
-            draw_right_bracket(gui, new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
         -- middle
         else
-            draw_middle(gui, new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
         end
     end
     return {positions_x = positions_x, positions_y = positions_y}
 end
+
+----------- POTION MIXING ----------- 
+
+function potion_mixing_gui(pos_x, pos_y, pos_z)
+    potion_alchemy_spots(pos_x, pos_y, pos_z)
+    potion_alchemy_table(pos_x, pos_y, pos_z + 1)
+end
+
+function potion_alchemy_spots(pos_x, pos_y, pos_z)
+    GuiZSetForNextWidget(gui, pos_z)
+    local left_spot_rc, left_spot_lc = GuiImageButton(gui, bags_of_many_new_id(), pos_x+4, pos_y+8, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png")
+    if left_spot_lc or left_spot_rc then
+        left_spot_alchemy.item = nil
+    end
+    GuiZSetForNextWidget(gui, pos_z)
+    local combined_spot_rc, combined_spot_lc = GuiImageButton(gui, bags_of_many_new_id(), pos_x+20, pos_y+11, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png")
+    if combined_spot_lc or combined_spot_rc then
+        combined_spot_alchemy.item = nil
+    end
+    GuiZSetForNextWidget(gui, pos_z)
+    local right_spot_rc, right_spot_lc = GuiImageButton(gui, bags_of_many_new_id(), pos_x+46, pos_y+12, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png")
+    if right_spot_lc or right_spot_rc then
+        right_spot_alchemy.item = nil
+    end
+end
+
+function potion_alchemy_table(pos_x, pos_y, pos_z)
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table.png", 1, 1 ,1)
+end
+
 
 --------- UTILS ---------
 
@@ -931,7 +948,7 @@ function draw_info_line(pos_x, pos_y, image, text, value)
     local draw_width, draw_height = 0,0
     if image ~= nil and image ~= "" then
         GuiZSetForNextWidget(gui, 1)
-        GuiImage(gui, new_id(), pos_x, pos_y, image, 1, 1, 1)
+        GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, image, 1, 1, 1)
         draw_width, _ = GuiGetImageDimensions(gui, image, 1)
         draw_width_sum = draw_width_sum + draw_width + 6
     end
@@ -1004,40 +1021,40 @@ function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, 
     ---- CORNERS
     -- TOP LEFT CORNER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x - pad_left, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
     -- TOP RIGHT CORNER ONE
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x + pad_right + size_x - 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x + pad_right + size_x - 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
     -- TOP RIGHT CORNER TWO
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x + pad_right + size_x, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x + pad_right + size_x, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
     -- BOTTOM LEFT CORNER ONE
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x - pad_left, pos_y + pad_bottom + size_y - 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left, pos_y + pad_bottom + size_y - 1, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
     -- BOTTOM LEFT CORNER TWO
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x - pad_left + 1, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
     -- BOTTOM RIGHT CORNER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x + pad_right + size_x, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x + pad_right + size_x, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/corner_piece.png", 1, 1, 1)
 
     ---- MIDDLE
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x - pad_left + 1, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/middle_piece.png", 0.99, size_x + pad_left + pad_right - 1, size_y + pad_top + pad_bottom - 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/middle_piece.png", 0.99, size_x + pad_left + pad_right - 1, size_y + pad_top + pad_bottom - 1)
 
     ---- BORDERS
     -- TOP BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x - pad_left + 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
     -- LEFT BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x - pad_left, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
     -- RIGHT BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x + size_x + pad_right, pos_y - pad_top + 2, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
+    GuiImage(gui, bags_of_many_new_id(), pos_x + size_x + pad_right, pos_y - pad_top + 2, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
     -- BOTTOM BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
 end
 
 function add_potion_color(entity)

@@ -114,6 +114,28 @@ mod_settings =
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
+                id = "alchemy_pos_x",
+                ui_name = "Alchemy horizontal position",
+                ui_description = "",
+                value_default = 170,
+                value_min = 0,
+                value_max = 1000,
+                value_display_multiplier = 1,
+                value_display_formatting = " x = $0",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "alchemy_pos_y",
+                ui_name = "Alchemy vertical position",
+                ui_description = "",
+                value_default = 54,
+                value_min = 0,
+                value_max = 1000,
+                value_display_multiplier = 1,
+                value_display_formatting = " y = $0",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
                 id = "show_bags_without_inventory_open",
                 ui_name = "Show bags without inventory open",
                 ui_description = "Show the bags inventory even when the inventory is not open.\n"..

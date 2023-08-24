@@ -4,20 +4,24 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spells_lookup.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/testing/item_spawner.lua" )
-dofile_once( "mods/bags_of_many/files/gui.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/gui/gui.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
 
 bags_mod_state = {
     lookup_spells = {},
     bag_pickup_override = nil,
     button_pos_x = ModSettingGet("BagsOfMany.pos_x"),
-    button_pos_y = ModSettingGet("BagsOfMany.pos_y")
+    button_pos_y = ModSettingGet("BagsOfMany.pos_y"),
+    alchemy_pos_x = ModSettingGet("BagsOfMany.alchemy_pos_x"),
+    alchemy_pos_y = ModSettingGet("BagsOfMany.alchemy_pos_y")
 }
 
 -- Adding translations
 local TRANSLATIONS_FILE = "data/translations/common.csv"
 local translations = ModTextFileGetContent(TRANSLATIONS_FILE) .. ModTextFileGetContent("mods/bags_of_many/translations/common.csv")
 ModTextFileSetContent(TRANSLATIONS_FILE, translations)
+
+-- ADDING SPAWN CHANCE
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
@@ -77,7 +81,7 @@ function spawn_items_showcase(x, y)
 end
 
 function OnWorldPreUpdate()
-    bag_of_many_setup_gui_v2()
+    bags_of_many_ui_setup()
 end
 
 function OnPausedChanged(is_paused, is_inventory_pause)
@@ -88,7 +92,7 @@ function OnPausedChanged(is_paused, is_inventory_pause)
     else
         bags_mod_state.button_pos_x = ModSettingGet("BagsOfMany.pos_x")
         bags_mod_state.button_pos_y = ModSettingGet("BagsOfMany.pos_y")
-        print(bags_mod_state.button_pos_x)
 	end
-    update_settings()
+    bags_mod_state.alchemy_pos_x = ModSettingGet("BagsOfMany.alchemy_pos_x")
+    bags_mod_state.alchemy_pos_y = ModSettingGet("BagsOfMany.alchemy_pos_y")
 end
