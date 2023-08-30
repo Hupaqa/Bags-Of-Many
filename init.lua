@@ -13,7 +13,8 @@ bags_mod_state = {
     button_pos_x = ModSettingGet("BagsOfMany.pos_x"),
     button_pos_y = ModSettingGet("BagsOfMany.pos_y"),
     alchemy_pos_x = ModSettingGet("BagsOfMany.alchemy_pos_x"),
-    alchemy_pos_y = ModSettingGet("BagsOfMany.alchemy_pos_y")
+    alchemy_pos_y = ModSettingGet("BagsOfMany.alchemy_pos_y"),
+    alchemy_amount_transfered = 10,
 }
 
 -- Adding translations
