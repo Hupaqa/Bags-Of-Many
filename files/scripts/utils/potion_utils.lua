@@ -1,0 +1,150 @@
+function get_biggest_potion_content( entity_id )
+    local biggest_potion_content = nil
+    local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    if suc_component ~= nil and inv_component ~= nil then
+        local capacity = ComponentGetValue2(suc_component, "barrel_size")
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        for i = 1, #counts do
+            if counts[i] > 0 then
+                local material = {
+                    id = i - 1,
+                    name = CellFactory_GetUIName(i - 1),
+                    amount = (counts[i]/capacity) * (capacity/10),
+                }
+                if biggest_potion_content == nil then
+                    biggest_potion_content = material
+                elseif biggest_potion_content.amount < material.amount then
+                    biggest_potion_content = material
+                end
+            end
+        end
+        return biggest_potion_content
+    end
+end
+
+function get_potion_contents( entity_id )
+    local materials = {}
+    local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    if suc_component ~= nil and inv_component ~= nil then
+        local capacity = ComponentGetValue2(suc_component, "barrel_size")
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        for i = 1, #counts do
+            if counts[i] > 0 then
+                local material = {
+                    id = i - 1,
+                    name = CellFactory_GetUIName(i - 1),
+                    amount = (counts[i]/capacity) * (capacity/10),
+                }
+                table.insert(materials, material)
+            end
+        end
+    end
+    for i = 1, #materials do
+        for j = i + 1, #materials do
+            if materials[i].amount < materials[j].amount then
+                local temp_mat = materials[i]
+                materials[i] = materials[j]
+                materials[j] = temp_mat
+            end
+        end
+    end
+    return materials
+end
+
+function get_potion_materials(entity_id)
+    local material_list = {}
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    if inv_component ~= nil then
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        for material_id, amount in pairs(counts) do
+            if amount > 0 then
+                local material_name = CellFactory_GetUIName(material_id - 1)
+                table.insert(material_list, material_name)
+            end
+        end
+    end
+    return material_list
+end
+
+function get_potion_avalaible_space(entity_id)
+    local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    local total_material_count = 0
+    if suc_component ~= nil and inv_component ~= nil then
+        local capacity = ComponentGetValue2(suc_component, "barrel_size")
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        for i = 1, #counts do
+            if counts[i] > 0 then
+                total_material_count = total_material_count + counts[i]
+            end
+        end
+        return capacity - total_material_count
+    end
+    return 0
+end
+
+function transfer_potion_specific_content(potion_from, potion_to, material_id, amount_transfered)
+    local suc_component_one = EntityGetFirstComponentIncludingDisabled(potion_from, "MaterialSuckerComponent")
+    local inv_component_one = EntityGetFirstComponentIncludingDisabled(potion_from, "MaterialInventoryComponent")
+    local suc_component_two = EntityGetFirstComponentIncludingDisabled(potion_to, "MaterialSuckerComponent")
+    local inv_component_two = EntityGetFirstComponentIncludingDisabled(potion_to, "MaterialInventoryComponent")
+    if material_id and suc_component_one ~= nil and inv_component_one ~= nil and suc_component_two ~= nil and inv_component_two ~= nil then
+        -- local capacity_from = ComponentGetValue2(suc_component_one, "barrel_size")
+        local counts_from = ComponentGetValue2(inv_component_one, "count_per_material_type")
+        -- local capacity_to = ComponentGetValue2(suc_component_two, "barrel_size")
+        local counts_to = ComponentGetValue2(inv_component_two, "count_per_material_type")
+        local potion_to_space_left = get_potion_avalaible_space(potion_to)
+        local mat_amount_from = counts_from[material_id+1]
+        local mat_amount_to = counts_to[material_id+1]
+        if amount_transfered > mat_amount_from then
+            amount_transfered = mat_amount_from
+        end
+        if amount_transfered > potion_to_space_left then
+            amount_transfered = potion_to_space_left
+        end
+        local material_name = CellFactory_GetName(material_id)
+        AddMaterialInventoryMaterial(potion_to, material_name, mat_amount_to + amount_transfered)
+        AddMaterialInventoryMaterial(potion_from, material_name,  mat_amount_from - amount_transfered)
+    end
+end
+
+function delete_potion_contents(entity_id)
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    if inv_component ~= nil then
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        for i = 1, #counts do
+            if counts[i] > 0 then
+                local mat_name = CellFactory_GetName(i - 1)
+                AddMaterialInventoryMaterial(entity_id, mat_name, 0)
+            end
+        end
+    end
+end
+
+function delete_potion_specific_content(entity_id, material_id)
+    local mat_name = CellFactory_GetName(material_id)
+    AddMaterialInventoryMaterial(entity_id, mat_name, 0)
+end
+
+function reduce_potion_to_amount(potion, material_id, amount)
+    local mat_name = CellFactory_GetName(material_id)
+    AddMaterialInventoryMaterial(potion, mat_name, amount)
+end
+
+function ingest_potion_material(potion, player)
+    local material = get_biggest_potion_content(potion)
+    if material and material.id then
+        local type = CellFactory_GetType(CellFactory_GetName(material.id))
+        if type then
+            local amount_consumed = 100
+            if material.amount * 10 < 100 then
+                amount_consumed = material.amount * 10
+            end
+            EntityIngestMaterial(player, type, amount_consumed)
+            local mat_name = CellFactory_GetName(material.id)
+            AddMaterialInventoryMaterial(potion, mat_name, material.amount * 10 - amount_consumed)
+        end
+    end
+end

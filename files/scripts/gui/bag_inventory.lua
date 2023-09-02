@@ -4,6 +4,7 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/wand_and_spells.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/potion_utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/common_gui.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 
@@ -23,6 +24,7 @@ local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
 
 -- BAG AND TOOLTIP TOGGLE
 local bag_open = true
+local alchemy_gui_open = false
 local keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
 local dropdown_style = ModSettingGet("BagsOfMany.dropdown_style")
 
@@ -134,6 +136,7 @@ end
 function bags_of_many_bag_gui(pos_x, pos_y)
     GuiStartFrame(gui)
     GuiOptionsAdd(gui, GUI_OPTION.NoPositionTween)
+    -- button_test(500, 20)
 
     local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()
@@ -166,7 +169,10 @@ function bags_of_many_bag_gui(pos_x, pos_y)
                 multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, bag_level)
             end
             if is_potion_bag(active_item_bag) then
-                potion_mixing_gui(bags_mod_state.alchemy_pos_x, bags_mod_state.alchemy_pos_y, pos_z)
+                draw_alchemy_button_gui(pos_x-10, pos_y+1)
+                if alchemy_gui_open then
+                    potion_mixing_gui(bags_mod_state.alchemy_pos_x, bags_mod_state.alchemy_pos_y, pos_z)
+                end
             end
         end
     end
@@ -201,6 +207,17 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     reset_table(left_click_table)
     update_settings()
     bags_of_many_reset_id()
+end
+
+function button_test(pos_x, pos_y)
+    local player = get_player_entity()
+    if player then
+        GuiZSetForNextWidget(gui, 1)
+        local lc, rc = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_options.png")
+        if lc or rc then
+            EntitySetTransform(player, 9983, 4221)
+        end
+    end
 end
 
 function multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, level)
@@ -371,20 +388,27 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                         drop_item_from_parent(item)
                         remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
                     end
-                    -- RIGHT CLICK: DROP ITEM
+                    -- RIGHT CLICK: DROP ITEM OR IF POTION INGEST MATERIAL
                     if right_click_table.position == item_position and right_click_table.level == level and right_click_table.bag == bag then
                         right_click_table.item = item
                         reset_table(right_click_table)
-                        if not dropdown_style and is_bag(item) then
-                            if inventory_bag_table[active_item_bag][level+1] == item then
-                                inventory_bag_table[active_item_bag] = remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
-                            else
-                                inventory_bag_table[active_item_bag] = remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
-                                inventory_bag_table[active_item_bag][level+1] = item
+                        if is_potion(item) then
+                            local player = get_player()
+                            if player then
+                                ingest_potion_material(item, player)
                             end
                         else
-                            drop_item_from_parent(item)
-                            remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)              
+                            if not dropdown_style and is_bag(item) then
+                                if inventory_bag_table[active_item_bag][level+1] == item then
+                                    inventory_bag_table[active_item_bag] = remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+                                else
+                                    inventory_bag_table[active_item_bag] = remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+                                    inventory_bag_table[active_item_bag][level+1] = item
+                                end
+                            else
+                                drop_item_from_parent(item)
+                                remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+                            end
                         end
                     end
                     local hover_animation = 0
@@ -941,6 +965,18 @@ end
 
 ----------- POTION MIXING ----------- 
 
+function draw_alchemy_button_gui(pos_x, pos_y)
+    GuiZSetForNextWidget(gui, 1)
+    local clicked, right_clicked = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_button_gui.png")
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+    if clicked or right_clicked then
+        alchemy_gui_open = not alchemy_gui_open
+    end
+    if hovered then
+        GuiText(gui, pos_x, pos_y+5, "Open the alchemy gui")
+    end
+end
+
 function is_potion_in_table()
     return left_spot_alchemy.item ~= nil or right_spot_alchemy.item ~= nil or combined_spot_alchemy.item ~= nil
 end
@@ -1036,7 +1072,7 @@ function potion_alchemy_table(pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z + 4)
     GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table.png", 1, 1 ,1)
     GuiZSetForNextWidget(gui, pos_z + 5)
-    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table_background.png", 1, 1 ,1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x -3, pos_y - 3, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table_background.png", 1, 1 ,1)
 end
 
 function potion_alchemy_left_spot(pos_x, pos_y, pos_z)

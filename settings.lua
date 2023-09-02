@@ -421,16 +421,30 @@ mod_settings =
             },
             {
                 id = "allow_holy_mountain_wand_stealing",
-                ui_name = "Allow holy mountain wand stealing with bags",
+                ui_name = "Allow holy mountain WAND stealing with bags",
                 ui_description = "When set to true bags will be allowed to steal the wands in holy mountains",
                 value_default = true,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
                 id = "allow_holy_mountain_spell_stealing",
-                ui_name = "Allow holy mountain spell stealing with bags",
+                ui_name = "Allow holy mountain SPELL stealing with bags",
                 ui_description = "When set to true bags will be allowed to steal the spells in holy mountains",
                 value_default = true,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "allow_tower_wand_stealing",
+                ui_name = "Allow TOWER wands stealing with bags",
+                ui_description = "When set to true bags will be allowed to steal the tower wands (you can take multiple tower wands)",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "allow_sampo_stealing",
+                ui_name = "Allow the SAMPO to be picked up with bags",
+                ui_description = "When set to true bags will be allowed to pickup the sampo",
+                value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {
