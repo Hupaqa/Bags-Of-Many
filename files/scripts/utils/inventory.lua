@@ -44,7 +44,7 @@ function universal_bag_pickup(entity_who_kicked, active_item)
         add_items_to_inventory(active_item, inventory, entity_who_kicked, entities)
     end
     -- Pickup bags
-    if ModSettingGet("BagsOfMany.allow_bags_inception") then
+    if ModSettingGet("BagsOfMany.allow_bags_inception_universal_bag") or ModSettingGet("BagsOfMany.allow_bags_inception_potion_bag") or ModSettingGet("BagsOfMany.allow_bags_inception_spell_bag") then
         local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "item_pickup")
         add_bags_to_inventory(active_item, inventory, entity_who_kicked, entities)
     end
