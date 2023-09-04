@@ -36,3 +36,4 @@ item_description_bag_potions_medium,A pouch for adepts that is able to carry a m
 item_description_bag_potions_big,A pouch for masters that is able to carry a large amount of potions,,,,Un sac pour maîtres qui est capable de transporter une grande quantité de potions,,,,,,,,,
 alchemy_table_delete_button,Delete selected contents,,,,Supprime les matériaux sélectionné,,,,,,,,,
 alchemy_table_transfer_button,Transfer selected contents to middle potion,,,,Transfer les matériaux selectionnés dans la potion du milieu,,,,,,,,,
+alchemy_table_gui_toggle,[LMB] Open the alchemy gui,,,,[LMB] Ouvrir le gui d'alchimie,,,,,,,,,

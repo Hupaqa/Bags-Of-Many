@@ -128,7 +128,7 @@ mod_settings =
                 id = "alchemy_pos_y",
                 ui_name = "Alchemy vertical position",
                 ui_description = "",
-                value_default = 54,
+                value_default = 200,
                 value_min = 0,
                 value_max = 1000,
                 value_display_multiplier = 1,
@@ -148,7 +148,7 @@ mod_settings =
                 id = "locked",
                 ui_name = "Lock Inventory",
                 ui_description = "When false, the bag button can be dragged to a new position to display the inventory at a new location",
-                value_default = true,
+                value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
             {

@@ -973,7 +973,7 @@ function draw_alchemy_button_gui(pos_x, pos_y)
         alchemy_gui_open = not alchemy_gui_open
     end
     if hovered then
-        GuiText(gui, pos_x, pos_y+5, "Open the alchemy gui")
+        GuiText(gui, pos_x, pos_y+15, "$alchemy_table_gui_toggle")
     end
 end
 
@@ -983,6 +983,13 @@ end
 
 function is_item_in_alchemy_table(item)
     return left_spot_alchemy.item == item or right_spot_alchemy.item == item or combined_spot_alchemy.item == item
+end
+
+function is_material_in_alchemy_table_selected()
+    local left_material_selected = left_spot_alchemy.item
+    local combined_material_selected = combined_spot_alchemy.item
+    local right_material_selected = right_spot_alchemy.item
+    return left_material_selected or combined_material_selected or right_material_selected
 end
 
 function is_potion_spot_hovered()
@@ -1061,6 +1068,7 @@ function potion_alchemy_table(pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z)
     GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table_button.png")
     local _, _, _, _, _, draw_width, draw_height, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+    local hovered = last_widget_is_being_hovered(gui)
     if draw_x ~= 0 and draw_y ~= 0 and draw_x ~= pos_x and draw_y ~= pos_y then
         pos_x = draw_x - draw_width / 2
         pos_y = draw_y - draw_height / 2
@@ -1072,7 +1080,7 @@ function potion_alchemy_table(pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z + 4)
     GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table.png", 1, 1 ,1)
     GuiZSetForNextWidget(gui, pos_z + 5)
-    GuiImage(gui, bags_of_many_new_id(), pos_x -3, pos_y - 3, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table_background.png", 1, 1 ,1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x -3, pos_y - 3, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_table_background.png", 1, 1)
 end
 
 function potion_alchemy_left_spot(pos_x, pos_y, pos_z)
@@ -1175,48 +1183,58 @@ function potion_alchemy_table_content(potion, pos_x, pos_y, pos_z)
 end
 
 function potion_alchemy_delete_chosen(pos_x, pos_y, pos_z)
-    GuiZSetForNextWidget(gui, pos_z + 1)
-    local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/thrashcan.png")
-    local hover = last_widget_is_being_hovered(gui)
-    if hover then
-        GuiText(gui, pos_x + 10, pos_y, GameTextGet("$alchemy_table_delete_button"))
-    end
-    if left_click or right_click then
-        if left_spot_alchemy.item then
-            if potion_alchemy_content_buttons[left_spot_alchemy.item] then
-                for index, value in pairs(potion_alchemy_content_buttons[left_spot_alchemy.item]) do
-                    if value then
-                        delete_potion_specific_content(left_spot_alchemy.item, index)
-                    end
-                end
-                potion_alchemy_content_buttons[left_spot_alchemy.item] = nil
-            end
+    if is_material_in_alchemy_table_selected() then
+        GuiZSetForNextWidget(gui, pos_z + 1)
+        local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/thrashcan.png")
+        local hover = last_widget_is_being_hovered(gui)
+        if hover then
+            GuiText(gui, pos_x + 10, pos_y, GameTextGet("$alchemy_table_delete_button"))
         end
-        if combined_spot_alchemy.item then
-            if potion_alchemy_content_buttons[combined_spot_alchemy.item] then
-                for index, value in pairs(potion_alchemy_content_buttons[combined_spot_alchemy.item]) do
-                    if value then
-                        delete_potion_specific_content(combined_spot_alchemy.item, index)
+        if left_click or right_click then
+            if left_spot_alchemy.item then
+                if potion_alchemy_content_buttons[left_spot_alchemy.item] then
+                    for index, value in pairs(potion_alchemy_content_buttons[left_spot_alchemy.item]) do
+                        if value then
+                            delete_potion_specific_content(left_spot_alchemy.item, index)
+                        end
                     end
+                    potion_alchemy_content_buttons[left_spot_alchemy.item] = nil
                 end
-                potion_alchemy_content_buttons[combined_spot_alchemy.item] = nil
             end
-        end
-        if right_spot_alchemy.item then
-            if potion_alchemy_content_buttons[right_spot_alchemy.item] then
-                for index, value in pairs(potion_alchemy_content_buttons[right_spot_alchemy.item]) do
-                    if value then
-                        delete_potion_specific_content(right_spot_alchemy.item, index)
+            if combined_spot_alchemy.item then
+                if potion_alchemy_content_buttons[combined_spot_alchemy.item] then
+                    for index, value in pairs(potion_alchemy_content_buttons[combined_spot_alchemy.item]) do
+                        if value then
+                            delete_potion_specific_content(combined_spot_alchemy.item, index)
+                        end
                     end
+                    potion_alchemy_content_buttons[combined_spot_alchemy.item] = nil
                 end
-                potion_alchemy_content_buttons[right_spot_alchemy.item] = nil
+            end
+            if right_spot_alchemy.item then
+                if potion_alchemy_content_buttons[right_spot_alchemy.item] then
+                    for index, value in pairs(potion_alchemy_content_buttons[right_spot_alchemy.item]) do
+                        if value then
+                            delete_potion_specific_content(right_spot_alchemy.item, index)
+                        end
+                    end
+                    potion_alchemy_content_buttons[right_spot_alchemy.item] = nil
+                end
             end
         end
     end
 end
 
 function potion_alchemy_amount_slider(pos_x, pos_y, pos_z)
-    local alchemy_amount_transfered = math.ceil(GuiSlider(gui, bags_of_many_new_id(), pos_x, pos_y,"", bags_mod_state.alchemy_amount_transfered, 0, 1000, 10, 0.1, "amount = $0%", 62)/10)
+    local alchemy_amount_transfered = math.ceil(GuiSlider(gui, bags_of_many_new_id(), pos_x, pos_y,"", bags_mod_state.alchemy_amount_transfered, 0, 1000, 10, 0.1, " ", 62)/10)
+    if alchemy_amount_transfered <= 0 then
+        alchemy_amount_transfered = 1
+    end
+    local hovered = last_widget_is_being_hovered(gui)
+    if hovered then
+        GuiZSetForNextWidget(gui, 1)
+        GuiText(gui, pos_x, pos_y + 10, "AMOUNT = "..tostring(bags_mod_state.alchemy_amount_transfered/10).."%")
+    end
     bags_mod_state.alchemy_amount_transfered = alchemy_amount_transfered * 10
 end
 
