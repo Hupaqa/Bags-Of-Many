@@ -282,7 +282,9 @@ function draw_inventory_v2(active_item, pos_x, pos_y, pos_z, entity, level)
         positions[level] = inventory(gui, storage_size, item_per_line, pos_x + 25 + (5 * (level - 1)), pos_y + (28 * (level - 1)), pos_z + 100)
 
         -- Inventory Options
-        setup_inventory_options_buttons(entity, level, positions[level].positions_x[#positions[level].positions_x] + 25, positions[level].positions_y[#positions[level].positions_y] - 3, pos_z + 100)
+        if positions and positions[level] then
+            setup_inventory_options_buttons(entity, level, positions[level].positions_x[#positions[level].positions_x] + 25, positions[level].positions_y[#positions[level].positions_y] - 3, pos_z + 100)
+        end
 
         -- Items drawing loop
         local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
@@ -367,6 +369,9 @@ end
 
 function draw_inventory_v2_items(items, positions, bag, level, pos_z)
     -- LOOP FOR ITEMS
+    if not items then
+        return
+    end
     for i = 1, #items do
         local item = items[i]
         if item and not(dragged_item_table.item and dragged_item_table.item == item) then
@@ -844,11 +849,13 @@ function draw_tooltip(item, pos_x, pos_y, level)
         end
         spell_tooltip_size_y = spell_tooltip_size_y + text_height
         local tooltip_y_always_cast_space = 0
-        if #always_cast > 0 then
+        if always_cast and #always_cast > 0 then
             local number_of_always_cast_lines, _, draw_w = draw_wand_always_cast_spells(always_cast, tooltip_x, tooltip_y + text_height)
-            local space_occupied_by_always_cast = ((number_of_always_cast_lines + 1) * draw_w) - 4
-            tooltip_y_always_cast_space = space_occupied_by_always_cast + 8
-            spell_tooltip_size_y = spell_tooltip_size_y + space_occupied_by_always_cast + 8
+            if number_of_always_cast_lines and draw_w then
+                local space_occupied_by_always_cast = ((number_of_always_cast_lines + 1) * draw_w) - 4
+                tooltip_y_always_cast_space = space_occupied_by_always_cast + 8
+                spell_tooltip_size_y = spell_tooltip_size_y + space_occupied_by_always_cast + 8
+            end
         end
         draw_wand_spells(wand_capacity, normal_cast, spells_per_line, tooltip_x, tooltip_y + text_height + tooltip_y_always_cast_space)
         draw_background_box(gui, tooltip_x, tooltip_y, 4, spell_tooltip_size_x, spell_tooltip_size_y, 8, 10, 10, 8)
@@ -858,14 +865,16 @@ end
 function filter_wand_spells(wand_spells)
     local always_cast = {}
     local normal_cast = {}
-    for i = 1, #wand_spells do
-        if is_spell_permanently_attached(wand_spells[i]) then
-            table.insert(always_cast, wand_spells[i])
-        else
-            table.insert(normal_cast, wand_spells[i])
+    if wand_spells then
+        for i = 1, #wand_spells do
+            if is_spell_permanently_attached(wand_spells[i]) then
+                table.insert(always_cast, wand_spells[i])
+            else
+                table.insert(normal_cast, wand_spells[i])
+            end
         end
+        return always_cast, normal_cast
     end
-    return always_cast, normal_cast
 end
 
 function draw_wand_spells(wand_capacity, wand_spells, spells_per_line,  pos_x, pos_y)
@@ -889,28 +898,30 @@ function draw_wand_spells(wand_capacity, wand_spells, spells_per_line,  pos_x, p
 end
 
 function draw_wand_always_cast_spells(wand_spells, pos_x, pos_y)
-    local alpha = 1
-    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y + 1, "data/ui_gfx/inventory/icon_gun_permanent_actions.png", alpha, 1, 1)
-    GuiText(gui, pos_x + 14, pos_y, "Always cast")
-    local width = GuiGetTextDimensions(gui, "ALWAYS CAST", 1)
-    local always_cast_per_line = 5
-    local draw_w, draw_h = 0,0
-    local number_of_always_cast_lines = math.floor((#wand_spells-1)/always_cast_per_line)
-    for i = 1, #wand_spells do
-        local background_pos_x = pos_x+(13*((i-1)%always_cast_per_line)) + width
-        local background_pos_y = pos_y+(math.floor((i-1)/always_cast_per_line)*13) - 4
-        -- Spell sprite
-        if wand_spells and wand_spells[i] then
-            local spell_sprite = get_sprite_file(wand_spells[i])
-            if spell_sprite then
-                GuiZSetForNextWidget(gui, 1)
-                GuiImage(gui, bags_of_many_new_id(), background_pos_x+3, background_pos_y+3, spell_sprite, alpha, 0.65)
-                _, _, _, _, _, draw_w, draw_h = GuiGetPreviousWidgetInfo(gui)
-                draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha, 0.8)
+    if wand_spells then
+        local alpha = 1
+        GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y + 1, "data/ui_gfx/inventory/icon_gun_permanent_actions.png", alpha, 1, 1)
+        GuiText(gui, pos_x + 14, pos_y, "Always cast")
+        local width = GuiGetTextDimensions(gui, "ALWAYS CAST", 1)
+        local always_cast_per_line = 5
+        local draw_w, draw_h = 0,0
+        local number_of_always_cast_lines = math.floor((#wand_spells-1)/always_cast_per_line)
+        for i = 1, #wand_spells do
+            local background_pos_x = pos_x+(13*((i-1)%always_cast_per_line)) + width
+            local background_pos_y = pos_y+(math.floor((i-1)/always_cast_per_line)*13) - 4
+            -- Spell sprite
+            if wand_spells and wand_spells[i] then
+                local spell_sprite = get_sprite_file(wand_spells[i])
+                if spell_sprite then
+                    GuiZSetForNextWidget(gui, 1)
+                    GuiImage(gui, bags_of_many_new_id(), background_pos_x+3, background_pos_y+3, spell_sprite, alpha, 0.65)
+                    _, _, _, _, _, draw_w, draw_h = GuiGetPreviousWidgetInfo(gui)
+                    draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha, 0.8)
+                end
             end
         end
+        return number_of_always_cast_lines, draw_w, draw_h
     end
-    return number_of_always_cast_lines, draw_w, draw_h
 end
 
 function draw_action_type(entity, pos_x, pos_y, pos_z, alpha, scale)
