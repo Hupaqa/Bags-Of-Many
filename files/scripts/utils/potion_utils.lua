@@ -10,7 +10,7 @@ function get_biggest_potion_content( entity_id )
                 local material = {
                     id = i - 1,
                     name = CellFactory_GetUIName(i - 1),
-                    amount = (counts[i]/capacity) * (capacity/10),
+                    amount = (counts[i]/capacity) * (100),
                 }
                 if biggest_potion_content == nil then
                     biggest_potion_content = material
@@ -35,7 +35,7 @@ function get_potion_contents( entity_id )
                 local material = {
                     id = i - 1,
                     name = CellFactory_GetUIName(i - 1),
-                    amount = (counts[i]/capacity) * (capacity/10),
+                    amount = (counts[i]/capacity) * (100),
                 }
                 table.insert(materials, material)
             end
@@ -171,15 +171,18 @@ end
 function ingest_potion_material(potion, player)
     local material = get_biggest_potion_content(potion)
     if material and material.id then
-        local type = CellFactory_GetType(CellFactory_GetName(material.id))
-        if type then
-            local amount_consumed = 100
-            if material.amount * 10 < 100 then
-                amount_consumed = material.amount * 10
+        local name = CellFactory_GetName(material.id)
+        if name then
+            local type = CellFactory_GetType(name)
+            if type then
+                local amount_consumed = 100
+                if material.amount * 10 < 100 then
+                    amount_consumed = material.amount * 10
+                end
+                EntityIngestMaterial(player, type, amount_consumed)
+                local mat_name = CellFactory_GetName(material.id)
+                AddMaterialInventoryMaterial(potion, mat_name, material.amount * 10 - amount_consumed)
             end
-            EntityIngestMaterial(player, type, amount_consumed)
-            local mat_name = CellFactory_GetName(material.id)
-            AddMaterialInventoryMaterial(potion, mat_name, material.amount * 10 - amount_consumed)
         end
     end
 end

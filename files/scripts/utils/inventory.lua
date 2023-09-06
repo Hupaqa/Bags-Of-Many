@@ -84,6 +84,14 @@ function get_entity_velocity_compenent(entity)
     return velocity_comp
 end
 
+function has_material_inventory(entity)
+    local material_inv = EntityGetComponentIncludingDisabled(entity, "MaterialInventoryComponent")
+    if material_inv then
+        return true
+    end
+    return false
+end
+
 function is_inventory_open()
 	local player = get_player_entity()
 	if player then
@@ -152,6 +160,24 @@ function is_potion(entity)
     if entity then
         local tags = EntityGetTags(entity)
         return string.find(tags, "potion") ~= nil
+    else
+        return false
+    end
+end
+
+function is_powder_stash(entity)
+    local is_powder_stash = false
+    if entity then
+        local sprite_comps = EntityGetComponentIncludingDisabled(entity, "SpriteComponent")
+        if sprite_comps then
+            for _, sprite_comp in ipairs(sprite_comps) do
+                local image_file = ComponentGetValue(sprite_comp, "image_file")
+                if image_file and image_file == "data/items_gfx/material_pouch.png" then
+                    is_powder_stash = true
+                end
+            end
+        end
+        return is_powder_stash
     else
         return false
     end
@@ -269,7 +295,7 @@ function get_bag_size(entity)
 end
 
 function is_allowed_in_potions_bag(entity_id)
-    return is_potion(entity_id)
+    return has_material_inventory(entity_id)
 end
 
 function is_allowed_in_spells_bag(entity_id)

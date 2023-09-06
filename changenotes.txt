@@ -1,1 +1,4 @@
-"________1.4________\n - Potion Mixing with potion pouches or universal bags (settings need to be turned on).\n  - Fixed empty wand display breaking gui.\n Right click on potion consumes some of the potion content.\n"
+________1.4________
+- Potion Mixing with potion pouches or universal bags (settings need to be turned on).
+- Right click on potion consumes some of the potion content.
+- Fixed empty wand display breaking gui.

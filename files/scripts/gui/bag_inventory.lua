@@ -399,10 +399,10 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                         if is_potion(item) then
                             local player = get_player()
                             if player then
-                                ingest_potion_material(item, player)
+                                -- ingest_potion_material(item, player)
                             end
                         else
-                            if not dropdown_style and is_bag(item) then
+                            if not dropdown_style and is_bag(item) and active_item_bag then
                                 if inventory_bag_table[active_item_bag][level+1] == item then
                                     inventory_bag_table[active_item_bag] = remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
                                 else
@@ -541,7 +541,7 @@ function swapping_inventory_v2(sort_by_time)
 end
 
 function swapping_potion_alchemy()
-    if dragged_item_table.item and is_potion(dragged_item_table.item) then
+    if dragged_item_table.item and has_material_inventory(dragged_item_table.item) then
         if left_spot_alchemy.hovered then
             left_spot_alchemy.item = dragged_item_table.item
             if right_spot_alchemy.item == left_spot_alchemy.item then
@@ -784,21 +784,27 @@ function generate_tooltip(item)
                 tooltip = action_id
             end
         end
-    elseif EntityHasTag(item, "potion") then
+    elseif has_material_inventory(item) then
         local potion_fill_percent = get_potion_fill_percent(item)
+        local potion_size = get_potion_size(item)
         local materials = get_potion_contents(item)
         if materials then
+            local material_inv_type = "POTION"
+            if is_powder_stash(item) then
+                material_inv_type = "POUCH"
+            end
             for i = 1, #materials do
                 local game_text = GameTextGet(materials[i].name)
                 if i == 1 then
-                    tooltip = tooltip .. string.upper(game_text) .. " " .. "POTION" .. " (" .. string.format("%.2f", potion_fill_percent*100) .. "% FULL)" .. "\n"
+                    tooltip = tooltip .. string.upper(game_text) .. " " .. material_inv_type .. " (" .. string.format("%.2f", potion_fill_percent*100) .. "% FULL)" .. "\n"
                 end
                 local text_to_add = string.format("%.2f", materials[i].amount) .. "% " .. string.upper(game_text:sub(1,1)) .. game_text:sub(2, #game_text)
                 tooltip = tooltip .. text_to_add .. "\n"
             end
             if #materials <= 0 then
-                tooltip = tooltip .. "EMPTY POTION"
+                tooltip = tooltip .. "EMPTY " .. material_inv_type
             end
+            -- tooltip = tooltip .. "size : [" .. tostring(potion_size) .. "]\n"
         end
     else
         local item_component = EntityGetComponentIncludingDisabled(item, "ItemComponent")
@@ -1105,7 +1111,13 @@ function potion_alchemy_left_spot(pos_x, pos_y, pos_z)
     local potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_empty_spot.png"
     if left_spot_alchemy.item then
         add_potion_color(gui, left_spot_alchemy.item)
-        potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
+        if is_potion(left_spot_alchemy.item) then
+            potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
+        elseif is_powder_stash(left_spot_alchemy.item) then
+            potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/material_pouch.png"
+            pos_x = pos_x - 2
+            pos_y = pos_y - 2
+        end
     else
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
     end
@@ -1131,7 +1143,13 @@ function potion_alchemy_combined_spot(pos_x, pos_y, pos_z)
     local potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_empty_spot.png"
     if combined_spot_alchemy.item then
         add_potion_color(gui, combined_spot_alchemy.item)
-        potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
+        if is_potion(combined_spot_alchemy.item) then
+            potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
+        elseif is_powder_stash(combined_spot_alchemy.item) then
+            potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/material_pouch.png"
+            pos_x = pos_x - 2
+            pos_y = pos_y - 2
+        end
     else
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
     end
@@ -1157,7 +1175,13 @@ function potion_alchemy_right_spot(pos_x, pos_y, pos_z)
     local potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_empty_spot.png"
     if right_spot_alchemy.item then
         add_potion_color(gui, right_spot_alchemy.item)
-        potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
+        if is_potion(right_spot_alchemy.item) then
+            potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
+        elseif is_powder_stash(right_spot_alchemy.item) then
+            potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/material_pouch.png"
+            pos_x = pos_x - 2
+            pos_y = pos_y - 2
+        end
     else
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
     end
@@ -1412,7 +1436,7 @@ function add_item_specifity(gui, entity, x, y, z)
     if EntityHasTag(entity, "card_action") then
         --Draw the action type if its a spell
         draw_action_type(entity, x - 2, y - 2, z, 1, 1)
-    elseif EntityHasTag(entity, "potion") then
+    elseif has_material_inventory(entity) then
         -- Add the color to the potion sprite
         add_potion_color(gui, entity)
     end
