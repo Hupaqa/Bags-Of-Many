@@ -1231,6 +1231,7 @@ function potion_alchemy_table_content(potion, pos_x, pos_y, pos_z)
             position_y = position_y + 12
         end
         GuiEndScrollContainer(gui)
+        draw_background_click_capture(gui, pos_x, pos_y, pos_z + 1, 100 + 6, height + 6)
     end
 end
 

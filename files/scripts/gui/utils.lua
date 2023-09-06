@@ -131,3 +131,13 @@ function auto_draw_background_box(gui, pos_z, pad_top, pad_right, pad_bottom, pa
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
 end
+
+function draw_background_click_capture(gui, pos_x, pos_y, pos_z, size_x, size_y)
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.AlwaysClickable)
+    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_click_prevention.png", 1, size_x, size_y)
+end
