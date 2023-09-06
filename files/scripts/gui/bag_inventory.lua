@@ -1061,7 +1061,7 @@ function potion_alchemy_spots(pos_x, pos_y, pos_z)
 
     potion_alchemy_delete_chosen(pos_x +50, pos_y + 34, pos_z)
     potion_alchemy_transfer(pos_x - 10, pos_y + 23, pos_z)
-    potion_alchemy_amount_slider(pos_x - 2, pos_y + 44, pos_z)
+    potion_alchemy_amount_slider(pos_x - 2, pos_y + 48, pos_z)
 
     potion_alchemy_left_spot(pos_x+4, pos_y+8, pos_z)
     potion_alchemy_combined_spot(pos_x+20, pos_y+11, pos_z)
@@ -1220,7 +1220,7 @@ function potion_alchemy_delete_chosen(pos_x, pos_y, pos_z)
         if hover then
             GuiZSetForNextWidget(gui, 1)
             GuiColorSetForNextWidget(gui, 1, 0.2, 0.2, 1)
-            GuiText(gui, pos_x + 20, pos_y, GameTextGet("$alchemy_table_delete_button"))
+            GuiText(gui, pos_x + 20, pos_y, GameTextGet("$alchemy_table_delete_button").." ("..tostring(bags_mod_state.alchemy_amount_transfered/10).."%)")
             auto_draw_background_box(gui, 2, 3, 6)
         end
         if left_click or right_click then
@@ -1285,7 +1285,7 @@ function potion_alchemy_transfer(pos_x, pos_y, pos_z)
         if hover then
             GuiZSetForNextWidget(gui, 1)
             GuiColorSetForNextWidget(gui, 1, 1, 0.2, 1)
-            GuiText(gui, pos_x + 20, pos_y, GameTextGet("$alchemy_table_transfer_button"))
+            GuiText(gui, pos_x + 20, pos_y, GameTextGet("$alchemy_table_transfer_button").." ("..tostring(bags_mod_state.alchemy_amount_transfered/10).."%)")
             auto_draw_background_box(gui, 2, 3, 6)
         end
         if left_click or right_click then
