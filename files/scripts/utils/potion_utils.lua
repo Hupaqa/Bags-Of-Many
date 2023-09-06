@@ -82,7 +82,21 @@ function get_potion_avalaible_space(entity_id)
         end
         return capacity - total_material_count
     end
-    return 0
+end
+
+function get_potion_size(entity_id)
+    local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
+    if suc_component ~= nil then
+        return ComponentGetValue2(suc_component, "barrel_size")
+    end
+end
+
+function get_potion_fill_percent(entity_id)
+    local potion_size = get_potion_size(entity_id)
+    local potion_space_left = get_potion_avalaible_space(entity_id)
+    if potion_size and potion_space_left then
+        return (potion_size - potion_space_left)/potion_size
+    end
 end
 
 function transfer_potion_specific_content(potion_from, potion_to, material_id, amount_transfered)
@@ -128,6 +142,27 @@ function delete_potion_specific_content(entity_id, material_id)
     AddMaterialInventoryMaterial(entity_id, mat_name, 0)
 end
 
+function delete_potion_specific_content_quantity(entity_id, material_id, amount_deleted)
+    local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
+    local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
+    local material_count
+    if suc_component ~= nil and inv_component ~= nil then
+        local counts = ComponentGetValue2(inv_component, "count_per_material_type")
+        if counts then
+            material_count = counts[material_id+1]
+        end
+    end
+    if material_count then
+        if amount_deleted > material_count then
+            amount_deleted = material_count
+        end
+        local mat_name = CellFactory_GetName(material_id)
+        AddMaterialInventoryMaterial(entity_id, mat_name, material_count - amount_deleted)
+        return material_count - amount_deleted
+    end
+    return 0
+end
+
 function reduce_potion_to_amount(potion, material_id, amount)
     local mat_name = CellFactory_GetName(material_id)
     AddMaterialInventoryMaterial(potion, mat_name, amount)
@@ -146,5 +181,15 @@ function ingest_potion_material(potion, player)
             local mat_name = CellFactory_GetName(material.id)
             AddMaterialInventoryMaterial(potion, mat_name, material.amount * 10 - amount_consumed)
         end
+    end
+end
+
+function add_potion_color(gui, entity)
+    local potion_color = GameGetPotionColorUint(entity)
+    if potion_color ~= 0 then
+        local b = bit.rshift(bit.band(potion_color, 0xFF0000), 16) / 0xFF
+        local g = bit.rshift(bit.band(potion_color, 0xFF00), 8) / 0xFF
+        local r = bit.band(potion_color, 0xFF) / 0xFF
+        GuiColorSetForNextWidget(gui, r, g, b, 1)
     end
 end

@@ -801,6 +801,28 @@ mod_settings =
         }
     },
     {
+        category_id = "bag_abilities",
+        foldable = true,
+        _folded = true,
+        ui_name = "Bag Abilities",
+        ui_description = "Bag abilities options",
+        settings = {
+            {
+                ui_fn = mod_setting_section,
+                ui_name = "Universal Bag",
+                ui_description = "",
+                not_setting = true,
+            },
+            {
+                id = "universal_bag_alchemy_table",
+                ui_name = "Universal bag alchemy table",
+                ui_description = "When true the universal bags have the alchemy table gui available.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+        }
+    },
+    {
         category_id = "bags_of_many_version",
         foldable = false,
         _folded = true,

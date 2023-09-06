@@ -140,18 +140,30 @@ function is_wand(entity)
 end
 
 function is_item(entity)
-	local tags = EntityGetTags(entity)
-    return string.find(tags, "item_pickup") ~= nil
+    if entity then
+        local tags = EntityGetTags(entity)
+        return string.find(tags, "item_pickup") ~= nil
+    else
+        return false
+    end
 end
 
 function is_potion(entity)
-    local tags = EntityGetTags(entity)
-    return string.find(tags, "potion") ~= nil
+    if entity then
+        local tags = EntityGetTags(entity)
+        return string.find(tags, "potion") ~= nil
+    else
+        return false
+    end
 end
 
 function is_spell(entity)
-    local tags = EntityGetTags(entity)
-    return string.find(tags, "card_action") ~= nil
+    if entity then
+        local tags = EntityGetTags(entity)
+        return string.find(tags, "card_action") ~= nil
+    else
+        return false
+    end
 end
 
 function is_bag(entity_id)
