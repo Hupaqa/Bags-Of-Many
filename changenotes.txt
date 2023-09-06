@@ -1,1 +1,1 @@
-"----1.2.5----\n - Inventory dragging (only in bag inventory and EXPERIMENTAL).\n  Swapping items positions (only with position sorting)\n Dropping items\n - Better bag inception display (bags in bags).\n - Drop item orderly using item order\n"
+"________1.4________\n - Potion Mixing with potion pouches or universal bags (settings need to be turned on).\n  - Fixed empty wand display breaking gui.\n Right click on potion consumes some of the potion content.\n"

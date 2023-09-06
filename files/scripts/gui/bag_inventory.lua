@@ -136,7 +136,6 @@ end
 function bags_of_many_bag_gui(pos_x, pos_y)
     GuiStartFrame(gui)
     GuiOptionsAdd(gui, GUI_OPTION.NoPositionTween)
-    -- button_test(500, 20)
 
     local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()

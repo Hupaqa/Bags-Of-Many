@@ -1,6 +1,10 @@
 A mod that adds different bags you can find in the world of Noita allowing you to carry more of you wizard stuff by expanding your available inventory space.
 
-[b] Better inventory dragging now available you can now move items between bags if you allowed bag inception. [/b]
+[b] POTION ALCHEMY TABLE now available in potion pouches and universal bags (setting need to be turned on).
+- Click the small icon to the left of the potion or universal bag gui button.
+- Materials in potions wont react together except if you are on the beta branch since it's a new feature there.[/b]
+
+Better inventory dragging now available you can now move items between bags if you allowed bag inception.
 
 To pickup items in the bags you need to hold it in your hands then use your [b]KICK[/b] action near an object you want to pick up. The items you can pick up depends on the type of bag.
 
