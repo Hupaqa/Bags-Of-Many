@@ -38,3 +38,4 @@ alchemy_table_delete_button,Delete selected contents,,,,Supprime les matériaux 
 alchemy_table_transfer_button,Transfer selected contents to middle potion,,,,Transfer les matériaux selectionnés dans la potion du milieu,,,,,,,,,
 alchemy_table_gui_toggle,[LMB] Open the alchemy gui,,,,[LMB] Ouvrir le gui d'alchimie,,,,,,,,,
 alchemy_table_move_button,Move the alchemy gui,,,,Bouger la table d'alchimie,,,,,,,,,
+alchemy_table_unselect_all_materials,Unselect all materials,,,,Déselectionner tout les matériaux,,,,,,,,,

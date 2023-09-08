@@ -130,6 +130,15 @@ function get_var_storage_with_name(entity_id, name)
     end
 end
 
+function add_var_storage_with_name(entity_id, name)
+    if not entity_id or not name then
+        return 0
+    end
+    return EntityAddComponent2(entity_id, "VariableStorageComponent", {
+        name=name,
+    })
+end
+
 function calculate_grid(length, nb_items, px_rows, px_columns, direction)
     local grid = {x = {}, y = {}}
     if direction == "column" then

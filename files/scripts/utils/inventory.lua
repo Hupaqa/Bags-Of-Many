@@ -79,7 +79,7 @@ function get_player_control_component()
     return control_comp
 end
 
-function get_entity_velocity_compenent(entity)
+function get_entity_velocity_component(entity)
     local velocity_comp = EntityGetFirstComponentIncludingDisabled(entity, "VelocityComponent")
     return velocity_comp
 end
@@ -112,6 +112,9 @@ function is_spell_permanently_attached(entity)
 end
 
 function is_in_bag_tree(bag, item_to_switch)
+    if not item_to_switch then
+        return false
+    end
     local parent = item_to_switch
     while parent ~= 0 do
         if parent == bag then
@@ -328,6 +331,9 @@ function is_allowed_in_bag(item_id, bag_id)
 end
 
 function find_item_level_in_draw_list(draw_list, item)
+    if not draw_list or not item then
+        return
+    end
     local level_item = 0
     for key, value in pairs(draw_list) do
         if value == item then
@@ -338,6 +344,9 @@ function find_item_level_in_draw_list(draw_list, item)
 end
 
 function remove_draw_list_up_to_level(draw_list, level)
+    if not draw_list or not level then
+        return
+    end
     for key, _ in pairs(draw_list) do
         if key >= level then
             draw_list[key] = nil
@@ -347,6 +356,9 @@ function remove_draw_list_up_to_level(draw_list, level)
 end
 
 function remove_draw_list_under_level(draw_list, level)
+    if not draw_list or not level then
+        return
+    end
     for key, _ in pairs(draw_list) do
         if key > level then
             draw_list[key] = nil
@@ -447,11 +459,35 @@ function get_player_inventory_quick()
     end
 end
 
+function get_player_inventory_quick_items()
+    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
+        if EntityGetName(child) == "inventory_quick" then
+            return EntityGetAllChildren(child)
+        end
+    end
+end
+
 function get_player_inventory_full()
     for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
         if EntityGetName(child) == "inventory_full" then
             return child
         end
+    end
+end
+
+function get_player_inventory_full_items()
+    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
+        if EntityGetName(child) == "inventory_full" then
+            return EntityGetAllChildren(child)
+        end
+    end
+end
+
+function get_item_inventory_slot(entity_id)
+    local item_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ItemComponent")
+    if item_comp then
+        local inv_x = ComponentGetValue2(item_comp, "inventory_slot")
+        return inv_x
     end
 end
 
@@ -539,7 +575,7 @@ function remove_item_position(entity)
 end
 
 -- SWAPS ITEM TO A POSITION (EMPTY POSITION)
-function swap_item_to_position(item, position, bag)    
+function swap_item_to_position(item, position, bag)
     -- Prevent bag being placed inside themselves (will cause CRASH)
     if item == bag then
         return
@@ -551,6 +587,9 @@ function swap_item_to_position(item, position, bag)
     end
 
     local var_storage_one = get_var_storage_with_name(item, "bags_of_many_item_position")
+    if not var_storage_one then
+        var_storage_one = add_var_storage_with_name(item, "bags_of_many_item_position")
+    end
     if var_storage_one then
         local bag_inventory = get_inventory(bag)
         local item_inventory = EntityGetParent(item)
@@ -838,12 +877,20 @@ end
 
 function get_sprite_file( entity_id )
     local sprite = "mods/bags_of_many/files/ui_gfx/inventory/unidentified_item.png"
+    if not entity_id then
+        return sprite
+    end
     -- Sprite for the spells and wands
     if EntityHasTag(entity_id, "card_action") or is_wand(entity_id) then
         local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
         if item_component then
             local wand_sprite = ComponentGetValue2(item_component[1], "image_file")
-            if wand_sprite and wand_sprite ~= "" then
+            if string_contains(wand_sprite, ".xml") then
+                local png_file = extract_png_file_from_xml(wand_sprite)
+                if png_file then
+                    sprite = png_file
+                end
+            elseif wand_sprite and wand_sprite ~= "" then
                 sprite = wand_sprite
             end
         end
@@ -916,6 +963,9 @@ function show_entity( entity_id )
 end
 
 function moved_far_enough(pos_x, pos_y, init_x, init_y, limit_x, limit_y)
+    if not pos_x or not pos_y or not init_x or not init_y then
+        return true
+    end
     local moved_enough = false
     local delta_x = pos_x - init_x
     local delta_y = pos_y - init_y

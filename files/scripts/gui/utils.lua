@@ -140,4 +140,38 @@ function draw_background_click_capture(gui, pos_x, pos_y, pos_z, size_x, size_y)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.AlwaysClickable)
     GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_click_prevention.png", 1, size_x, size_y)
+    return GuiGetPreviousWidgetInfo(gui)
+end
+
+function is_xml_sprite_file(entity_id)
+    if entity_id then
+        local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
+        if item_component then
+            local sprite = ComponentGetValue2(item_component[1], "image_file")
+            if string_contains(sprite, ".xml") then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function extract_png_file_from_xml(xml_file)
+    if xml_file then
+        if not bags_mod_state.is_file_exist(xml_file) then
+            return
+        end
+        if  bags_mod_state.xml_file_png and bags_mod_state.xml_file_png[xml_file] then
+            return bags_mod_state.xml_file_png[xml_file]
+        end
+        local file_content = bags_mod_state.get_file_content(xml_file)
+        if file_content then
+            local file_png_with_apostrophe = string.match(file_content, '%".+%.png%"')
+            if file_png_with_apostrophe then
+                local file_png = string.gsub(file_png_with_apostrophe, '"', "")
+                bags_mod_state.xml_file_png[xml_file] = file_png
+                return file_png
+            end
+        end
+    end
 end
