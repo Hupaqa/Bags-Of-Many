@@ -689,6 +689,10 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
             if mouse_x and mouse_y and sprite then
                 local sprite_size_x, sprite_size_y = GuiGetImageDimensions(gui, sprite)
                 local offset_x, offset_y = padding_to_center(20, 20, sprite_size_x, sprite_size_y)
+                GuiZSetForNextWidget(gui, 1)
+                if is_potion(vanilla_inventory_table.quick.widget_item) then
+                    add_potion_color(gui, vanilla_inventory_table.quick.widget_item)
+                end
                 GuiImage(gui, bags_of_many_new_id(), mouse_x/2 + offset_x, mouse_y/2 + offset_y, sprite, 1, 1)
             end
         end

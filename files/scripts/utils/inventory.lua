@@ -738,11 +738,12 @@ function add_item_to_inventory_quick_vanilla(item, position)
         local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
         if can_be_added_at_pos and player_inv_quick_table and player_inv_quick and item_comp then
             if not player_inv_quick_table[position] then
-                hide_entity(item)
                 remove_component_pickup_frame(item)
                 remove_item_position(item)
                 EntityRemoveFromParent(item)
                 EntityAddChild(player_inv_quick, item)
+                ComponentSetValue2(item_comp, "play_hover_animation", false)
+                ComponentSetValue2(item_comp, "has_been_picked_by_player", true)
                 ComponentSetValue2(item_comp, "inventory_slot", position, 0)
             end
         end
