@@ -35,7 +35,7 @@ item_description_bag_potions_small,A pouch for novices that is able to carry a s
 item_description_bag_potions_medium,A pouch for adepts that is able to carry a medium amount of potions,,,,Un sac pour adeptes qui est capable de transporter une quantité moyenne de potions,,,,,,,,,
 item_description_bag_potions_big,A pouch for masters that is able to carry a large amount of potions,,,,Un sac pour maîtres qui est capable de transporter une grande quantité de potions,,,,,,,,,
 alchemy_table_delete_button,Delete selected contents,,,,Supprime les matériaux sélectionné,,,,,,,,,
-alchemy_table_transfer_button,Transfer selected contents to middle potion,,,,Transfer les matériaux selectionnés dans la potion du milieu,,,,,,,,,
+alchemy_table_transfer_button,Transfer selected contents to middle potion (II),,,,Transfer les matériaux selectionnés dans la potion du milieu (II),,,,,,,,,
 alchemy_table_gui_toggle,[LMB] Open the alchemy gui,,,,[LMB] Ouvrir le gui d'alchimie,,,,,,,,,
 alchemy_table_move_button,Move the alchemy gui,,,,Bouger la table d'alchimie,,,,,,,,,
 alchemy_table_unselect_all_materials,Unselect all materials,,,,Déselectionner tout les matériaux,,,,,,,,,

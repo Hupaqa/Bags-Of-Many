@@ -159,12 +159,12 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     if inventory_open and ((not only_show_bag_button_when_held) or (is_bag(active_item) and only_show_bag_button_when_held)) then
         draw_inventory_button(pos_x, pos_y, active_item)
     end
-    if inventory_open and is_bag(active_item) then
+    if inventory_open and is_bag(active_item) and GameIsBetaBuild() then
         draw_vanilla_inventory_v2(gui)
     end
 
     local level = 1
-
+    
     if active_item and inventory_open and is_bag(active_item) and bag_open then
         active_item_bag = active_item
         if not inventory_bag_table[active_item_bag] then
@@ -174,6 +174,7 @@ function bags_of_many_bag_gui(pos_x, pos_y)
         if inventory_bag_table[active_item_bag][level] ~= active_item then
             inventory_bag_table[active_item_bag][level] = active_item_bag
         end
+        local alchemy_gui_button_drawn = false
         if not option_changed then
             local pos_z = 10
             for bag_level, bag in pairs(inventory_bag_table[active_item_bag]) do
@@ -185,10 +186,11 @@ function bags_of_many_bag_gui(pos_x, pos_y)
                 end
                 draw_inventory_v2(active_item, pos_x, pos_y, pos_z, bag, bag_level)
                 if is_potion_bag(bag) or (ModSettingGet("BagsOfMany.universal_bag_alchemy_table") and is_universal_bag(bag)) then
+                    alchemy_gui_button_drawn = true
                     draw_alchemy_button_gui(pos_x-10, pos_y+1)
                 end
             end
-            if alchemy_gui_open then
+            if alchemy_gui_open and alchemy_gui_button_drawn then
                 potion_mixing_gui(bags_mod_state.alchemy_pos_x, bags_mod_state.alchemy_pos_y, 10)
             end
         end
@@ -205,7 +207,9 @@ function bags_of_many_bag_gui(pos_x, pos_y)
         gui = GuiCreate()
     end
     hovered_item_table = reset_item_table(hovered_item_table)
-    detect_vanilla_inventory_mouse_release(gui)
+    if GameIsBetaBuild() then
+        detect_vanilla_inventory_mouse_release(gui)
+    end
 
     -- OPTION CHANGE PROCESSING
     if sort_order_change_flag then
@@ -544,20 +548,20 @@ function draw_inventory_dragged_item_v2(pos_z)
 end
 
 function swapping_inventory_v2(sort_by_t)
-    if not vanilla_inventory_table.quick.widget_item then
+    if GameIsBetaBuild() and vanilla_inventory_table.quick.widget_item then
+        swapping_vanilla_inventory()
+    else
         if not is_potion_spot_hovered() then
             swapping_in_bag_inventory(sort_by_t)
         else
             swapping_potion_alchemy()
         end
-    else
-        swapping_vanilla_inventory()
     end
     dragged_item_table = reset_table(dragged_item_table)
 end
 
 function swapping_in_bag_inventory(sort_by_t)
-    if vanilla_inventory_table.hovering then
+    if GameIsBetaBuild() and vanilla_inventory_table.hovering then
         if dragged_item_table.item then
             add_item_to_inventory_quick_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot)
         end
@@ -671,7 +675,6 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
         end
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
-        print("REGISTER VANILLA START")
         -- JUST USED FOR THE HOVER ANIMATION
         dragged_item_table.item = item
 
@@ -1236,7 +1239,7 @@ function potion_alchemy_spots(pos_x, pos_y, pos_z)
     end
 
     potion_unselect_all(pos_x - 10, pos_y + 13, pos_z)
-    potion_alchemy_transfer(pos_x - 10, pos_y + 23, pos_z)
+    potion_alchemy_transfer(pos_x - 10, pos_y + 24, pos_z)
     potion_alchemy_delete_chosen(pos_x +50, pos_y + 34, pos_z)
     potion_alchemy_amount_slider(pos_x - 2, pos_y + 48, pos_z)
 
@@ -1408,50 +1411,52 @@ function potion_alchemy_table_content(potion, pos_x, pos_y, pos_z)
 end
 
 function potion_alchemy_delete_chosen(pos_x, pos_y, pos_z)
+    local delete_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/thrashcan_disabled.png"
     if is_material_in_alchemy_table_selected() then
-        GuiZSetForNextWidget(gui, 3)
-        GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
-        local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/thrashcan.png")
-        local hover = last_widget_is_being_hovered(gui)
-        if hover then
-            GuiZSetForNextWidget(gui, 1)
-            GuiColorSetForNextWidget(gui, 1, 0.2, 0.2, 1)
-            GuiText(gui, pos_x + 20, pos_y, GameTextGet("$alchemy_table_delete_button").." ("..tostring(bags_mod_state.alchemy_amount_transfered/10).."%)")
-            auto_draw_background_box(gui, 2, 3, 6)
+        delete_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/thrashcan.png"
+    end
+    GuiZSetForNextWidget(gui, 3)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+    local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", delete_sprite)
+    local hover = last_widget_is_being_hovered(gui)
+    if hover then
+        GuiZSetForNextWidget(gui, 1)
+        GuiColorSetForNextWidget(gui, 1, 0.2, 0.2, 1)
+        GuiText(gui, pos_x + 20, pos_y, GameTextGet("$alchemy_table_delete_button").." ("..tostring(bags_mod_state.alchemy_amount_transfered/10).."%)")
+        auto_draw_background_box(gui, 2, 3, 6)
+    end
+    if left_click or right_click then
+        if left_spot_alchemy.item then
+            if potion_alchemy_content_buttons[left_spot_alchemy.item] then
+                for index, value in pairs(potion_alchemy_content_buttons[left_spot_alchemy.item]) do
+                    if value then
+                        local amount_left = delete_potion_specific_content_quantity(left_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                        if amount_left <= 0 then
+                            potion_alchemy_content_buttons[left_spot_alchemy.item][index] = nil
+                        end
+                    end
+                end
+            end
         end
-        if left_click or right_click then
-            if left_spot_alchemy.item then
-                if potion_alchemy_content_buttons[left_spot_alchemy.item] then
-                    for index, value in pairs(potion_alchemy_content_buttons[left_spot_alchemy.item]) do
-                        if value then
-                            local amount_left = delete_potion_specific_content_quantity(left_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
-                            if amount_left <= 0 then
-                                potion_alchemy_content_buttons[left_spot_alchemy.item][index] = nil
-                            end
+        if combined_spot_alchemy.item then
+            if potion_alchemy_content_buttons[combined_spot_alchemy.item] then
+                for index, value in pairs(potion_alchemy_content_buttons[combined_spot_alchemy.item]) do
+                    if value then
+                        local amount_left = delete_potion_specific_content_quantity(combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                        if amount_left <= 0 then
+                            potion_alchemy_content_buttons[combined_spot_alchemy.item][index] = nil
                         end
                     end
                 end
             end
-            if combined_spot_alchemy.item then
-                if potion_alchemy_content_buttons[combined_spot_alchemy.item] then
-                    for index, value in pairs(potion_alchemy_content_buttons[combined_spot_alchemy.item]) do
-                        if value then
-                            local amount_left = delete_potion_specific_content_quantity(combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
-                            if amount_left <= 0 then
-                                potion_alchemy_content_buttons[combined_spot_alchemy.item][index] = nil
-                            end
-                        end
-                    end
-                end
-            end
-            if right_spot_alchemy.item then
-                if potion_alchemy_content_buttons[right_spot_alchemy.item] then
-                    for index, value in pairs(potion_alchemy_content_buttons[right_spot_alchemy.item]) do
-                        if value then
-                            local amount_left = delete_potion_specific_content_quantity(right_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
-                            if amount_left <= 0 then
-                                potion_alchemy_content_buttons[right_spot_alchemy.item][index] = nil
-                            end
+        end
+        if right_spot_alchemy.item then
+            if potion_alchemy_content_buttons[right_spot_alchemy.item] then
+                for index, value in pairs(potion_alchemy_content_buttons[right_spot_alchemy.item]) do
+                    if value then
+                        local amount_left = delete_potion_specific_content_quantity(right_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                        if amount_left <= 0 then
+                            potion_alchemy_content_buttons[right_spot_alchemy.item][index] = nil
                         end
                     end
                 end
@@ -1474,11 +1479,12 @@ function potion_alchemy_amount_slider(pos_x, pos_y, pos_z)
 end
 
 function potion_alchemy_transfer(pos_x, pos_y, pos_z)
+    local transfer_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/transfer_button.png"
     if not combined_spot_alchemy.item then
-        GuiColorSetForNextWidget(gui, 0.5, 0.5, 0.5, 1)
+        transfer_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/transfer_button_disabled.png"
     end
     GuiZSetForNextWidget(gui, 3)
-    local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/transfer_button.png")
+    local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", transfer_sprite)
     local hover = last_widget_is_being_hovered(gui)
     if hover then
         GuiZSetForNextWidget(gui, 1)
@@ -1506,8 +1512,9 @@ end
 
 function potion_unselect_all(pos_x, pos_y, pos_z)
     if is_material_in_alchemy_table_selected() then
+        local unselect_all_button = "mods/bags_of_many/files/ui_gfx/potion_mixing/unselect_all_button.png"
         GuiZSetForNextWidget(gui, 3)
-        local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/potion_mixing/unselect_all_button.png")
+        local left_click, right_click = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", unselect_all_button)
         local hover = last_widget_is_being_hovered(gui)
         if hover then
             GuiZSetForNextWidget(gui, 1)
