@@ -111,9 +111,9 @@ local potion_alchemy_content_buttons = {}
 -- VANILLA INVENTORY VARIABLES
 local vanilla_inventory_table = {
     hovering = false,
+    hovering_spot = nil,
     quick = {
         inv_position = nil,
-        widget_id = nil,
         widget_item = nil,
         frame_click = 0,
         frame_release = 0,
@@ -159,7 +159,7 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     if inventory_open and ((not only_show_bag_button_when_held) or (is_bag(active_item) and only_show_bag_button_when_held)) then
         draw_inventory_button(pos_x, pos_y, active_item)
     end
-    if is_inventory_open() then
+    if inventory_open and is_bag(active_item) then
         draw_vanilla_inventory_v2(gui)
     end
 
@@ -180,7 +180,7 @@ function bags_of_many_bag_gui(pos_x, pos_y)
                 pos_z = 10 * bag_level
                 -- DISPLAY BAG HOVERED AT BEGINNING OF INVENTORY
                 if bag_level ~= 1 then
-                    pos_x, pos_y = pos_x + (5 * (bag_level - 1)), positions[bag_level - 1].positions_y[#positions[bag_level - 1].positions_y] + (28 * (bag_level - 1))
+                    pos_x, pos_y = pos_x + (5), positions[bag_level - 1].positions_y[#positions[bag_level - 1].positions_y] + (28)
                     multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, bag_level)
                 end
                 draw_inventory_v2(active_item, pos_x, pos_y, pos_z, bag, bag_level)
@@ -498,27 +498,14 @@ end
 
 function draw_vanilla_inventory_capture(gui, pos_x, pos_y, pos_z)
     vanilla_inventory_table.hovering = false
-    local vanilla_items = get_player_inventory_quick_items()
-    if vanilla_items then
-        local vanilla_item_pos = {}
-        local biggest_slot_found = -1
-        for i = 1, #vanilla_items do
-            local item_slot = get_item_inventory_slot(vanilla_items[i])
-            if item_slot then
-                if vanilla_item_pos[item_slot] or item_slot < biggest_slot_found then
-                    item_slot = item_slot + 4
-                end
-                vanilla_item_pos[item_slot] = vanilla_items[i]
-                if biggest_slot_found < item_slot then
-                    biggest_slot_found = item_slot
-                end
-            end
-        end
+    vanilla_inventory_table.hovering_spot = nil
+    local vanilla_item_pos = get_player_inventory_quick_table()
+    if vanilla_item_pos then
         for i = 0, 7 do
             if i == 4 then
-                pos_x = pos_x + 2
+                pos_x = pos_x + 1
             end
-            detect_vanilla_inventory_mouse_input(gui, pos_x + (20 * i), pos_y, pos_z, vanilla_item_pos[i])
+            detect_vanilla_inventory_mouse_input(gui, pos_x + (20 * i), pos_y, pos_z, vanilla_item_pos[i], i)
         end
     end
 end
@@ -558,7 +545,6 @@ end
 
 function swapping_inventory_v2(sort_by_t)
     if not vanilla_inventory_table.quick.widget_item then
-        print(tostring(vanilla_inventory_table.quick.widget_item))
         if not is_potion_spot_hovered() then
             swapping_in_bag_inventory(sort_by_t)
         else
@@ -571,6 +557,12 @@ function swapping_inventory_v2(sort_by_t)
 end
 
 function swapping_in_bag_inventory(sort_by_t)
+    if vanilla_inventory_table.hovering then
+        if dragged_item_table.item then
+            add_item_to_inventory_quick_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot)
+        end
+        return
+    end
     if not sort_by_t then
         if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
@@ -639,39 +631,44 @@ function swapping_vanilla_inventory(sort_by_t)
                 swap_item_to_position(dragged_item_table.item, hovered_item_table.position, hovered_item_table.bag)
                 hide_entity(dragged_item_table.item)
             end
-        elseif dragged_item_table.item and not hovered_item_table.item and not hovered_item_table.bag then
-            if moved_far_enough(dragged_item_table.position_x, dragged_item_table.position_y, dragged_item_table.initial_position_x, dragged_item_table.initial_position_y, 20, 20) then
-                drop_item_from_parent(dragged_item_table.item, true)
-                remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
-            end
         end
     else
         if dragged_item_table.item and hovered_item_table.bag then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
                 swap_item_to_bag(dragged_item_table.item, hovered_item_table.bag)
             end
-        elseif dragged_item_table.item and not hovered_item_table.item and not hovered_item_table.bag then
-            drop_item_from_parent(dragged_item_table.item, true)
-            remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
         end
     end
     -- Reset variables
     reset_table(dragged_item_table)
-    vanilla_inventory_table.quick.widget_id = nil
     vanilla_inventory_table.quick.widget_item = nil
     vanilla_inventory_table.quick.frame_release = 0
 end
 
-function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item)
+function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/visible20x20.png")
+    GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
     local _, _, hover = GuiGetPreviousWidgetInfo(gui)
     if hover then
         vanilla_inventory_table.hovering = true
+        vanilla_inventory_table.hovering_spot = inv_spot
+        -- mod dragging display ish
+        if dragged_item_table.item and not vanilla_inventory_table.quick.widget_item then
+            local should_display_hover_anim = true
+            if is_item(dragged_item_table.item) and vanilla_inventory_table.hovering_spot <= 3 then
+                should_display_hover_anim = false
+            elseif is_wand(dragged_item_table.item) and vanilla_inventory_table.hovering_spot >= 4 then
+                should_display_hover_anim = false
+            end
+            if should_display_hover_anim then
+                GuiZSetForNextWidget(gui, 1)
+                GuiImage(gui, bags_of_many_new_id(), pos_x - 1, pos_y - 1, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1.1)
+            end
+        end
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
         print("REGISTER VANILLA START")
@@ -679,10 +676,9 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item)
         dragged_item_table.item = item
 
         vanilla_inventory_table.quick.widget_item = item
-        vanilla_inventory_table.quick.widget_id = bags_of_many_current_id()
         vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
     end
-    if item and InputIsMouseButtonDown(1) and vanilla_inventory_table.quick.widget_item and vanilla_inventory_table.quick.widget_id == bags_of_many_current_id() then
+    if item and not is_inventory_open() and InputIsMouseButtonDown(1) and vanilla_inventory_table.quick.widget_item then
         local player_control_comp = get_player_control_component()
         if player_control_comp then
             local sprite = get_sprite_file(vanilla_inventory_table.quick.widget_item)
@@ -700,17 +696,14 @@ function detect_vanilla_inventory_mouse_release(gui)
     if InputIsMouseButtonJustUp(1) and vanilla_inventory_table.quick.widget_item then
         if not vanilla_inventory_table.hovering then
             vanilla_inventory_table.quick.frame_release = GameGetFrameNum()
+            dragging_possible_swap = true
+            dragged_item_table.item = vanilla_inventory_table.quick.widget_item
         else
             -- Reset variables
             reset_table(dragged_item_table)
-            vanilla_inventory_table.quick.widget_id = nil
             vanilla_inventory_table.quick.widget_item = nil
             vanilla_inventory_table.quick.frame_release = 0
         end
-    end
-    if vanilla_inventory_table.quick.frame_release ~= 0 and vanilla_inventory_table.quick.frame_release+1 == GameGetFrameNum() then
-        dragging_possible_swap = true
-        dragged_item_table.item = vanilla_inventory_table.quick.widget_item
     end
 end
 

@@ -151,9 +151,17 @@ function is_wand(entity)
 end
 
 function is_item(entity)
+    local ability_component = EntityGetFirstComponentIncludingDisabled(entity, "AbilityComponent")
+    local ending_mc_guffin_component = EntityGetFirstComponentIncludingDisabled(entity, "EndingMcGuffinComponent")
+    return (not ability_component) or ending_mc_guffin_component or ComponentGetValue2(ability_component, "use_gun_script") == false
+end
+
+function is_item_old(entity)
     if entity then
         local tags = EntityGetTags(entity)
-        return string.find(tags, "item_pickup") ~= nil
+        if tags then
+            return string.find(tags, "item_pickup") ~= nil
+        end
     else
         return false
     end
@@ -162,7 +170,9 @@ end
 function is_potion(entity)
     if entity then
         local tags = EntityGetTags(entity)
-        return string.find(tags, "potion") ~= nil
+        if tags then
+            return string.find(tags, "potion") ~= nil
+        end
     else
         return false
     end
@@ -189,7 +199,9 @@ end
 function is_spell(entity)
     if entity then
         local tags = EntityGetTags(entity)
-        return string.find(tags, "card_action") ~= nil
+        if tags then
+            return string.find(tags, "card_action") ~= nil
+        end
     else
         return false
     end
@@ -264,6 +276,9 @@ function is_stealable (entity)
 end
 
 function is_bag_one_smaller_than_bag_two(bag_one, bag_two)
+    if not is_bag(bag_one) or not is_bag(bag_two) then
+        return true
+    end
     local first_bag_size = get_bag_size(bag_one)
     local second_bag_size = get_bag_size(bag_two)
     if first_bag_size and second_bag_size then
@@ -388,7 +403,7 @@ function is_bag_not_full(bag, maximum)
 end
 
 function drop_item_from_parent(item, with_movement, delta_x, delta_y)
-    if item then
+    if item and type(item) == "number" then
         local active_item = get_active_item()
         if active_item then
             local override_bag = get_bag_pickup_override(active_item)
@@ -405,7 +420,9 @@ function drop_item_from_parent(item, with_movement, delta_x, delta_y)
         remove_component_pickup_frame(item)
         remove_item_position(item)
         EntityRemoveFromParent(item)
-        EntityApplyTransform(item, x, y - 5)
+        if x and y then
+            EntityApplyTransform(item, x, y - 5)
+        end
         show_entity(item)
         local control_comp = get_player_control_component()
         if control_comp and with_movement then
@@ -448,6 +465,23 @@ function drop_all_inventory(bag, orderly, sort_by_time, sorting_order)
         for _, item in ipairs(items or {}) do
             drop_item_from_parent(item)
         end
+    end
+end
+
+function get_player_inventory_quick_table()
+    local vanilla_items = get_player_inventory_quick_items()
+    if vanilla_items then
+        local vanilla_item_pos = {}
+        for i = 1, #vanilla_items do
+            local item_slot = get_item_inventory_slot(vanilla_items[i])
+            if item_slot then
+                if is_item(vanilla_items[i]) then
+                    item_slot = item_slot + 4
+                end
+                vanilla_item_pos[item_slot] = vanilla_items[i]
+            end
+        end
+        return vanilla_item_pos
     end
 end
 
@@ -689,6 +723,30 @@ function add_item_to_inventory(inventory, path)
         GamePrint("Error: Couldn't load the item ["..path.."]!")
     end
     return item
+end
+
+function add_item_to_inventory_quick_vanilla(item, position)
+    if item and type(item) == "number" and position then
+        local can_be_added_at_pos = true
+        if is_item(item) and position <= 3 then
+            can_be_added_at_pos = false
+        elseif is_wand(item) and position >= 4 then
+            can_be_added_at_pos = false
+        end
+        local player_inv_quick_table = get_player_inventory_quick_table()
+        local player_inv_quick = get_player_inventory_quick()
+        local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+        if can_be_added_at_pos and player_inv_quick_table and player_inv_quick and item_comp then
+            if not player_inv_quick_table[position] then
+                hide_entity(item)
+                remove_component_pickup_frame(item)
+                remove_item_position(item)
+                EntityRemoveFromParent(item)
+                EntityAddChild(player_inv_quick, item)
+                ComponentSetValue2(item_comp, "inventory_slot", position, 0)
+            end
+        end
+    end
 end
 
 function add_entity_to_inventory_bag(bag, inventory, entity)
