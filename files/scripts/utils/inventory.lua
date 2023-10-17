@@ -485,6 +485,20 @@ function get_player_inventory_quick_table()
     end
 end
 
+function get_player_inventory_full_table()
+    local vanilla_spells = get_player_inventory_full_items()
+    if vanilla_spells then
+        local vanilla_spell_table = {}
+        for i = 1, #vanilla_spells do
+            local item_slot = get_item_inventory_slot(vanilla_spells[i])
+            if item_slot then
+                vanilla_spell_table[item_slot] = vanilla_spells[i]
+            end
+        end
+        return vanilla_spell_table
+    end
+end
+
 function get_player_inventory_quick()
     for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
         if EntityGetName(child) == "inventory_quick" then
@@ -750,6 +764,32 @@ function add_item_to_inventory_quick_vanilla(item, position)
     end
 end
 
+function add_item_to_inventory_full_vanilla(item, pos_x, pos_y)
+    if item and type(item) == "number" and pos_x and pos_y then
+        local can_be_added_at_pos = true
+        if not is_spell(item) then
+            can_be_added_at_pos = false
+        end
+        local player_inv_full_table = get_player_inventory_full_table()
+        local player_inv_full = get_player_inventory_full()
+        local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+        if can_be_added_at_pos and player_inv_full_table and player_inv_full and item_comp then
+            print("POSITION :".. tostring(pos_x*(pos_y+1)))
+            if not player_inv_full_table[pos_x*(pos_y+1)] then
+                remove_component_pickup_frame(item)
+                remove_item_position(item)
+                EntityRemoveFromParent(item)
+                EntityAddChild(player_inv_full, item)
+                ComponentSetValue2(item_comp, "play_hover_animation", false)
+                ComponentSetValue2(item_comp, "has_been_picked_by_player", true)
+                print(tostring("pos_x"))
+                print(tostring(pos_x))
+                ComponentSetValue2(item_comp, "inventory_slot", pos_x, pos_y)
+            end
+        end
+    end
+end
+
 function add_entity_to_inventory_bag(bag, inventory, entity)
     add_component_pickup_frame(entity)
     EntityRemoveFromParent(entity)
@@ -853,6 +893,24 @@ function get_active_item()
     if player then
         local activeItem = ComponentGetValue2(EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component"), "mActualActiveItem")
         return activeItem > 0 and activeItem or nil
+    end
+end
+
+function get_inventory_two_component()
+    local player = get_player()
+    if player then
+        local inventory_comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+        return inventory_comp
+    end
+end
+
+function get_inventory_spell_size()
+    local inv_comp = get_inventory_two_component()
+    if inv_comp then
+        -- local members = ComponentGetMembers(inv_comp)
+        local x = ComponentGetValue2(inv_comp, "full_inventory_slots_x")
+        local y = ComponentGetValue2(inv_comp, "full_inventory_slots_y")
+        return x, y
     end
 end
 

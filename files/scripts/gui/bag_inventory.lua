@@ -110,9 +110,17 @@ local potion_alchemy_content_buttons = {}
 
 -- VANILLA INVENTORY VARIABLES
 local vanilla_inventory_table = {
+    inventory_type = 0,
     hovering = false,
     hovering_spot = nil,
+    hovering_spot_level = nil,
     quick = {
+        inv_position = nil,
+        widget_item = nil,
+        frame_click = 0,
+        frame_release = 0,
+    },
+    full = {
         inv_position = nil,
         widget_item = nil,
         frame_click = 0,
@@ -164,8 +172,9 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     end
 
     local level = 1
-    
+
     if active_item and inventory_open and is_bag(active_item) and bag_open then
+        clean_bag_components(active_item)
         active_item_bag = active_item
         if not inventory_bag_table[active_item_bag] then
             inventory_bag_table[active_item_bag] = {}
@@ -497,19 +506,38 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
 end
 
 function draw_vanilla_inventory_v2(gui)
+    reset_vanilla_capture_vars()
     draw_vanilla_inventory_capture(gui, MagicNumbersGetValue("UI_BARS_POS_X") - 1, MagicNumbersGetValue("UI_BARS_POS_Y"), 1)
+    if is_inventory_open() then
+        draw_vanilla_spell_inventory_capture(gui, MagicNumbersGetValue("UI_FULL_INVENTORY_OFFSET_X") + MagicNumbersGetValue("UI_BARS_POS_X"), MagicNumbersGetValue("UI_BARS_POS_Y"), 1)
+    end
+end
+
+function reset_vanilla_capture_vars()
+    vanilla_inventory_table.inventory_type = 0
+    vanilla_inventory_table.hovering = false
+    vanilla_inventory_table.hovering_spot = nil
+    vanilla_inventory_table.hovering_spot_level = nil
 end
 
 function draw_vanilla_inventory_capture(gui, pos_x, pos_y, pos_z)
-    vanilla_inventory_table.hovering = false
-    vanilla_inventory_table.hovering_spot = nil
-    local vanilla_item_pos = get_player_inventory_quick_table()
-    if vanilla_item_pos then
+    local vanilla_items = get_player_inventory_quick_table()
+    if vanilla_items then
         for i = 0, 7 do
             if i == 4 then
                 pos_x = pos_x + 1
             end
-            detect_vanilla_inventory_mouse_input(gui, pos_x + (20 * i), pos_y, pos_z, vanilla_item_pos[i], i)
+            detect_vanilla_inventory_mouse_input(gui, pos_x + (20 * i), pos_y, pos_z, vanilla_items[i], i)
+        end
+    end
+end
+
+function draw_vanilla_spell_inventory_capture(gui, pos_x, pos_y, pos_z)
+    local vanilla_spells = get_player_inventory_full_table()
+    if vanilla_spells then
+        local x, y = get_inventory_spell_size()
+        for i = 0, (x * y) - 1 do
+            detect_vanilla_spell_inventory_mouse_input(gui, pos_x + (20 * ((i)%x)), pos_y + (math.floor((i)/x)* 20), pos_z, vanilla_spells[i], i - (x *math.floor((i)/x)), math.floor((i)/x))
         end
     end
 end
@@ -563,7 +591,11 @@ end
 function swapping_in_bag_inventory(sort_by_t)
     if GameIsBetaBuild() and vanilla_inventory_table.hovering then
         if dragged_item_table.item then
-            add_item_to_inventory_quick_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot)
+            if not is_spell(dragged_item_table.item) then
+                add_item_to_inventory_quick_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot)
+            elseif is_spell(dragged_item_table.item) then
+                add_item_to_inventory_full_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot, vanilla_inventory_table.hovering_spot_level)
+            end
         end
         return
     end
@@ -649,6 +681,61 @@ function swapping_vanilla_inventory(sort_by_t)
     vanilla_inventory_table.quick.frame_release = 0
 end
 
+function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot, level)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/visible20x20.png")
+    local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+    if hover then
+        vanilla_inventory_table.inventory_type = 2
+        vanilla_inventory_table.hovering = true
+        vanilla_inventory_table.hovering_spot = inv_spot
+        vanilla_inventory_table.hovering_spot_level = level
+        -- print(tostring("inv_spot"))
+        -- print(tostring(inv_spot))
+        -- print(tostring("level"))
+        -- print(tostring(level))
+        -- mod dragging display ish
+        if dragged_item_table.item and not vanilla_inventory_table.quick.widget_item then
+            print("Hovering spot with item")
+            local should_display_hover_anim = false
+            if is_spell(dragged_item_table.item) then
+                should_display_hover_anim = true
+            end
+            if should_display_hover_anim then
+                GuiZSetForNextWidget(gui, 1)
+                GuiImage(gui, bags_of_many_new_id(), pos_x - 1, pos_y - 1, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1.1)
+            end
+        end
+    end
+    if item and hover and InputIsMouseButtonJustDown(1) then
+        -- JUST USED FOR THE HOVER ANIMATION
+        dragged_item_table.item = item
+
+        vanilla_inventory_table.quick.widget_item = item
+        vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
+    end
+    if item and not is_inventory_open() and InputIsMouseButtonDown(1) and vanilla_inventory_table.quick.widget_item then
+        local player_control_comp = get_player_control_component()
+        if player_control_comp then
+            local sprite = get_sprite_file(vanilla_inventory_table.quick.widget_item)
+            local mouse_x, mouse_y = ComponentGetValue2(player_control_comp, "mMousePositionRaw")
+            if mouse_x and mouse_y and sprite then
+                local sprite_size_x, sprite_size_y = GuiGetImageDimensions(gui, sprite)
+                local offset_x, offset_y = padding_to_center(20, 20, sprite_size_x, sprite_size_y)
+                GuiZSetForNextWidget(gui, 1)
+                if is_potion(vanilla_inventory_table.quick.widget_item) then
+                    add_potion_color(gui, vanilla_inventory_table.quick.widget_item)
+                end
+                GuiImage(gui, bags_of_many_new_id(), mouse_x/2 + offset_x, mouse_y/2 + offset_y, sprite, 1, 1)
+            end
+        end
+    end
+end
+
 function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
@@ -658,6 +745,7 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
     GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
     local _, _, hover = GuiGetPreviousWidgetInfo(gui)
     if hover then
+        vanilla_inventory_table.inventory_type = 1
         vanilla_inventory_table.hovering = true
         vanilla_inventory_table.hovering_spot = inv_spot
         -- mod dragging display ish
@@ -666,6 +754,8 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
             if is_item(dragged_item_table.item) and vanilla_inventory_table.hovering_spot <= 3 then
                 should_display_hover_anim = false
             elseif is_wand(dragged_item_table.item) and vanilla_inventory_table.hovering_spot >= 4 then
+                should_display_hover_anim = false
+            elseif is_spell(dragged_item_table.item) then
                 should_display_hover_anim = false
             end
             if should_display_hover_anim then

@@ -23,6 +23,18 @@ function last_widget_position(gui)
     return x, y
 end
 
+function clean_bag_components(item)
+    local childs = EntityGetAllChildren(item)
+    if childs then
+        for _, child in ipairs(childs) do
+            local name = EntityGetName(child)
+            if not (name == "inventory_full" or name == "inventory_quick") then
+                EntityKill(child)
+            end
+        end
+    end
+end
+
 function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)
     size_x = size_x - 1
     size_y = size_y - 1
