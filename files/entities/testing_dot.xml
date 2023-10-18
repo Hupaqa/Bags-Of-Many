@@ -1,0 +1,7 @@
+<Entity name="testing_dot" tags="teleportable_NOT">
+    <PixelSpriteComponent
+		_tags="enabled_in_world"
+        image_file="mods/bags_of_many/files/ui_gfx/testing.png"
+		>
+	</PixelSpriteComponent>
+</Entity>

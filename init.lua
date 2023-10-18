@@ -64,6 +64,8 @@ function OnPlayerSpawned(player_entity) -- This runs when player entity has been
             spawn_items_showcase(x, y)
         end
     end
+    print("HEYYYAYDAYWAYDAYWDAWODJAWODAW_________________________________________________________")
+    local is_colliding = CheckEntityCollideWithWorkshop(player_entity)
     -- Load a spell table to find their name with their id
     bags_mod_state.lookup_spells = lookup_spells()
 end

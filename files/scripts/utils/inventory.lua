@@ -485,14 +485,30 @@ function get_player_inventory_quick_table()
     end
 end
 
+function get_player_inventory_wand_table()
+    local vanilla_items = get_player_inventory_quick_items()
+    if vanilla_items then
+        local vanilla_item_pos = {}
+        local nmb_wands = 0
+        for i = 1, #vanilla_items do
+            if is_wand(vanilla_items[i]) then
+                nmb_wands = nmb_wands + 1
+                vanilla_item_pos[i] = vanilla_items[i]
+            end
+        end
+        return vanilla_item_pos, nmb_wands
+    end
+end
+
 function get_player_inventory_full_table()
     local vanilla_spells = get_player_inventory_full_items()
     if vanilla_spells then
         local vanilla_spell_table = {}
         for i = 1, #vanilla_spells do
-            local item_slot = get_item_inventory_slot(vanilla_spells[i])
-            if item_slot then
-                vanilla_spell_table[item_slot] = vanilla_spells[i]
+            local x = get_inventory_spell_size()
+            local pos_x, pos_y = get_item_inventory_slot(vanilla_spells[i])
+            if pos_x and pos_y then
+                vanilla_spell_table[pos_x+(pos_y*x)] = vanilla_spells[i]
             end
         end
         return vanilla_spell_table
@@ -534,8 +550,8 @@ end
 function get_item_inventory_slot(entity_id)
     local item_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ItemComponent")
     if item_comp then
-        local inv_x = ComponentGetValue2(item_comp, "inventory_slot")
-        return inv_x
+        local inv_x, inv_y = ComponentGetValue2(item_comp, "inventory_slot")
+        return inv_x, inv_y
     end
 end
 
@@ -557,6 +573,16 @@ function get_bag_pickup_override(bag)
             return nil
         end
         return bag_pickup_override
+    end
+end
+
+function get_spell_remaining_uses(spell)
+    if spell then
+        local item_comp = EntityGetFirstComponentIncludingDisabled(spell, "ItemComponent")
+        if item_comp then
+            local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+            return uses_remaining
+        end
     end
 end
 
@@ -707,6 +733,7 @@ function swap_item_to_bag(item, bag)
     if item and bag then
         local bag_inventory = get_inventory(bag)
         if bag_inventory and bag_inventory ~= bag and is_bag_not_full(bag, get_bag_inventory_size(bag)) then
+            hide_entity(item)
             EntityRemoveFromParent(item)
             EntityAddChild(bag_inventory, item)
             add_item_position(item, get_smallest_position_avalaible(bag))
@@ -737,6 +764,27 @@ function add_item_to_inventory(inventory, path)
         GamePrint("Error: Couldn't load the item ["..path.."]!")
     end
     return item
+end
+
+function add_item_to_inventory_wand_vanilla(wand, spell, position)
+    if wand and spell and position then
+        local can_be_added_at_pos = false
+        if is_wand(wand) then
+            can_be_added_at_pos = true
+        end
+        local item_comp = EntityGetFirstComponentIncludingDisabled(spell, "ItemComponent")
+        if can_be_added_at_pos and item_comp then
+            -- if not player_inv_quick_table[position] then
+                remove_component_pickup_frame(spell)
+                remove_item_position(spell)
+                EntityRemoveFromParent(spell)
+                EntityAddChild(wand, spell)
+                ComponentSetValue2(item_comp, "play_hover_animation", false)
+                ComponentSetValue2(item_comp, "has_been_picked_by_player", true)
+                ComponentSetValue2(item_comp, "inventory_slot", position, 0)
+            -- end
+        end
+    end
 end
 
 function add_item_to_inventory_quick_vanilla(item, position)
@@ -774,7 +822,7 @@ function add_item_to_inventory_full_vanilla(item, pos_x, pos_y)
         local player_inv_full = get_player_inventory_full()
         local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
         if can_be_added_at_pos and player_inv_full_table and player_inv_full and item_comp then
-            print("POSITION :".. tostring(pos_x*(pos_y+1)))
+            hide_entity(item)
             if not player_inv_full_table[pos_x*(pos_y+1)] then
                 remove_component_pickup_frame(item)
                 remove_item_position(item)
@@ -782,8 +830,6 @@ function add_item_to_inventory_full_vanilla(item, pos_x, pos_y)
                 EntityAddChild(player_inv_full, item)
                 ComponentSetValue2(item_comp, "play_hover_animation", false)
                 ComponentSetValue2(item_comp, "has_been_picked_by_player", true)
-                print(tostring("pos_x"))
-                print(tostring(pos_x))
                 ComponentSetValue2(item_comp, "inventory_slot", pos_x, pos_y)
             end
         end
@@ -886,6 +932,70 @@ function add_bags_to_inventory(active_item, inventory, player_id, entities)
             add_entity_to_inventory_bag(active_item, inventory, entity)
         end
     end
+end
+
+function get_perks()
+    local player = get_player()
+    if player then
+        local perks_entity = EntityGetAllChildren(player)
+        if perks_entity then
+            for _, perk in ipairs(perks_entity) do
+                if EntityHasTag(perk, "perk_entity") then
+                    EntityGetComponentIncludingDisabled(perk, "GameEff")
+                end
+            end
+        end
+    end
+end
+
+--- @param entity integer
+--- @return boolean
+function CheckEntityCollideWithWorkshop(entity)
+    local colliding_with_workshop = false
+    local entity_hitbox = EntityGetFirstComponent(entity, "HitboxComponent")
+    if entity_hitbox then
+        local x, y = EntityGetTransform(entity)
+        local entity_min_x = math.floor(ComponentGetValue2(entity_hitbox, "aabb_min_x") + x)
+        local entity_max_x = math.floor(ComponentGetValue2(entity_hitbox, "aabb_max_x") + x)
+        local entity_min_y = math.floor(ComponentGetValue2(entity_hitbox, "aabb_min_y") + y)
+        local entity_max_y = math.floor(ComponentGetValue2(entity_hitbox, "aabb_max_y") + y)
+        -- if GameGetFrameNum()%60 then
+        --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", entity_min_x, entity_min_y)
+        --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", entity_max_x, entity_min_y)
+        --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", entity_min_x, entity_max_y)
+        --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", entity_max_x, entity_max_y)
+        -- end
+        local workshop_entities = EntityGetWithTag("workshop")
+        for _, workshop_entity in ipairs(workshop_entities) do
+            local workshop_hitbox = EntityGetFirstComponent(workshop_entity, "HitboxComponent")
+            if workshop_hitbox then
+                -- print("ENTITY MIN X : "..tostring(entity_min_x))
+                -- print("ENTITY MAX X : "..tostring(entity_max_x))
+                -- print("ENTITY MIN Y : "..tostring(entity_min_y))
+                -- print("ENTITY MAX Y : "..tostring(entity_max_y))
+                local pos_workshop_x, pos_workshop_y = EntityGetTransform(workshop_entity)
+                local min_x = math.floor(ComponentGetValue2(workshop_hitbox, "aabb_min_x") + pos_workshop_x)
+                local max_x = math.floor(ComponentGetValue2(workshop_hitbox, "aabb_max_x") + pos_workshop_x)
+                local min_y = math.floor(ComponentGetValue2(workshop_hitbox, "aabb_min_y") + pos_workshop_y)
+                local max_y = math.floor(ComponentGetValue2(workshop_hitbox, "aabb_max_y") + pos_workshop_y)
+                -- if GameGetFrameNum()%60 then
+                --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", min_x, min_y)
+                --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", max_x, min_y)
+                --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", min_x, max_y)
+                --     EntityLoad("mods/bags_of_many/files/entities/testing_dot.xml", max_x, max_y)
+                -- end
+                -- print("WORKSHOP MIN X : "..tostring(min_x))
+                -- print("WORKSHOP MAX X : "..tostring(max_x))
+                -- print("WORKSHOP MIN Y : "..tostring(min_y))
+                -- print("WORKSHOP MAX Y : "..tostring(max_y))
+                colliding_with_workshop = entity_min_x >= min_x and entity_max_x <= max_x and entity_min_y >= min_y and entity_max_y <= max_y
+                if colliding_with_workshop then
+                    return colliding_with_workshop
+                end
+            end
+        end
+    end
+    return colliding_with_workshop
 end
 
 function get_active_item()
