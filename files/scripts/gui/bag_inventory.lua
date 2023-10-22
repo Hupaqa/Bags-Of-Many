@@ -419,9 +419,20 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
 
                     -- LEFT CLICK: DROP ITEM
                     if left_click_table.position == item_position and left_click_table.level == level and left_click_table.bag == bag then
-                        left_click_table.item = item
-                        drop_item_from_parent(item)
-                        remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+                        if GameIsBetaBuild() and InputIsKeyDown(225) then
+                            local smallest_pos_x, smallest_pos_y = get_smallest_vanilla_pos_for_item(item)
+                            if smallest_pos_x and smallest_pos_y then
+                                if not is_spell(item) then
+                                    add_item_to_inventory_quick_vanilla(item, smallest_pos_x)
+                                elseif is_spell(item) then
+                                    add_item_to_inventory_full_vanilla(item, smallest_pos_x, smallest_pos_y)
+                                end
+                            end
+                        else
+                            left_click_table.item = item
+                            drop_item_from_parent(item)
+                            remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
+                        end
                     end
                     -- RIGHT CLICK: DROP ITEM OR IF POTION INGEST MATERIAL
                     if right_click_table.position == item_position and right_click_table.level == level and right_click_table.bag == bag then
@@ -510,7 +521,17 @@ function draw_vanilla_inventory_v2(gui)
     draw_vanilla_inventory_capture(gui, MagicNumbersGetValue("UI_BARS_POS_X") - 1, MagicNumbersGetValue("UI_BARS_POS_Y"), 1)
     if is_inventory_open() then
         draw_vanilla_spell_inventory_capture(gui, MagicNumbersGetValue("UI_FULL_INVENTORY_OFFSET_X") + MagicNumbersGetValue("UI_BARS_POS_X"), MagicNumbersGetValue("UI_BARS_POS_Y"), 1)
-        draw_vanilla_wand_inventory_capture(gui, 0, 0, 1)
+        local player = get_player()
+        if player then
+            local is_colliding = CheckEntityCollideWithWorkshop(player)
+            local tinker_points = EntityTinkerPoints(player)
+            if is_colliding then
+                tinker_points = tinker_points + 1
+            end
+            if tinker_points > 0 then
+                draw_vanilla_wand_inventory_capture(gui, 0, 0, 1)
+            end
+        end
     end
 end
 
@@ -548,11 +569,9 @@ end
 
 function draw_vanilla_spell_inventory_capture(gui, pos_x, pos_y, pos_z)
     local vanilla_spells = get_player_inventory_full_table()
-    if vanilla_spells then
-        local x, y = get_inventory_spell_size()
-        for i = 0, (x * y) - 1 do
-            detect_vanilla_spell_inventory_mouse_input(gui, pos_x + (20 * ((i)%x)), pos_y + (math.floor((i)/x)* 20), pos_z, vanilla_spells[i], i - (x *math.floor((i)/x)), math.floor((i)/x))
-        end
+    local x, y = get_inventory_spell_size()
+    for i = 0, (x * y) - 1 do
+        detect_vanilla_spell_inventory_mouse_input(gui, pos_x + (20 * ((i)%x)), pos_y + (math.floor((i)/x)* 20), pos_z, vanilla_spells[i], i - (x *math.floor((i)/x)), math.floor((i)/x))
     end
 end
 
@@ -698,7 +717,6 @@ function swapping_vanilla_inventory(sort_by_t)
 end
 
 function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot, level)
-    local is_colliding = CheckEntityCollideWithWorkshop(get_player())
     local spells = EntityGetAllChildren(item)
     local wand_capacity = EntityGetWandCapacity(item)
     local spell_found = 1
@@ -739,6 +757,11 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
             end
         end
         if spell and hover and InputIsMouseButtonJustDown(1) and i-1 == item_pos_x then
+            -- SHIFT CLICK SWAP
+            if GameIsBetaBuild() and InputIsKeyDown(225) then
+                add_item_shift_click(active_item_bag, spell)
+            end
+
             dragged_item_table.item = spell
             vanilla_inventory_table.quick.widget_item = spell
             vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
@@ -790,6 +813,10 @@ function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, it
         end
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
+        -- SHIFT CLICK SWAP
+        if GameIsBetaBuild() and InputIsKeyDown(225) then
+            add_item_shift_click(active_item_bag, item)
+        end
         -- JUST USED FOR THE HOVER ANIMATION
         dragged_item_table.item = item
 
@@ -843,6 +870,10 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
         end
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
+        -- SHIFT CLICK SWAP
+        if GameIsBetaBuild() and InputIsKeyDown(225) then
+            add_item_shift_click(active_item_bag, item)
+        end
         -- JUST USED FOR THE HOVER ANIMATION
         dragged_item_table.item = item
 
