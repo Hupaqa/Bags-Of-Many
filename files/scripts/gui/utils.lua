@@ -35,6 +35,26 @@ function clean_bag_components(item)
     end
 end
 
+function open_inventory_gui_vanilla()
+    local player_entity = get_player()
+    if player_entity then
+        local inv_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+        if inv_gui_comp then
+            ComponentSetValue2(inv_gui_comp, "mActive", true)
+        end
+    end
+end
+
+function close_inventory_gui_vanilla()
+    local player_entity = get_player()
+    if player_entity then
+        local inv_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+        if inv_gui_comp then
+            ComponentSetValue2(inv_gui_comp, "mActive", false)
+        end
+    end
+end
+
 function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)
     size_x = size_x - 1
     size_y = size_y - 1

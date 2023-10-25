@@ -42,9 +42,12 @@ local drop_orderly = "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_dr
 local dropping_button_sprite = drop_orderly
 
 -- BAG VARIABLES
+local swap_frame = 0
+local reset_bag_ui_done = true
 local active_item_bag = nil
 local bag_pickup_override_local = nil
 local inventory_bag_table = {}
+local shift_clicked = false
 local dragging_possible_swap = false
 local dragged_invis_gui_id = nil
 local dragged_item_gui_id = nil
@@ -143,6 +146,16 @@ local function update_settings()
     keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
 end
 
+function reset_bag_and_buttons_gui()
+    reset_table(dragged_item_table)
+    dragging_possible_swap = false
+    dragged_invis_gui_id = nil
+    dragged_item_gui_id = nil
+    bags_of_many_reset_reserved_ids()
+    GuiDestroy(gui)
+    gui = GuiCreate()
+    reset_potion_spots_hovered()
+end
 
 function reset_item_table(table)
     for key, _ in pairs(table) do
@@ -174,6 +187,7 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     local level = 1
 
     if active_item and inventory_open and is_bag(active_item) and bag_open then
+        reset_bag_ui_done = false
         clean_bag_components(active_item)
         active_item_bag = active_item
         if not inventory_bag_table[active_item_bag] then
@@ -203,17 +217,39 @@ function bags_of_many_bag_gui(pos_x, pos_y)
                 potion_mixing_gui(bags_mod_state.alchemy_pos_x, bags_mod_state.alchemy_pos_y, 10)
             end
         end
+    else
+        if not reset_bag_ui_done then
+            reset_table(dragged_item_table)
+            dragging_possible_swap = false
+            dragged_invis_gui_id = nil
+            dragged_item_gui_id = nil
+            bags_of_many_reset_reserved_ids()
+            GuiDestroy(gui)
+            gui = GuiCreate()
+            reset_potion_spots_hovered()
+            reset_bag_ui_done = true
+        end
     end
 
     if dragging_allowed and dragging_possible_swap then
         swapping_inventory_v2(sort_by_time)
+        -- RESET THE GUI TO PREVENT PROBLEM OF DRAWING AFTER DRAGGING
         dragging_possible_swap = false
         dragged_invis_gui_id = nil
         dragged_item_gui_id = nil
         bags_of_many_reset_reserved_ids()
-        -- RESET THE GUI TO PREVENT PROBLEM OF DRAWING AFTER DRAGGING
         GuiDestroy(gui)
         gui = GuiCreate()
+    end
+    if swap_frame ~= 0 and GameGetFrameNum() == swap_frame + 1 then
+        swap_frame = 0
+        open_inventory_gui_vanilla()
+        reset_bag_and_buttons_gui()
+    end
+    if shift_clicked then
+        shift_clicked = false
+        -- RESET THE GUI TO PREVENT PROBLEM OF DRAWING AFTER SHIFT CLICKING
+        reset_bag_and_buttons_gui()
     end
     hovered_item_table = reset_item_table(hovered_item_table)
     if GameIsBetaBuild() then
@@ -349,7 +385,7 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
             GuiImageButton(gui, bags_of_many_new_id(), item_pos_x, item_pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
             local clicked_inv, right_clicked_inv, hovered_inv, _, _, _, _, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
 
-                -- DETECT DRAGGING
+            -- DETECT DRAGGING
             if dragging_allowed then
                 if dragged_item_table.item and dragged_item_table.bag == bag and dragged_item_table.level == level and dragged_item_table.position == i then
                     dragged_item_table.position_x = draw_x
@@ -422,11 +458,22 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                         if GameIsBetaBuild() and InputIsKeyDown(225) then
                             local smallest_pos_x, smallest_pos_y = get_smallest_vanilla_pos_for_item(item)
                             if smallest_pos_x and smallest_pos_y then
+                                local shift_click_worked = false
                                 if not is_spell(item) then
+                                    shift_click_worked = true
                                     add_item_to_inventory_quick_vanilla(item, smallest_pos_x)
                                 elseif is_spell(item) then
+                                    shift_click_worked = true
                                     add_item_to_inventory_full_vanilla(item, smallest_pos_x, smallest_pos_y)
                                 end
+                                if is_wand(item) then
+                                    swap_frame = GameGetFrameNum()
+                                    close_inventory_gui_vanilla()
+                                end
+                                if shift_click_worked then
+                                    shift_clicked = true
+                                end
+                                remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
                             end
                         else
                             left_click_table.item = item
@@ -555,14 +602,23 @@ function draw_vanilla_inventory_capture(gui, pos_x, pos_y, pos_z)
 end
 
 function draw_vanilla_wand_inventory_capture(gui, pos_x, pos_y, pos_z)
-    local wands, number_of_wands = get_player_inventory_wand_table()
-    if wands and number_of_wands then
-        for i = 1, number_of_wands do
-            local wand_offset_y = 81 + ((62 * (i-1)) - (i-1)*1)
-            if i > 1 then
-                wand_offset_y = wand_offset_y + 2
+    local wands = get_player_inventory_wand_table()
+    if wands then
+        local sprite_added_padding = 0
+        local wands_found = 0
+        for i = 0, 3 do
+            if wands[i] then
+                local wand_offset_y = 48 + (63 * wands_found) + sprite_added_padding
+                local wand_sprite = get_sprite_file(wands[i])
+                if wand_sprite then
+                    local _, sprite_size_y = GuiGetImageDimensions(gui, wand_sprite)
+                    local sprite_padding = ((sprite_size_y-8)*2)
+                    sprite_added_padding = sprite_added_padding + sprite_padding
+                    local wands_spell_pos = 33 + sprite_padding
+                    detect_vanilla_wand_inventory_mouse_input(gui, pos_x + 25, pos_y + wand_offset_y + wands_spell_pos, pos_z, wands[i], 1)
+                end
+                wands_found = wands_found + 1
             end
-            detect_vanilla_wand_inventory_mouse_input(gui, pos_x + 25, pos_y + wand_offset_y , pos_z, wands[i], 1, (i-1))
         end
     end
 end
@@ -625,6 +681,8 @@ function swapping_in_bag_inventory(sort_by_t)
     if GameIsBetaBuild() and vanilla_inventory_table.hovering then
         if dragged_item_table.item then
             if not is_spell(dragged_item_table.item) and vanilla_inventory_table.inventory_type == 1 then
+                swap_frame = GameGetFrameNum()
+                close_inventory_gui_vanilla()
                 add_item_to_inventory_quick_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot)
             elseif is_spell(dragged_item_table.item) and vanilla_inventory_table.inventory_type == 2 then
                 add_item_to_inventory_full_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot, vanilla_inventory_table.hovering_spot_level)
@@ -716,7 +774,10 @@ function swapping_vanilla_inventory(sort_by_t)
     vanilla_inventory_table.quick.frame_release = 0
 end
 
-function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot, level)
+function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot)
+    if not item then
+        return
+    end
     local spells = EntityGetAllChildren(item)
     local wand_capacity = EntityGetWandCapacity(item)
     local spell_found = 1
@@ -737,7 +798,7 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
         GuiZSetForNextWidget(gui, pos_z)
-        GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+        GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/visible20x20.png")
         local _, _, hover = GuiGetPreviousWidgetInfo(gui)
         if hover then
             vanilla_inventory_table.inventory_type = 3
@@ -759,6 +820,7 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
         if spell and hover and InputIsMouseButtonJustDown(1) and i-1 == item_pos_x then
             -- SHIFT CLICK SWAP
             if GameIsBetaBuild() and InputIsKeyDown(225) then
+                shift_clicked = true
                 add_item_shift_click(active_item_bag, spell)
             end
 
@@ -815,6 +877,7 @@ function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, it
     if item and hover and InputIsMouseButtonJustDown(1) then
         -- SHIFT CLICK SWAP
         if GameIsBetaBuild() and InputIsKeyDown(225) then
+            shift_clicked = true
             add_item_shift_click(active_item_bag, item)
         end
         -- JUST USED FOR THE HOVER ANIMATION
@@ -872,6 +935,9 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
     if item and hover and InputIsMouseButtonJustDown(1) then
         -- SHIFT CLICK SWAP
         if GameIsBetaBuild() and InputIsKeyDown(225) then
+            swap_frame = GameGetFrameNum()
+            close_inventory_gui_vanilla()
+            shift_clicked = true
             add_item_shift_click(active_item_bag, item)
         end
         -- JUST USED FOR THE HOVER ANIMATION

@@ -321,7 +321,7 @@ function is_allowed_in_spells_bag(entity_id)
 end
 
 function is_allowed_in_bag(item_id, bag_id)
-    if is_in_bag_tree(bag_id, item_id) then
+    if is_bag(item_id) and is_in_bag_tree(item_id, bag_id) then
         return false
     end
     if is_universal_bag(bag_id) then
@@ -495,8 +495,11 @@ function get_player_inventory_wand_table()
         local nmb_wands = 0
         for i = 1, #vanilla_items do
             if is_wand(vanilla_items[i]) then
-                nmb_wands = nmb_wands + 1
-                vanilla_item_pos[i] = vanilla_items[i]
+                local pos_x = get_item_inventory_slot(vanilla_items[i])
+                if pos_x then
+                    nmb_wands = nmb_wands + 1
+                    vanilla_item_pos[pos_x] = vanilla_items[i]
+                end
             end
         end
         return vanilla_item_pos, nmb_wands
@@ -515,6 +518,25 @@ function get_player_inventory_full_table()
             end
         end
         return vanilla_spell_table
+    end
+    return {}
+end
+
+function get_wand_spells_table(wand)
+    if not is_wand(wand) then
+        return {}
+    end
+    local spells = EntityGetAllChildren(wand)
+    if spells then
+        local spells_table = {}
+        for i = 1, #spells do
+
+            local pos_x, pos_y = get_item_inventory_slot(spells[i])
+            if pos_x and pos_y then
+                spells_table[pos_x] = spells[i]
+            end
+        end
+        return spells_table
     end
     return {}
 end
@@ -784,12 +806,13 @@ end
 function add_item_to_inventory_wand_vanilla(wand, spell, position)
     if wand and spell and position then
         local can_be_added_at_pos = false
-        if is_wand(wand) then
+        if is_wand(wand) and is_spell(spell) then
             can_be_added_at_pos = true
         end
+        local wands_spells = get_wand_spells_table(wand)
         local item_comp = EntityGetFirstComponentIncludingDisabled(spell, "ItemComponent")
         if can_be_added_at_pos and item_comp then
-            -- if not player_inv_quick_table[position] then
+            if not wands_spells[position] then
                 remove_component_pickup_frame(spell)
                 remove_item_position(spell)
                 EntityRemoveFromParent(spell)
@@ -797,7 +820,23 @@ function add_item_to_inventory_wand_vanilla(wand, spell, position)
                 ComponentSetValue2(item_comp, "play_hover_animation", false)
                 ComponentSetValue2(item_comp, "has_been_picked_by_player", true)
                 ComponentSetValue2(item_comp, "inventory_slot", position, 0)
-            -- end
+            else
+                -- vanilla item change
+                local item_pos = get_item_position(spell)
+                local item_bag_inventory = EntityGetParent(spell)
+                add_component_pickup_frame(wands_spells[position])
+                add_item_position(wands_spells[position], item_pos)
+                EntityRemoveFromParent(wands_spells[position])
+                EntityAddChild(item_bag_inventory, wands_spells[position])
+                -- bag item
+                remove_component_pickup_frame(spell)
+                remove_item_position(spell)
+                EntityRemoveFromParent(spell)
+                EntityAddChild(wand, spell)
+                ComponentSetValue2(item_comp, "play_hover_animation", false)
+                ComponentSetValue2(item_comp, "has_been_picked_by_player", true)
+                ComponentSetValue2(item_comp, "inventory_slot", position, 0)
+            end
         end
     end
 end
@@ -1048,9 +1087,9 @@ function get_smallest_vanilla_pos_for_item(item)
         local full_table = get_player_inventory_full_table()
         local size_x, size_y = get_inventory_spell_size()
         if full_table and size_x and size_y then
-            for i = 1, (size_x * size_y), 1 do
+            for i = 0, (size_x * size_y), 1 do
                 if not full_table[i] then
-                    return i%size_x, math.floor((i)/size_x)
+                    return (i%size_x), math.floor((i)/size_x)
                 end
             end
         end
