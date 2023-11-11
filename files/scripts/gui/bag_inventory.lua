@@ -175,6 +175,9 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()
     bag_pickup_override_local = get_bag_pickup_override(active_item)
+    if bag_pickup_override_local and not is_in_bag_tree(active_item, bag_pickup_override_local) then
+        toggle_bag_pickup_override(active_item, active_item)
+    end
 
     -- Setup the inventory button
     if inventory_open and ((not only_show_bag_button_when_held) or (is_bag(active_item) and only_show_bag_button_when_held)) then
@@ -201,6 +204,10 @@ function bags_of_many_bag_gui(pos_x, pos_y)
         if not option_changed then
             local pos_z = 10
             for bag_level, bag in pairs(inventory_bag_table[active_item_bag]) do
+                if not is_in_bag_tree(active_item, bag) then
+                    inventory_bag_table = {}
+                    break
+                end
                 pos_z = 10 * bag_level
                 -- DISPLAY BAG HOVERED AT BEGINNING OF INVENTORY
                 if bag_level ~= 1 then
@@ -695,7 +702,7 @@ function swapping_in_bag_inventory(sort_by_t)
     if not sort_by_t then
         if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
-                swap_item_position(dragged_item_table.item, hovered_item_table.item)
+                swap_item_position(dragged_item_table.item, hovered_item_table.item, dragged_item_table.bag, hovered_item_table.bag)
             end
         elseif dragged_item_table.item and not hovered_item_table.item and hovered_item_table.bag then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) then
@@ -753,12 +760,11 @@ function swapping_vanilla_inventory(sort_by_t)
     if not sort_by_t then
         if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
-                swap_item_position(dragged_item_table.item, hovered_item_table.item)
+                swap_item_position(dragged_item_table.item, hovered_item_table.item, dragged_item_table.bag, hovered_item_table.bag)
             end
         elseif dragged_item_table.item and not hovered_item_table.item and hovered_item_table.bag then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) then
                 swap_item_to_position(dragged_item_table.item, hovered_item_table.position, hovered_item_table.bag)
-                hide_entity(dragged_item_table.item)
             end
         end
     else
@@ -798,7 +804,7 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
         GuiZSetForNextWidget(gui, pos_z)
-        GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/visible20x20.png")
+        GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
         local _, _, hover = GuiGetPreviousWidgetInfo(gui)
         if hover then
             vanilla_inventory_table.inventory_type = 3
@@ -825,6 +831,7 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
             end
 
             dragged_item_table.item = spell
+            dragged_item_table.bag = item
             vanilla_inventory_table.quick.widget_item = spell
             vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
         end
@@ -882,7 +889,7 @@ function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, it
         end
         -- JUST USED FOR THE HOVER ANIMATION
         dragged_item_table.item = item
-
+        dragged_item_table.bag = EntityGetParent(item)
         vanilla_inventory_table.quick.widget_item = item
         vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
     end
