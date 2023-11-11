@@ -849,7 +849,7 @@ mod_settings =
         category_id = "bags_of_many_version",
         foldable = false,
         _folded = true,
-        ui_name = "Version: 1.4",
+        ui_name = "Version: 1.5",
         ui_description = "Current version of the mod",
         settings = {}
     }
