@@ -183,7 +183,7 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     if inventory_open and ((not only_show_bag_button_when_held) or (is_bag(active_item) and only_show_bag_button_when_held)) then
         draw_inventory_button(pos_x, pos_y, active_item)
     end
-    if inventory_open and is_bag(active_item) and GameIsBetaBuild() then
+    if inventory_open and is_bag(active_item) then
         draw_vanilla_inventory_v2(gui)
     end
 
@@ -259,9 +259,7 @@ function bags_of_many_bag_gui(pos_x, pos_y)
         reset_bag_and_buttons_gui()
     end
     hovered_item_table = reset_item_table(hovered_item_table)
-    if GameIsBetaBuild() then
-        detect_vanilla_inventory_mouse_release(gui)
-    end
+    detect_vanilla_inventory_mouse_release(gui)
 
     -- OPTION CHANGE PROCESSING
     if sort_order_change_flag then
@@ -462,7 +460,7 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
 
                     -- LEFT CLICK: DROP ITEM
                     if left_click_table.position == item_position and left_click_table.level == level and left_click_table.bag == bag then
-                        if GameIsBetaBuild() and InputIsKeyDown(225) then
+                        if InputIsKeyDown(225) then
                             local smallest_pos_x, smallest_pos_y = get_smallest_vanilla_pos_for_item(item)
                             if smallest_pos_x and smallest_pos_y then
                                 local shift_click_worked = false
@@ -672,7 +670,7 @@ function draw_inventory_dragged_item_v2(pos_z)
 end
 
 function swapping_inventory_v2(sort_by_t)
-    if GameIsBetaBuild() and vanilla_inventory_table.quick.widget_item then
+    if vanilla_inventory_table.quick.widget_item then
         swapping_vanilla_inventory()
     else
         if not is_potion_spot_hovered() then
@@ -685,7 +683,7 @@ function swapping_inventory_v2(sort_by_t)
 end
 
 function swapping_in_bag_inventory(sort_by_t)
-    if GameIsBetaBuild() and vanilla_inventory_table.hovering then
+    if vanilla_inventory_table.hovering then
         if dragged_item_table.item then
             if not is_spell(dragged_item_table.item) and vanilla_inventory_table.inventory_type == 1 then
                 swap_frame = GameGetFrameNum()
@@ -825,7 +823,7 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
         end
         if spell and hover and InputIsMouseButtonJustDown(1) and i-1 == item_pos_x then
             -- SHIFT CLICK SWAP
-            if GameIsBetaBuild() and InputIsKeyDown(225) then
+            if InputIsKeyDown(225) then
                 shift_clicked = true
                 add_item_shift_click(active_item_bag, spell)
             end
@@ -883,7 +881,7 @@ function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, it
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
         -- SHIFT CLICK SWAP
-        if GameIsBetaBuild() and InputIsKeyDown(225) then
+        if InputIsKeyDown(225) then
             shift_clicked = true
             add_item_shift_click(active_item_bag, item)
         end
@@ -941,7 +939,7 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
         -- SHIFT CLICK SWAP
-        if GameIsBetaBuild() and InputIsKeyDown(225) then
+        if InputIsKeyDown(225) then
             swap_frame = GameGetFrameNum()
             close_inventory_gui_vanilla()
             shift_clicked = true
