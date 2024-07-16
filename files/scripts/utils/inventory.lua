@@ -473,6 +473,7 @@ function drop_item_from_parent(item, with_movement, delta_x, delta_y)
         end
         remove_component_pickup_frame(item)
         remove_item_position(item)
+        remove_inherit_comp(item)
         EntityRemoveFromParent(item)
         if x and y then
             EntityApplyTransform(item, x, y - 5)
@@ -733,6 +734,22 @@ function remove_item_position(entity)
     end
 end
 
+function add_inherit_comp(entity)
+    local inherit_comp = EntityGetFirstComponentIncludingDisabled(entity, "InheritTransformComponent", "coop_respawn")
+    if not inherit_comp then
+        inherit_comp = EntityAddComponent2(entity, "InheritTransformComponent")
+        ComponentAddTag(inherit_comp, "coop_respawn")
+    end
+    return inherit_comp
+end
+
+function remove_inherit_comp(entity)
+    local inherit_comps = EntityGetComponentIncludingDisabled(entity, "InheritTransformComponent", "coop_respawn")
+    for _, inherit_comp in ipairs(inherit_comps or {}) do
+        EntityRemoveComponent(entity, inherit_comp)
+    end
+end
+
 -- SWAPS ITEM TO A POSITION (EMPTY POSITION)
 function swap_item_to_position(item, position, bag)
     -- Prevent bag being placed inside themselves (will cause CRASH)
@@ -744,6 +761,8 @@ function swap_item_to_position(item, position, bag)
     if not is_allowed_in_bag(item, bag) then
         return
     end
+
+    add_inherit_comp(item)
 
     local var_storage_one = get_var_storage_with_name(item, "bags_of_many_item_position")
     if not var_storage_one then
@@ -802,6 +821,7 @@ function swap_item_to_bag(item, bag)
             EntityRemoveFromParent(item)
             EntityAddChild(bag_inventory, item)
             add_item_position(item, get_smallest_position_avalaible(bag))
+            add_inherit_comp(item)
         end
     end
 end
@@ -857,15 +877,19 @@ function swap_items_btw_inventories(dragged_item, hovered_item, entity_one, enti
     end
     if var_storage_one then
         add_item_position(hovered_item, position_one)
+        -- add_inherit_comp(hovered_item)
     else
         set_entity_inventory_position(hovered_item, position_one)
         remove_item_position(hovered_item)
+        -- remove_inherit_comp(hovered_item)
     end
     if var_storage_two then
         add_item_position(dragged_item, position_two)
+        -- add_inherit_comp(dragged_item)
     else
         set_entity_inventory_position(dragged_item, position_two)
         remove_item_position(dragged_item)
+        -- remove_inherit_comp(dragged_item)
     end
     EntityRemoveFromParent(dragged_item)
     EntityRemoveFromParent(hovered_item)
@@ -922,6 +946,7 @@ function add_item_to_inventory_wand_vanilla(wand, spell, position)
             if not wands_spells[position] then
                 remove_component_pickup_frame(spell)
                 remove_item_position(spell)
+                remove_inherit_comp(spell)
                 EntityRemoveFromParent(spell)
                 EntityAddChild(wand, spell)
                 ComponentSetValue2(item_comp, "play_hover_animation", false)
@@ -933,11 +958,13 @@ function add_item_to_inventory_wand_vanilla(wand, spell, position)
                 local item_bag_inventory = EntityGetParent(spell)
                 add_component_pickup_frame(wands_spells[position])
                 add_item_position(wands_spells[position], item_pos)
+                add_inherit_comp(wands_spells[position])
                 EntityRemoveFromParent(wands_spells[position])
                 EntityAddChild(item_bag_inventory, wands_spells[position])
                 -- bag item
                 remove_component_pickup_frame(spell)
                 remove_item_position(spell)
+                remove_inherit_comp(spell)
                 EntityRemoveFromParent(spell)
                 EntityAddChild(wand, spell)
                 ComponentSetValue2(item_comp, "play_hover_animation", false)
@@ -961,9 +988,11 @@ function add_item_to_inventory_quick_vanilla(item, position)
         local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
         local player_inv_quick_size = get_inventory_quick_size()
         if can_be_added_at_pos and player_inv_quick_table and player_inv_quick and item_comp and #player_inv_quick_table <= player_inv_quick_size then
+            hide_entity(item)
             if not player_inv_quick_table[position] then
                 remove_component_pickup_frame(item)
                 remove_item_position(item)
+                remove_inherit_comp(item)
                 EntityRemoveFromParent(item)
                 EntityAddChild(player_inv_quick, item)
                 ComponentSetValue2(item_comp, "play_hover_animation", false)
@@ -992,6 +1021,7 @@ function add_item_to_inventory_full_vanilla(item, pos_x, pos_y)
             if not player_inv_full_table[pos_x*(pos_y+1)] then
                 remove_component_pickup_frame(item)
                 remove_item_position(item)
+                remove_inherit_comp(item)
                 EntityRemoveFromParent(item)
                 EntityAddChild(player_inv_full, item)
                 ComponentSetValue2(item_comp, "play_hover_animation", false)
@@ -1003,11 +1033,13 @@ function add_item_to_inventory_full_vanilla(item, pos_x, pos_y)
                 local item_bag_inventory = EntityGetParent(item)
                 add_component_pickup_frame(player_inv_full_table[pos_x*(pos_y+1)])
                 add_item_position(player_inv_full_table[pos_x*(pos_y+1)], item_pos)
+                add_inherit_comp(player_inv_full_table[pos_x*(pos_y+1)])
                 EntityRemoveFromParent(player_inv_full_table[pos_x*(pos_y+1)])
                 EntityAddChild(item_bag_inventory, player_inv_full_table[pos_x*(pos_y+1)])
                 -- bag item
                 remove_component_pickup_frame(item)
                 remove_item_position(item)
+                remove_inherit_comp(item)
                 EntityRemoveFromParent(item)
                 EntityAddChild(player_inv_full, item)
                 ComponentSetValue2(item_comp, "play_hover_animation", false)
@@ -1024,6 +1056,7 @@ function add_entity_to_inventory_bag(bag, inventory, entity)
     EntityAddChild(inventory, entity)
     hide_entity(entity)
     add_item_position(entity, get_smallest_position_avalaible(bag))
+    add_inherit_comp(entity)
 end
 
 function add_spells_to_inventory(active_item, inventory, player_id, entities)
@@ -1402,7 +1435,9 @@ function hide_entity( entity_id )
         hide_entity(child)
     end
     for _, component in ipairs(components or {}) do
-        EntitySetComponentIsEnabled(entity_id, component, false)
+        if not ComponentHasTag(component, "enabled_in_inventory") then
+            EntitySetComponentIsEnabled(entity_id, component, false)
+        end
     end
 end
 
@@ -1425,6 +1460,22 @@ function show_entity( entity_id )
                 end
             else
                 EntitySetComponentIsEnabled(entity_id, component, true)
+            end
+        end
+    end
+end
+
+function show_in_hand_effect(entity)
+    local items = get_bag_items(entity)
+    for _, item in ipairs(items) do
+        if is_bag(item) then
+            show_in_hand_effect(item)
+        else
+            local comps = EntityGetAllComponents(item)
+            for _, comp in ipairs(comps) do
+                if ComponentHasTag(comp, "enabled_in_hand") and ComponentGetTypeName(comp) ~= "SpriteComponent" then
+                    EntitySetComponentIsEnabled(item, comp, true)
+                end
             end
         end
     end

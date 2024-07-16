@@ -7,7 +7,7 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/wand_and_spells.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/potion_utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/common_gui.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/gui/mouse_inputs.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
 
 -- GUI SECTION
 local gui = gui or GuiCreate()
@@ -174,6 +174,7 @@ function bags_of_many_bag_gui(pos_x, pos_y)
 
     local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()
+    -- show_in_hand_effect(active_item)
     bag_pickup_override_local = get_bag_pickup_override(active_item)
     if bag_pickup_override_local and not is_in_bag_tree(active_item, bag_pickup_override_local) then
         toggle_bag_pickup_override(active_item, active_item)

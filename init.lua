@@ -92,6 +92,9 @@ function spawn_items_showcase(x, y)
 end
 
 function OnWorldPreUpdate()
+end
+
+function OnWorldPostUpdate()
     bags_of_many_ui_setup()
 end
 

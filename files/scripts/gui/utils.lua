@@ -94,10 +94,11 @@ function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, 
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/middle_piece.png", 0.99, size_x + pad_left + pad_right - 1, size_y + pad_top + pad_bottom - 1)
 
+    local rotate_line_rad = deg_to_rad(-90)
     ---- BORDERS
     -- TOP BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_x + pad_left + pad_right - 2, rotate_line_rad)
     -- LEFT BORDER
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
@@ -106,7 +107,7 @@ function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, 
     GuiImage(gui, bags_of_many_new_id(), pos_x + size_x + pad_right, pos_y - pad_top + 2, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
     -- BOTTOM BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_x + pad_left + pad_right - 2, rotate_line_rad)
 end
 
 function auto_draw_background_box(gui, pos_z, pad_top, pad_right, pad_bottom, pad_left)
@@ -149,10 +150,11 @@ function auto_draw_background_box(gui, pos_z, pad_top, pad_right, pad_bottom, pa
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/middle_piece.png", 0.99, size_x + pad_left + pad_right - 1, size_y + pad_top + pad_bottom - 1)
 
+    local rotate_line_rad = deg_to_rad(-90)
     ---- BORDERS
     -- TOP BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 1, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_x + pad_left + pad_right - 2, rotate_line_rad)
     -- LEFT BORDER
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left, pos_y - pad_top + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
@@ -161,7 +163,7 @@ function auto_draw_background_box(gui, pos_z, pad_top, pad_right, pad_bottom, pa
     GuiImage(gui, bags_of_many_new_id(), pos_x + size_x + pad_right, pos_y - pad_top + 2, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_y + pad_top + pad_bottom - 2)
     -- BOTTOM BORDER
     GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, size_x + pad_left + pad_right - 2, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_x + pad_left + pad_right - 2, rotate_line_rad)
 end
 
 function draw_background_click_capture(gui, pos_x, pos_y, pos_z, size_x, size_y)

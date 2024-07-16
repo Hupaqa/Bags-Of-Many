@@ -39,23 +39,23 @@ function string_table_to_table(inputstr)
     return t
 end
 
-function table_to_string_table(table)
-    local str = ""
-    if table then
-        for i = 1, #table do
-            if i == 1 then
-                str = str .. "{"
-            end
-            str = str .. tostring(table[i])
-            if i == #table then
-                str = str .. "}"
-            else
-                str = str .. ","
-            end
-        end
-    end
-    return str
-end
+-- function table_to_string_table(table)
+--     local str = ""
+--     if table then
+--         for i = 1, #table do
+--             if i == 1 then
+--                 str = str .. "{"
+--             end
+--             str = str .. tostring(table[i])
+--             if i == #table then
+--                 str = str .. "}"
+--             else
+--                 str = str .. ","
+--             end
+--         end
+--     end
+--     return str
+-- end
 
 function find_value_in_table(table, value)
     local index_val
@@ -203,4 +203,12 @@ function print_table(table)
         print(tostring(key))
         print(tostring(table[key]))
     end
+end
+
+function deg_to_rad(deg)
+    return deg*(math.pi/180)
+end
+
+function petri_offset_func(pos_init)
+    return (math.cos(pos_init * 3.1415)+1) * 0.5 * math.sin(pos_init * 30)
 end
