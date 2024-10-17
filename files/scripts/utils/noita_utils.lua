@@ -114,3 +114,52 @@ function get_player_has_infinite_wallet()
 	end
 	return wallet_infinite
 end
+
+function enable_inherit_comps(entity)
+    local inherit_comps = EntityGetComponentIncludingDisabled(entity, "InheritTransformComponent")
+    local childs = EntityGetAllChildren(entity)
+    for _, child in ipairs(childs or {}) do
+        enable_inherit_comps(child)
+    end
+    for _, inherit_comp in ipairs(inherit_comps or {}) do
+        EntitySetComponentIsEnabled(entity, inherit_comp, true)
+    end
+end
+
+function enable_comp_with_tag_in_inventory(entity)
+    local comps = EntityGetAllComponents(entity)
+    local childs = EntityGetAllChildren(entity)
+    for _, child in ipairs(childs or {}) do
+        enable_comp_with_tag_in_inventory(child)
+    end
+    for _, comp in ipairs(comps or {}) do
+        if ComponentHasTag(comp, "enabled_in_inventory") then
+            EntitySetComponentIsEnabled(entity, comp, true)
+        end
+    end
+end
+
+function enable_game_effect_in_hand(entity)
+	local comps = EntityGetComponentIncludingDisabled(entity, "GameEffectComponent", "enabled_in_hand")
+    local childs = EntityGetAllChildren(entity)
+    for _, child in ipairs(childs or {}) do
+        enable_game_effect_in_hand(child)
+    end
+    for _, comp in ipairs(comps or {}) do
+		EntitySetComponentIsEnabled(entity, comp, true)
+    end
+end
+
+function clean_bag_components(item)
+    local childs = EntityGetAllChildren(item)
+	local children_to_delete = {}
+    for _, child in ipairs(childs or {}) do
+        local name = EntityGetName(child)
+        if not (name == "inventory_full" or name == "inventory_quick") then
+			table.insert(children_to_delete, child)
+        end
+    end
+	for _, child in ipairs(children_to_delete or {}) do
+		EntityKill(child)
+	end
+end

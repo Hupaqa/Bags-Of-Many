@@ -174,25 +174,27 @@ function bags_of_many_bag_gui(pos_x, pos_y)
 
     local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()
-    -- show_in_hand_effect(active_item)
+    local active_item_is_bag = is_bag(active_item)
+    if active_item_is_bag then
+        clean_bag_components(active_item)
+    end
     bag_pickup_override_local = get_bag_pickup_override(active_item)
     if bag_pickup_override_local and not is_in_bag_tree(active_item, bag_pickup_override_local) then
         toggle_bag_pickup_override(active_item, active_item)
     end
 
     -- Setup the inventory button
-    if inventory_open and ((not only_show_bag_button_when_held) or (is_bag(active_item) and only_show_bag_button_when_held)) then
+    if inventory_open and ((not only_show_bag_button_when_held) or (active_item_is_bag and only_show_bag_button_when_held)) then
         draw_inventory_button(pos_x, pos_y, active_item)
     end
-    if inventory_open and is_bag(active_item) then
+    if inventory_open and active_item_is_bag then
         draw_vanilla_inventory_v2(gui)
     end
 
     local level = 1
 
-    if active_item and inventory_open and is_bag(active_item) and bag_open then
+    if active_item and inventory_open and active_item_is_bag and bag_open then
         reset_bag_ui_done = false
-        clean_bag_components(active_item)
         active_item_bag = active_item
         if not inventory_bag_table[active_item_bag] then
             inventory_bag_table[active_item_bag] = {}

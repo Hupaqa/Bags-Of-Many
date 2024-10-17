@@ -73,6 +73,13 @@
 		script_kick="mods/bags_of_many/files/scripts/bags/bags_potions_script.lua"
         execute_every_n_frame="-1">
 	</LuaComponent>
+    	
+    <!-- Throw bag -->
+	<LuaComponent
+        _tags="enabled_in_hand"
+        script_throw_item="mods/bags_of_many/files/scripts/bags/bags_throw_script.lua"
+        execute_every_n_frame="-1" >
+	</LuaComponent>
 	
     <!-- Throw out things -->
     <!-- <LuaComponent

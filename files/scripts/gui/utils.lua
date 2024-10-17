@@ -23,18 +23,6 @@ function last_widget_position(gui)
     return x, y
 end
 
-function clean_bag_components(item)
-    local childs = EntityGetAllChildren(item)
-    if childs then
-        for _, child in ipairs(childs) do
-            local name = EntityGetName(child)
-            if not (name == "inventory_full" or name == "inventory_quick") then
-                EntityKill(child)
-            end
-        end
-    end
-end
-
 function open_inventory_gui_vanilla()
     local player_entity = get_player()
     if player_entity then
