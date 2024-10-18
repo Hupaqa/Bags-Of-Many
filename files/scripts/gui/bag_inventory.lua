@@ -623,7 +623,7 @@ function draw_vanilla_wand_inventory_capture(gui, pos_x, pos_y, pos_z)
                     local sprite_padding = ((sprite_size_y-8)*2)
                     sprite_added_padding = sprite_added_padding + sprite_padding
                     local wands_spell_pos = 33 + sprite_padding
-                    detect_vanilla_wand_inventory_mouse_input(gui, pos_x + 25, pos_y + wand_offset_y + wands_spell_pos, pos_z, wands[i], 1)
+                    detect_vanilla_wand_inventory_mouse_inputV2(gui, pos_x + 25, pos_y + wand_offset_y + wands_spell_pos, pos_z, wands[i], 1)
                 end
                 wands_found = wands_found + 1
             end
@@ -781,36 +781,41 @@ function swapping_vanilla_inventory(sort_by_t)
     vanilla_inventory_table.quick.frame_release = 0
 end
 
-function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot)
-    if not item then
+function detect_vanilla_wand_inventory_mouse_inputV2(gui, pos_x, pos_y, pos_z, item, inv_spot)
+    if not item or not is_wand(item) then
         return
     end
-    local spells = EntityGetAllChildren(item)
+    local all_spells = EntityGetAllChildren(item)
     local wand_capacity = EntityGetWandCapacity(item)
-    local spell_found = 1
-    for i = 1, wand_capacity do
-        local item_pos_x
-        local spell
-        if spells then
-            spell = spells[spell_found]
-            if spell then
-                item_pos_x = get_item_inventory_slot(spells[spell_found])
-                if i-1 == item_pos_x then
-                    spell_found = spell_found + 1
-                end
-            end
+    local normal_spells = {}
+    local permanent_spells = {}
+    for _, spell in ipairs(all_spells or {}) do
+        -- removing always cast spells from the detection
+        if is_spell_permanently_attached(spell) then
+            table.insert(permanent_spells, spell)
+        else
+            -- account for the possiblity that spells are not contiguous in the wand
+            local spell_pos = get_item_inventory_slot(spell)
+            table.insert(normal_spells, spell_pos + 1, spell)
         end
+    end
+
+    for i = 1, wand_capacity do
+        local spell
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
         GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
         GuiZSetForNextWidget(gui, pos_z)
         GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+        if normal_spells[i] then
+            spell = normal_spells[i]
+        end
         local _, _, hover = GuiGetPreviousWidgetInfo(gui)
         if hover then
             vanilla_inventory_table.inventory_type = 3
             vanilla_inventory_table.hovering = true
-            vanilla_inventory_table.hovering_spot = inv_spot - 1
+            vanilla_inventory_table.hovering_spot = i - 1
             vanilla_inventory_table.hovering_spot_level = item
             -- mod dragging display ish
             if dragged_item_table.item and not vanilla_inventory_table.quick.widget_item then
@@ -824,7 +829,7 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
                 end
             end
         end
-        if spell and hover and InputIsMouseButtonJustDown(1) and i-1 == item_pos_x then
+        if spell and hover and InputIsMouseButtonJustDown(1) then
             -- SHIFT CLICK SWAP
             if InputIsKeyDown(225) then
                 shift_clicked = true
@@ -836,7 +841,7 @@ function detect_vanilla_wand_inventory_mouse_input(gui, pos_x, pos_y, pos_z, ite
             vanilla_inventory_table.quick.widget_item = spell
             vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
         end
-        if spell and not is_inventory_open() and InputIsMouseButtonDown(1) and vanilla_inventory_table.quick.widget_item and i-1 == item_pos_x then
+        if spell and not is_inventory_open() and InputIsMouseButtonDown(1) and vanilla_inventory_table.quick.widget_item then
             local player_control_comp = get_player_control_component()
             if player_control_comp then
                 local sprite = get_sprite_file(vanilla_inventory_table.quick.widget_item)

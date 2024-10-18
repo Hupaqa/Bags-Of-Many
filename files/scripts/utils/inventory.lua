@@ -587,6 +587,24 @@ function get_wand_spells_table(wand)
     return {}
 end
 
+function get_wand_spells_table_no_always_cast(wand)
+    if not is_wand(wand) then
+        return {}
+    end
+    local spells = EntityGetAllChildren(wand)
+    if spells then
+        local spells_table = {}
+        for i = 1, #spells do
+            local pos_x = get_item_inventory_slot(spells[i])
+            if pos_x and not is_spell_permanently_attached(spells[i]) then
+                spells_table[pos_x] = spells[i]
+            end
+        end
+        return spells_table
+    end
+    return {}
+end
+
 function get_player_inventory_quick()
     for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
         if EntityGetName(child) == "inventory_quick" then
@@ -940,11 +958,12 @@ function add_item_to_inventory_wand_vanilla(wand, spell, position)
         if is_wand(wand) and is_spell(spell) then
             can_be_added_at_pos = true
         end
-        local wands_spells = get_wand_spells_table(wand)
+        local wands_spells = get_wand_spells_table_no_always_cast(wand)
         local item_comp = EntityGetFirstComponentIncludingDisabled(spell, "ItemComponent")
         if can_be_added_at_pos and item_comp then
             local wand_spell = wands_spells[position]
-            if wand_spell then
+            -- Do not move always cast spells if ever trying to swap with them 
+            if wand_spell and not is_spell_permanently_attached(wand_spell) then
                 -- vanilla item change
                 local item_pos = get_item_position(spell)
                 local item_bag_inventory = EntityGetParent(spell)
