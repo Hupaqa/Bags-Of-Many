@@ -1,4 +1,2 @@
-________1.4________
-- Potion Mixing with potion pouches or universal bags (settings need to be turned on).
-- Right click on potion consumes some of the potion content.
-- Fixed empty wand display breaking gui.
+________1.4.1________
+- Fixed always cast spells being able to be removed from wands.

@@ -163,3 +163,16 @@ function clean_bag_components(item)
 		EntityKill(child)
 	end
 end
+
+function world_to_screen_coords(gui, x, y)
+    local ww, wh = MagicNumbersGetValue("VIRTUAL_RESOLUTION_X"), MagicNumbersGetValue("VIRTUAL_RESOLUTION_Y")
+    local sw, sh = GuiGetScreenDimensions(gui)
+    local _, _, cam_w, cam_h = GameGetCameraBounds()
+    local cx, cy = GameGetCameraPos()
+    cx = cx - cam_w / 2
+    cy = cy - cam_h / 2
+    x, y = x - cx, y - cy
+    x, y = x / ww, y / wh
+    x, y = x * sw, y * sh
+    return x, y
+end

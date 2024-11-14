@@ -451,7 +451,11 @@ function name_contains(entity_id, contains_string)
 end
 
 function is_bag_not_full(bag, maximum)
-    return #get_bag_inventory_items(bag, false, false) < maximum
+    local number_of_items = #get_bag_inventory_items(bag, false, false)
+    if bag == nil or maximum == nil or number_of_items == nil then
+        return false
+    end
+    return number_of_items < maximum
 end
 
 function drop_item_from_parent(item, with_movement, delta_x, delta_y)

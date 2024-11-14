@@ -66,13 +66,6 @@
     <Entity name="inventory_full">
         <InheritTransformComponent/>
     </Entity>
-
-    <!-- Grab things -->
-	<LuaComponent
-        _tags="enabled_in_hand"
-		script_kick="mods/bags_of_many/files/scripts/bags/bags_spells_script.lua"
-        execute_every_n_frame="-1">
-	</LuaComponent>
     	
     <!-- Throw bag -->
 	<LuaComponent
@@ -80,13 +73,6 @@
         script_throw_item="mods/bags_of_many/files/scripts/bags/bags_throw_script.lua"
         execute_every_n_frame="-1" >
 	</LuaComponent>
-	
-    <!-- Throw out things -->
-    <!-- <LuaComponent
-		script_throw_item="mods/bags_of_many/files/scripts/bags/bags_spells_script.lua"
-        execute_every_n_frame="-1" >
-	</LuaComponent> -->
-	
 
 	<!-- item -->
 

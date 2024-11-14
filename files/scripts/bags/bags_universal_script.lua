@@ -1,20 +1,35 @@
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
 
-function kick(entity_who_kicked)
-    local active_item = get_active_item()
-    -- Checking entity name if contains uinversal so this script is not called when holding another bag
-    if active_item ~= nil and is_bag(active_item) and name_contains(active_item, "universal") then
-        -- BAG OVERRIDE TO CHANGE WHICH BAG IS PICKING UP THE ITEM
-        local bag_pickup_override = get_bag_pickup_override(active_item)
-        if bag_pickup_override and bag_pickup_override ~= 0 then
-            if is_player_root_entity(bag_pickup_override) then
-                active_item = bag_pickup_override
-            else
-                toggle_bag_pickup_override(active_item, 0)
+function pickup_detection(player, bag_entity)
+    if not is_bag(bag_entity) then
+        return
+    end
+    local pickup_input_code = tonumber(ModSettingGet("BagsOfMany.pickup_input_code"))
+    local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
+    if player ~= nil and bag_entity ~= nil then
+        local override_bag_entity = get_bag_pickup_override(bag_entity)
+        if override_bag_entity and is_bag(override_bag_entity) then
+            bag_entity = override_bag_entity
+        end
+        if pickup_input_code and pickup_input_type then
+            if pickup_input_type == "Key" then
+                if InputIsKeyJustDown(pickup_input_code) then
+                    bag_pickup_action(player, bag_entity)
+                end
+            elseif pickup_input_type == "Mouse" then
+                if InputIsMouseButtonJustDown(pickup_input_code) then
+                    bag_pickup_action(player, bag_entity)
+                end
+            end
+        else
+            if InputIsKeyJustDown(InputCodes.Key.Key_f) then
+                ModSettingSetNextValue("BagsOfMany.pickup_input_type", "Key", false)
+                ModSettingSetNextValue("BagsOfMany.pickup_input_code", 9, false)
+                bag_pickup_action(player, bag_entity)
+                print("No pickup action found reverting to [F] key. Please raise a bug with the mod: Bags Of Many")
+                GamePrint("No pickup action found reverting to [F] key by default.")
             end
         end
-        bag_pickup_action(entity_who_kicked, active_item)
     end
 end

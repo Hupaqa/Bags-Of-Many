@@ -1,6 +1,7 @@
 dofile_once( "data/scripts/game_helpers.lua" )
 dofile_once( "data/scripts/lib/utilities.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spawn.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/bags/bags_universal_script.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spells_lookup.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/testing/item_spawner.lua" )
@@ -92,9 +93,11 @@ function spawn_items_showcase(x, y)
 end
 
 function OnWorldPreUpdate()
+    
 end
 
 function OnWorldPostUpdate()
+    pickup_detection(get_player(), get_active_item())
     bags_of_many_ui_setup()
 end
 

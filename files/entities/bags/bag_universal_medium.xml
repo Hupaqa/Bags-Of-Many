@@ -67,32 +67,12 @@
         <InheritTransformComponent/>
     </Entity>
 
-    <!-- Grab things -->
-	<LuaComponent
-        _tags="enabled_in_hand"
-		script_kick="mods/bags_of_many/files/scripts/bags/bags_universal_script.lua"
-        execute_every_n_frame="-1" >
-	</LuaComponent>
-
     <!-- Throw bag -->
 	<LuaComponent
         _tags="enabled_in_hand"
         script_throw_item="mods/bags_of_many/files/scripts/bags/bags_throw_script.lua"
         execute_every_n_frame="-1" >
 	</LuaComponent>
-	
-    <!-- Throw out things -->
-    <!-- <LuaComponent
-		script_throw_item="mods/bags_of_many/files/scripts/bags/bags_universal_script.lua"
-        execute_every_n_frame="-1" >
-	</LuaComponent> -->
-	
-    <!-- Init bag container storage -->
-
-	<!-- <LuaComponent
-		script_item_picked_up="mods/bags_of_many/files/scripts/bags/bags_script.lua"
-        execute_every_n_frame="-1" >
-	</LuaComponent> -->
 	
 	<!-- item -->
 
