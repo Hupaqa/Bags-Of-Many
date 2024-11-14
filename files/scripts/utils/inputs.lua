@@ -37,7 +37,7 @@ end
 function get_key_pressed_name(value_pressed)
     for key, value in pairs(InputCodes.Key) do
         if value_pressed == value then
-            return key
+            return string.upper(InputCodes.KeyName[key])
         end
     end
     return nil
@@ -46,7 +46,7 @@ end
 function get_mouse_pressed_name(value_pressed)
     for mouse, value in pairs(InputCodes.Mouse) do
         if value_pressed == value then
-            return mouse
+            return string.upper(InputCodes.MouseName[mouse])
         end
     end
     return nil
