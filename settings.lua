@@ -407,30 +407,6 @@ mod_settings =
         settings = {
             {
                 ui_fn = mod_setting_section,
-                ui_name = "Starter loadout",
-                ui_description = "",
-                not_setting = true,
-            },
-            {
-                id = "starter_loadout",
-                ui_name = "Starter Loadout",
-                ui_description = "When true will start your run with a bag of each type lying around near you.",
-                value_default = false,
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
-            },
-            {
-                id = "showcase_loadout",
-                ui_name = "Showcase loadout",
-                ui_description = "When true will spawn all the bags of the mod in the mountain at the start.",
-                value_default = false,
-                scope = MOD_SETTING_SCOPE_NEW_GAME,
-            },
-            {
-                ui_fn = mod_setting_vertical_spacing,
-                not_setting = true,
-            },
-            {
-                ui_fn = mod_setting_section,
                 ui_name = "Inventory Interaction Options",
                 ui_description = "",
                 not_setting = true,
@@ -749,6 +725,30 @@ mod_settings =
         ui_name = "Bag Spawning",
         ui_description = "Options for the spawning of the bags",
         settings = {
+            {
+                ui_fn = mod_setting_section,
+                ui_name = "Starter loadout",
+                ui_description = "",
+                not_setting = true,
+            },
+            {
+                id = "starter_loadout",
+                ui_name = "Starter Loadout",
+                ui_description = "When true will start your run with a bag of each type lying around near you.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_NEW_GAME,
+            },
+            {
+                id = "showcase_loadout",
+                ui_name = "Showcase loadout",
+                ui_description = "When true will spawn all the bags of the mod in the mountain at the start.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_NEW_GAME,
+            },
+            {
+                ui_fn = mod_setting_vertical_spacing,
+                not_setting = true,
+            },
             {
                 ui_fn = mod_setting_section,
                 ui_name = "General Bag Spawn",
