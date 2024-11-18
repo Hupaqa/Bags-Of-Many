@@ -2,7 +2,7 @@ dofile("data/scripts/lib/mod_settings.lua")
 dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 
-local mod_version = "1.6.3"
+local mod_version = "1.6.4"
 
 local listening_to_key_press = false
 function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
