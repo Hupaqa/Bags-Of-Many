@@ -84,7 +84,9 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
         elseif pickup_input_type == "Mouse" then
             pickup_input_code_name = get_mouse_pressed_name(tonumber(pickup_input_code))
         end
-        GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]")
+        if pickup_input_code_name ~= nil and pickup_input_type ~= nil then
+            GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]")
+        end
     else
         GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
     end
