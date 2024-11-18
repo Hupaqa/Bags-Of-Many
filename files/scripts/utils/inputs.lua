@@ -30,8 +30,8 @@ function calculate_mouse_pos(gui)
     local screen_width, screen_height = GuiGetScreenDimensions(gui)
     local mouse_raw_x, mouse_raw_y = InputGetMousePosOnScreen()
 
-    Mouse.Position.X = mouse_raw_x * screen_width / tonumber(ModSettingGet("VanillaUIReworked.res_x"))
-    Mouse.Position.Y = mouse_raw_y * screen_height / tonumber(ModSettingGet("VanillaUIReworked.res_y"))
+    Mouse.Position.X = mouse_raw_x * screen_width / tonumber(ModSettingGet("BagsOfMany.noita_screen_size_x"))
+    Mouse.Position.Y = mouse_raw_y * screen_height / tonumber(ModSettingGet("BagsOfMany.noita_screen_size_y"))
 end
 
 function get_key_pressed_name(value_pressed)

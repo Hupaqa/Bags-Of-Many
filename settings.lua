@@ -2,17 +2,20 @@ dofile("data/scripts/lib/mod_settings.lua")
 dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 
+local mod_version = "1.6.3"
+
 local listening_to_key_press = false
 function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
     calculate_mouse_pos(gui)
     local value_pressed = nil
     local pickup_input_code = tonumber(ModSettingGet("BagsOfMany.pickup_input_code"))
-    if ModSettingGet("BagsOfMany.pickup_input_type") == "Key" then
+    local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
+    if pickup_input_type == "Key" then
         value_pressed = get_key_pressed_name(pickup_input_code)
-    else
+    elseif pickup_input_type == "Mouse" then
         value_pressed = get_mouse_pressed_name(pickup_input_code)
     end
-    if value_pressed then
+    if value_pressed ~= nil and value_pressed ~= "" then
         -- invisible text to capture inputs
         GuiZSetForNextWidget(gui, 100000)
         GuiColorSetForNextWidget(gui, 0, 0, 0, 0)
@@ -88,7 +91,7 @@ end
 function mod_setting_type_display(mod_id, gui, in_main_menu, im_id, setting)
     local pickup_input_code = ModSettingGet("BagsOfMany.pickup_input_code")
     local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
-    if pickup_input_code and pickup_input_type then
+    if pickup_input_code ~= nil and pickup_input_type ~= nil and pickup_input_code ~= "" and pickup_input_type ~= "" then
         GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
         GuiText(gui, mod_setting_group_x_offset, 0, "Input Type -> ( " .. pickup_input_type .. " ) | Input Code -> ( " .. pickup_input_code .. " )")
     end
@@ -173,6 +176,30 @@ mod_settings =
                 value_default = "Key",
                 ui_description = "Pickup input type used for the pickup actions.",
                 value_display_formatting = "Pickup input type: $0",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                ui_fn = mod_setting_vertical_spacing,
+                not_setting = true,
+            },
+            {
+                id = "noita_screen_size_x",
+                ui_name = "Screen Size X",
+                ui_description = "ONLY CHANGE this if you changed it in your mod config.",
+                value_default = "1280",
+                text_max_length = 4,
+                value_display_multiplier = 1,
+                value_display_formatting = " x = $0",
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
+            {
+                id = "noita_screen_size_y",
+                ui_name = "Screen Size Y",
+                ui_description = "ONLY CHANGE this if you changed it in your mod config.",
+                value_default = "720",
+                text_max_length = 4,
+                value_display_multiplier = 1,
+                value_display_formatting = " y = $0",
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
         }
@@ -972,7 +999,7 @@ mod_settings =
         category_id = "bags_of_many_version",
         foldable = false,
         _folded = true,
-        ui_name = "Version: 1.6",
+        ui_name = "Version: ".. mod_version,
         ui_description = "Current version of the mod",
         settings = {}
     }
