@@ -15,7 +15,7 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
     elseif pickup_input_type == "Mouse" then
         value_pressed = get_mouse_pressed_name(pickup_input_code)
     end
-    if value_pressed ~= nil and value_pressed ~= "" then
+    if value_pressed ~= nil and value_pressed ~= "" and pickup_input_type then
         -- invisible text to capture inputs
         GuiZSetForNextWidget(gui, 100000)
         GuiColorSetForNextWidget(gui, 0, 0, 0, 0)
@@ -89,8 +89,8 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
 end
 
 function mod_setting_type_display(mod_id, gui, in_main_menu, im_id, setting)
-    local pickup_input_code = ModSettingGet("BagsOfMany.pickup_input_code")
-    local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
+    local pickup_input_code = tostring(ModSettingGet("BagsOfMany.pickup_input_code"))
+    local pickup_input_type = tostring(ModSettingGet("BagsOfMany.pickup_input_type"))
     if pickup_input_code ~= nil and pickup_input_type ~= nil and pickup_input_code ~= "" and pickup_input_type ~= "" then
         GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
         GuiText(gui, mod_setting_group_x_offset, 0, "Input Type -> ( " .. pickup_input_type .. " ) | Input Code -> ( " .. pickup_input_code .. " )")
@@ -163,7 +163,7 @@ mod_settings =
                 id = "pickup_input_code",
                 ui_name = "Input code used for Pickup Action",
                 ui_description = "Input code used to pickup objects with the bags.",
-                value_default = "19",
+                value_default = "9",
                 text_max_length = 4,
 				allowed_characters = "0123456789",
                 value_display_formatting = "Pickup input code : $0",
