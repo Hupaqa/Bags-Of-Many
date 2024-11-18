@@ -1,2 +1,2 @@
-________1.6________
-- Added the ability to change the Pickup Action of the bags to any keys or mouse button allowed by the noita API. No more kicking everything everywhere.
+________1.6.6________
+- Maybe fixed the keybinding issue.

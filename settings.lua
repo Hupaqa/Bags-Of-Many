@@ -9,7 +9,82 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
     local pickup_input_code = ModSettingGet("BagsOfMany.pickup_input_code")
     local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
     if pickup_input_code and pickup_input_type and pickup_input_code ~= "" and pickup_input_type ~= "" then
-        GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "[" .. pickup_input_code .. "]")
+        if not listening_to_key_press then
+            GuiImage(gui, 1, mod_setting_group_x_offset, 0, "mods/bags_of_many/files/ui_gfx/settings/click_rebind_button.png", 0, 1)
+            local last_hovered = last_widget_is_being_hovered(gui)
+            local button_clicked = last_widget_is_left_clicked(gui)
+            local _, button_y = last_widget_size(gui)
+            if last_hovered then
+                GuiColorSetForNextWidget(gui, 0.75, 0.75, 0.75, 1.0)
+            end
+            GuiImage(gui, 1, mod_setting_group_x_offset, -button_y, "mods/bags_of_many/files/ui_gfx/settings/click_rebind_button.png", 1, 1)
+            if last_hovered then
+                GuiColorSetForNextWidget(gui, 1, 1, 0.71764705882, 1)
+                GuiText(gui, mod_setting_group_x_offset, 0, "CLICK TO BEGIN LISTENING TO KEY PRESS...")
+            end
+            if last_hovered and button_clicked then
+                listening_to_key_press = true
+            end
+        else
+            GuiImage(gui, 1, mod_setting_group_x_offset, 0, "mods/bags_of_many/files/ui_gfx/settings/listening_rebind.png", 0, 1)
+            local last_hovered = last_widget_is_being_hovered(gui)
+            local left_clicked = last_widget_is_left_clicked(gui)
+            local _, button_y = last_widget_size(gui)
+            if last_hovered then
+                GuiColorSetForNextWidget(gui, 0.75, 0.75, 0.75, 1.0)
+            end
+            GuiImage(gui, 1, mod_setting_group_x_offset, -button_y, "mods/bags_of_many/files/ui_gfx/settings/listening_rebind.png", 1, 1)
+            if last_hovered then
+                GuiColorSetForNextWidget(gui, 1, 1, 0.71764705882, 1)
+                GuiText(gui, mod_setting_group_x_offset, 0, "CLICK AGAIN TO CANCEL...")
+            end
+            local cancelling = false
+            if last_hovered and left_clicked then
+                listening_to_key_press = false
+                cancelling = true
+            end
+
+            if not cancelling then
+                local type_found = nil
+                local keys_just_down = detect_any_key_just_down()
+                local mouse_just_down = detect_any_mouse_just_down()
+                local key_or_mouse_found = nil
+                for _, key_code in pairs(keys_just_down or {}) do
+                    local key_number = InputCodes.Key[key_code]
+                    if key_number then
+                        type_found = "Key"
+                        key_or_mouse_found = key_number
+                        listening_to_key_press = false
+                        break
+                    end
+                end
+                for _, mouse_code in pairs(mouse_just_down or {}) do
+                    local mouse_number = InputCodes.Mouse[mouse_code]
+                    if mouse_number then
+                        type_found = "Mouse"
+                        key_or_mouse_found = mouse_number
+                        listening_to_key_press = false
+                        break
+                    end
+                end
+                if key_or_mouse_found then
+                    if type_found then
+                        ModSettingSet("BagsOfMany.pickup_input_type", type_found)
+                        ModSettingSetNextValue("BagsOfMany.pickup_input_type", type_found, false)
+                    end
+                    ModSettingSet("BagsOfMany.pickup_input_code", key_or_mouse_found)
+                    ModSettingSetNextValue("BagsOfMany.pickup_input_code", key_or_mouse_found, false)
+                end
+            end
+        end
+        -- DISPLAY PICKUP CODE NAME
+        local pickup_input_code_name = ""
+        if pickup_input_type == "Key" then
+            pickup_input_code_name = get_key_pressed_name(tonumber(pickup_input_code))
+        elseif pickup_input_type == "Mouse" then
+            pickup_input_code_name = get_mouse_pressed_name(tonumber(pickup_input_code))
+        end
+        GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]")
     else
         GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
     end
@@ -88,7 +163,7 @@ mod_settings =
             {
                 ui_fn = mod_setting_key_display,
                 id = "pickup_input_code",
-                ui_name = "Input code used for Pickup Action",
+                ui_name = "Input key/mouse used for Pickup Action",
                 ui_description = "Input code used to pickup objects with the bags.",
                 value_default = "9",
                 text_max_length = 4,

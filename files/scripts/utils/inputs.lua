@@ -48,7 +48,7 @@ function get_key_pressed_name(value_pressed)
             return string.upper(InputCodes.KeyName[key])
         end
     end
-    return nil
+    return ""
 end
 
 function get_mouse_pressed_name(value_pressed)
@@ -57,7 +57,7 @@ function get_mouse_pressed_name(value_pressed)
             return string.upper(InputCodes.MouseName[mouse])
         end
     end
-    return nil
+    return ""
 end
 
 function detect_any_key_just_down()
