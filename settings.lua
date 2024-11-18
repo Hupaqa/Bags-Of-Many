@@ -6,85 +6,12 @@ local mod_version = "1.6.4"
 
 local listening_to_key_press = false
 function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
-    calculate_mouse_pos(gui)
-    local value_pressed = nil
-    local pickup_input_code = tonumber(ModSettingGet("BagsOfMany.pickup_input_code"))
+    local pickup_input_code = ModSettingGet("BagsOfMany.pickup_input_code")
     local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
-    if pickup_input_type == "Key" then
-        value_pressed = get_key_pressed_name(pickup_input_code)
-    elseif pickup_input_type == "Mouse" then
-        value_pressed = get_mouse_pressed_name(pickup_input_code)
-    end
-    if value_pressed ~= nil and value_pressed ~= "" and pickup_input_type then
-        -- invisible text to capture inputs
-        GuiZSetForNextWidget(gui, 100000)
-        GuiColorSetForNextWidget(gui, 0, 0, 0, 0)
-        GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. tostring(value_pressed))
-        local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-        local size_x, size_y = GuiGetTextDimensions(gui, setting.ui_name .. ": " .. tostring(value_pressed))
-        local is_in_box = is_mouse_pos_in_box(x, y, size_x, size_y, Mouse.Position.X, Mouse.Position.Y)
-        local just_left_clicked = InputIsMouseButtonJustDown(InputCodes.Mouse.Mouse_left)
-        -- Cancel keybind change
-        local cancelled = false
-        if listening_to_key_press and is_in_box and just_left_clicked then
-            listening_to_key_press = false
-            cancelled = true
-        end
-        -- Listening to key press
-        if listening_to_key_press then
-            local type_found = nil
-            local keys_just_down = detect_any_key_just_down()
-            local mouse_just_down = detect_any_mouse_just_down()
-            local key_or_mouse_found = nil
-            for _, key_code in pairs(keys_just_down or {}) do
-                local key_number = InputCodes.Key[key_code]
-                if key_number then
-                    type_found = "Key"
-                    key_or_mouse_found = key_number
-                    listening_to_key_press = false
-                    break
-                end
-            end
-            for _, mouse_code in pairs(mouse_just_down or {}) do
-                local mouse_number = InputCodes.Mouse[mouse_code]
-                if mouse_number then
-                    type_found = "Mouse"
-                    key_or_mouse_found = mouse_number
-                    listening_to_key_press = false
-                    break
-                end
-            end
-            if key_or_mouse_found then
-                if type_found then
-                    ModSettingSetNextValue("BagsOfMany.pickup_input_type", type_found, false)
-                end
-                ModSettingSetNextValue("BagsOfMany.pickup_input_code", key_or_mouse_found, false)
-            end
-        end
-        if not listening_to_key_press and just_left_clicked and is_in_box and not cancelled then
-            listening_to_key_press = true
-        end
-        if is_in_box then
-            GuiColorSetForNextWidget(gui, 1, 1, 0.71764705882, 1)
-        end
-        -- Display input key/mouse
-        GuiText(gui, mod_setting_group_x_offset, -10, setting.ui_name .. ": [  " .. tostring(value_pressed) .. "  ]")
-        -- Display message to help guide how to change the input key/mouse
-        if not listening_to_key_press and is_in_box then
-            GuiColorSetForNextWidget(gui, 0.92, 0.18, 0.09, 1)
-            GuiText(gui, mod_setting_group_x_offset, 0, "Click to start recording for a key or mouse input to change the binding.")
-        end
-        -- Message displayed when listening to key press
-        if listening_to_key_press then
-            if is_in_box then
-                GuiColorSetForNextWidget(gui, 0.92, 0.18, 0.09, 1)
-                GuiText(gui, mod_setting_group_x_offset, 0, "To cancel keybind change click again.")
-            end
-            GuiColorSetForNextWidget(gui, 0, 0.8, 0, 1)
-            GuiText(gui, mod_setting_group_x_offset, 0, "Recording next key/mouse press...")
-        end
-        -- Reset keybind cancel
-        cancelled = false
+    if pickup_input_code and pickup_input_type and pickup_input_code ~= "" and pickup_input_type ~= "" then
+        GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "[" .. pickup_input_code .. "]")
+    else
+        GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
     end
 end
 

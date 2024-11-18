@@ -40,6 +40,10 @@ local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
 local SHOWCASE_LOAD_KEY = "BAGS_OF_MANY_SHOWCASE_LOAD_DONE"
 function OnPlayerSpawned(player_entity) -- This runs when player entity has been created
     if not GameHasFlagRun(LOAD_KEY) then
+
+        -- MESSAGE OF THE WEEK DISPLAY
+        GamePrint("Bags Of Many: You can now rebind the bag pickup action in the mod settings (default [F] key).")
+
         GameAddFlagRun(LOAD_KEY)
         local x, y = get_player_pos()
         if ModSettingGet("BagsOfMany.starter_loadout") then
