@@ -87,8 +87,11 @@ end
 
 function mod_setting_type_display(mod_id, gui, in_main_menu, im_id, setting)
     local pickup_input_code = ModSettingGet("BagsOfMany.pickup_input_code")
-    GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
-    GuiText(gui, mod_setting_group_x_offset, 0, "Input Type -> ( " .. ModSettingGet("BagsOfMany.pickup_input_type") .. " ) | Input Code -> ( " .. pickup_input_code .. " )")
+    local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
+    if pickup_input_code and pickup_input_type then
+        GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
+        GuiText(gui, mod_setting_group_x_offset, 0, "Input Type -> ( " .. pickup_input_type .. " ) | Input Code -> ( " .. pickup_input_code .. " )")
+    end
 end
 
 function mod_setting_error_with_title(mod_id, gui, in_main_menu, im_id, setting)
