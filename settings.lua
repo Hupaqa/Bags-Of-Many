@@ -1,9 +1,21 @@
 dofile("data/scripts/lib/mod_settings.lua")
-dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 
-local mod_version = "1.6.15"
+local mod_version = "1.6.17"
+
+local function last_widget_is_being_hovered(gui)
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+    return hovered
+end
+
+local function last_widget_is_left_clicked(gui)
+    local left_click = GuiGetPreviousWidgetInfo(gui)
+    return left_click
+end
+
+local function last_widget_size(gui)
+    local _, _, _, _, _, width, height = GuiGetPreviousWidgetInfo(gui)
+    return width, height
+end
 
 local function get_key_pressed_name(value_pressed)
     for key, value in pairs(InputCodes.Key) do
@@ -21,6 +33,28 @@ local function get_mouse_pressed_name(value_pressed)
         end
     end
     return ""
+end
+
+local function detect_any_key_just_down()
+    local just_down_list = {}
+    for key, value in pairs(InputCodes.Key) do
+        local just_down =  InputIsKeyJustDown(value)
+        if just_down then
+            table.insert(just_down_list, key)
+        end
+    end
+    return just_down_list
+end
+
+local function detect_any_mouse_just_down()
+    local just_down_list = {}
+    for key, value in pairs(InputCodes.Mouse) do
+        local just_down =  InputIsMouseButtonJustDown(value)
+        if just_down then
+            table.insert(just_down_list, key)
+        end
+    end
+    return just_down_list
 end
 
 local listening_to_key_press = false
