@@ -2,10 +2,11 @@ dofile("data/scripts/lib/mod_settings.lua")
 dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 
-local mod_version = "1.6.8"
+local mod_version = "1.6.9"
 
 local listening_to_key_press = false
 function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
+    local error_msg = "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM"
     local pickup_input_code = ModSettingGet("BagsOfMany.pickup_input_code")
     local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
     if pickup_input_code and pickup_input_type and pickup_input_code ~= "" and pickup_input_type ~= "" then
@@ -35,7 +36,9 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
             if last_hovered then
                 GuiColorSetForNextWidget(gui, 0.75, 0.75, 0.75, 1.0)
             end
-            GuiImage(gui, 1, mod_setting_group_x_offset, -button_y, "mods/bags_of_many/files/ui_gfx/settings/listening_rebind.png", 1, 1)
+            if button_y then
+                GuiImage(gui, 1, mod_setting_group_x_offset, -button_y, "mods/bags_of_many/files/ui_gfx/settings/listening_rebind.png", 1, 1)
+            end
             if last_hovered then
                 GuiColorSetForNextWidget(gui, 1, 1, 0.71764705882, 1)
                 GuiText(gui, mod_setting_group_x_offset, 0, "CLICK AGAIN TO CANCEL...")
@@ -84,20 +87,32 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
         elseif pickup_input_type == "Mouse" then
             pickup_input_code_name = get_mouse_pressed_name(tonumber(pickup_input_code))
         end
-        if pickup_input_code_name ~= nil and pickup_input_type ~= nil then
-            -- GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]")
+        local message_disp = ""
+        if pickup_input_code_name and pickup_input_code_name ~= "" then
+            message_disp = setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]"
+        end
+        if message_disp and message_disp ~= "" then
+            GuiText(gui, mod_setting_group_x_offset, 0, message_disp)
+        else
+            GuiText(gui, mod_setting_group_x_offset, 0, error_msg)
         end
     else
-        GuiText(gui, mod_setting_group_x_offset, 0, setting.ui_name .. ": " .. "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
+        GuiText(gui, mod_setting_group_x_offset, 0, error_msg)
     end
 end
 
 function mod_setting_type_display(mod_id, gui, in_main_menu, im_id, setting)
     local pickup_input_code = tostring(ModSettingGet("BagsOfMany.pickup_input_code"))
     local pickup_input_type = tostring(ModSettingGet("BagsOfMany.pickup_input_type"))
+    local msg_display = ""
     if pickup_input_code ~= nil and pickup_input_type ~= nil and pickup_input_code ~= "" and pickup_input_type ~= "" then
+        msg_display = "Input Type -> ( " .. pickup_input_type .. " ) | Input Code -> ( " .. pickup_input_code .. " )"
+    end
+    if msg_display and msg_display ~= "" then
         GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
-        -- GuiText(gui, mod_setting_group_x_offset, 0, "Input Type -> ( " .. pickup_input_type .. " ) | Input Code -> ( " .. pickup_input_code .. " )")
+        GuiText(gui, mod_setting_group_x_offset, 0, msg_display)
+    else
+        GuiText(gui, mod_setting_group_x_offset, 0, "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
     end
 end
 
