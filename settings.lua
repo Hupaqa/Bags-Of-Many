@@ -1,6 +1,6 @@
 dofile("data/scripts/lib/mod_settings.lua")
 
-local mod_version = "1.6.12"
+local mod_version = "1.6.13"
 
 local function last_widget_is_being_hovered(gui)
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
