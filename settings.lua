@@ -1,8 +1,9 @@
 dofile("data/scripts/lib/mod_settings.lua")
-dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
+dofile( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
+dofile( "mods/bags_of_many/files/scripts/utils/utils.lua" )
+dofile( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 
-local mod_version = "1.6.9"
+local mod_version = "1.6.11"
 
 local listening_to_key_press = false
 function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
@@ -81,39 +82,39 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
             end
         end
         -- DISPLAY PICKUP CODE NAME
-        local pickup_input_code_name = ""
-        if pickup_input_type == "Key" then
-            pickup_input_code_name = get_key_pressed_name(tonumber(pickup_input_code))
-        elseif pickup_input_type == "Mouse" then
-            pickup_input_code_name = get_mouse_pressed_name(tonumber(pickup_input_code))
-        end
-        local message_disp = ""
-        if pickup_input_code_name and pickup_input_code_name ~= "" then
-            message_disp = setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]"
-        end
-        if message_disp and message_disp ~= "" then
-            GuiText(gui, mod_setting_group_x_offset, 0, message_disp)
-        else
-            GuiText(gui, mod_setting_group_x_offset, 0, error_msg)
-        end
+        -- local pickup_input_code_name = ""
+        -- if pickup_input_type == "Key" then
+        --     pickup_input_code_name = get_key_pressed_name(tonumber(pickup_input_code))
+        -- elseif pickup_input_type == "Mouse" then
+        --     pickup_input_code_name = get_mouse_pressed_name(tonumber(pickup_input_code))
+        -- end
+        -- local message_disp = ""
+        -- if pickup_input_code_name and pickup_input_code_name ~= "" then
+        --     message_disp = setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]"
+        -- end
+        -- if message_disp and message_disp ~= "" then
+        --     GuiText(gui, mod_setting_group_x_offset, 0, message_disp)
+        -- else
+        --     GuiText(gui, mod_setting_group_x_offset, 0, error_msg)
+        -- end
     else
         GuiText(gui, mod_setting_group_x_offset, 0, error_msg)
     end
 end
 
 function mod_setting_type_display(mod_id, gui, in_main_menu, im_id, setting)
-    local pickup_input_code = tostring(ModSettingGet("BagsOfMany.pickup_input_code"))
-    local pickup_input_type = tostring(ModSettingGet("BagsOfMany.pickup_input_type"))
-    local msg_display = ""
-    if pickup_input_code ~= nil and pickup_input_type ~= nil and pickup_input_code ~= "" and pickup_input_type ~= "" then
-        msg_display = "Input Type -> ( " .. pickup_input_type .. " ) | Input Code -> ( " .. pickup_input_code .. " )"
-    end
-    if msg_display and msg_display ~= "" then
-        GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
-        GuiText(gui, mod_setting_group_x_offset, 0, msg_display)
-    else
-        GuiText(gui, mod_setting_group_x_offset, 0, "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
-    end
+    -- local pickup_input_code = tostring(ModSettingGet("BagsOfMany.pickup_input_code"))
+    -- local pickup_input_type = tostring(ModSettingGet("BagsOfMany.pickup_input_type"))
+    -- local msg_display = ""
+    -- if pickup_input_code ~= nil and pickup_input_type ~= nil and pickup_input_code ~= "" and pickup_input_type ~= "" then
+    --     msg_display = "Input Type -> ( " .. pickup_input_type .. " ) | Input Code -> ( " .. pickup_input_code .. " )"
+    -- end
+    -- if msg_display and msg_display ~= "" then
+    --     GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
+    --     GuiText(gui, 0, 0, msg_display)
+    -- else
+    --     GuiText(gui, 0, 0, "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
+    -- end
 end
 
 function mod_setting_error_with_title(mod_id, gui, in_main_menu, im_id, setting)
@@ -180,8 +181,6 @@ mod_settings =
             {
                 ui_fn = mod_setting_key_display,
                 id = "pickup_input_code",
-                ui_name = "Input key/mouse used for Pickup Action",
-                ui_description = "Input code used to pickup objects with the bags.",
                 value_default = "9",
                 text_max_length = 4,
 				allowed_characters = "0123456789",
@@ -195,30 +194,6 @@ mod_settings =
                 value_default = "Key",
                 ui_description = "Pickup input type used for the pickup actions.",
                 value_display_formatting = "Pickup input type: $0",
-                scope = MOD_SETTING_SCOPE_RUNTIME,
-            },
-            {
-                ui_fn = mod_setting_vertical_spacing,
-                not_setting = true,
-            },
-            {
-                id = "noita_screen_size_x",
-                ui_name = "Screen Size X",
-                ui_description = "ONLY CHANGE this if you changed it in your mod config.",
-                value_default = "1280",
-                text_max_length = 4,
-                value_display_multiplier = 1,
-                value_display_formatting = " x = $0",
-                scope = MOD_SETTING_SCOPE_RUNTIME,
-            },
-            {
-                id = "noita_screen_size_y",
-                ui_name = "Screen Size Y",
-                ui_description = "ONLY CHANGE this if you changed it in your mod config.",
-                value_default = "720",
-                text_max_length = 4,
-                value_display_multiplier = 1,
-                value_display_formatting = " y = $0",
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
         }
