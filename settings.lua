@@ -1,23 +1,11 @@
 dofile("data/scripts/lib/mod_settings.lua")
+dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 
-local mod_version = "1.6.13"
+local mod_version = "1.6.15"
 
-local function last_widget_is_being_hovered(gui)
-    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
-    return hovered
-end
-
-local function last_widget_is_left_clicked(gui)
-    local left_click = GuiGetPreviousWidgetInfo(gui)
-    return left_click
-end
-
-local function last_widget_size(gui)
-    local _, _, _, _, _, width, height = GuiGetPreviousWidgetInfo(gui)
-    return width, height
-end
-
-function get_key_pressed_name(value_pressed)
+local function get_key_pressed_name(value_pressed)
     for key, value in pairs(InputCodes.Key) do
         if value_pressed == value then
             return string.upper(InputCodes.KeyName[key])
@@ -26,7 +14,7 @@ function get_key_pressed_name(value_pressed)
     return ""
 end
 
-function get_mouse_pressed_name(value_pressed)
+local function get_mouse_pressed_name(value_pressed)
     for mouse, value in pairs(InputCodes.Mouse) do
         if value_pressed == value then
             return string.upper(InputCodes.MouseName[mouse])
@@ -35,34 +23,12 @@ function get_mouse_pressed_name(value_pressed)
     return ""
 end
 
-function detect_any_key_just_down()
-    local just_down_list = {}
-    for key, value in pairs(InputCodes.Key) do
-        local just_down =  InputIsKeyJustDown(value)
-        if just_down then
-            table.insert(just_down_list, key)
-        end
-    end
-    return just_down_list
-end
-
-function detect_any_mouse_just_down()
-    local just_down_list = {}
-    for key, value in pairs(InputCodes.Mouse) do
-        local just_down =  InputIsMouseButtonJustDown(value)
-        if just_down then
-            table.insert(just_down_list, key)
-        end
-    end
-    return just_down_list
-end
-
 local listening_to_key_press = false
 function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
     local error_msg = "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM"
     local pickup_input_code = ModSettingGet("BagsOfMany.pickup_input_code")
     local pickup_input_type = ModSettingGet("BagsOfMany.pickup_input_type")
-    if pickup_input_code and pickup_input_type and pickup_input_code ~= "" and pickup_input_type ~= "" then
+    if not in_main_menu and pickup_input_code and pickup_input_type and pickup_input_code ~= "" and pickup_input_type ~= "" then
         if not listening_to_key_press then
             GuiImage(gui, 1, mod_setting_group_x_offset, 0, "mods/bags_of_many/files/ui_gfx/settings/click_rebind_button.png", 0, 1)
             local last_hovered = last_widget_is_being_hovered(gui)
@@ -133,22 +99,24 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
                 end
             end
         end
-        -- DISPLAY PICKUP CODE NAME
-        local pickup_input_code_name = ""
-        if pickup_input_type == "Key" then
-            pickup_input_code_name = get_key_pressed_name(tonumber(pickup_input_code))
-        elseif pickup_input_type == "Mouse" then
-            pickup_input_code_name = get_mouse_pressed_name(tonumber(pickup_input_code))
-        end
-        local message_disp = ""
-        if pickup_input_code_name and pickup_input_code_name ~= "" then
-            message_disp = setting.ui_name .. ": " .. "[  " .. pickup_input_code_name .. "  ]"
-        end
-        if message_disp and message_disp ~= "" then
-            GuiText(gui, mod_setting_group_x_offset, 0, message_disp)
-        else
-            GuiText(gui, mod_setting_group_x_offset, 0, error_msg)
-        end
+    end
+    if in_main_menu then
+        GuiColorSetForNextWidget(gui, 1.0, 0.4, 0.4, 1.0)
+        GuiText(gui, mod_setting_group_x_offset, 0, "TO MODIFY THIS SETTING ENTER A GAME")
+    end
+    -- DISPLAY PICKUP CODE NAME
+    local pickup_input_code_name = ""
+    if pickup_input_type == "Key" then
+        pickup_input_code_name = get_key_pressed_name(tonumber(pickup_input_code))
+    elseif pickup_input_type == "Mouse" then
+        pickup_input_code_name = get_mouse_pressed_name(tonumber(pickup_input_code))
+    end
+    local message_disp = ""
+    if pickup_input_code_name and pickup_input_code_name ~= "" then
+        message_disp = "INPUT key/mouse code: " .. "[  " .. pickup_input_code_name .. "  ]"
+    end
+    if message_disp and message_disp ~= "" then
+        GuiText(gui, mod_setting_group_x_offset, 0, message_disp)
     else
         GuiText(gui, mod_setting_group_x_offset, 0, error_msg)
     end
@@ -163,9 +131,9 @@ function mod_setting_type_display(mod_id, gui, in_main_menu, im_id, setting)
     end
     if msg_display and msg_display ~= "" then
         GuiColorSetForNextWidget(gui, 0.55, 0.55, 0.55, 1)
-        GuiText(gui, 0, 0, msg_display)
+        GuiText(gui, mod_setting_group_x_offset, 0, msg_display)
     else
-        GuiText(gui, 0, 0, "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
+        GuiText(gui, mod_setting_group_x_offset, 0, "COULD NOT BE DISPLAYED PROPERLY PLEASE REPORT THE PROBLEM")
     end
 end
 
