@@ -1,6 +1,6 @@
 dofile("data/scripts/lib/mod_settings.lua")
 
-local mod_version = "1.6.17"
+local mod_version = "1.6.18"
 
 local function last_widget_is_being_hovered(gui)
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
@@ -8,6 +8,11 @@ local function last_widget_is_being_hovered(gui)
 end
 
 local function last_widget_is_left_clicked(gui)
+    local left_click = GuiGetPreviousWidgetInfo(gui)
+    return left_click
+end
+
+function last_widget_is_right_clicked(gui)
     local left_click = GuiGetPreviousWidgetInfo(gui)
     return left_click
 end
@@ -83,8 +88,7 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
             end
         else
             GuiImage(gui, 1, mod_setting_group_x_offset, 0, "mods/bags_of_many/files/ui_gfx/settings/listening_rebind.png", 0, 1)
-            local last_hovered = last_widget_is_being_hovered(gui)
-            local left_clicked = last_widget_is_left_clicked(gui)
+            local _, right_clicked, last_hovered = GuiGetPreviousWidgetInfo(gui)
             local _, button_y = last_widget_size(gui)
             if last_hovered then
                 GuiColorSetForNextWidget(gui, 0.75, 0.75, 0.75, 1.0)
@@ -94,10 +98,10 @@ function mod_setting_key_display(mod_id, gui, in_main_menu, im_id, setting)
             end
             if last_hovered then
                 GuiColorSetForNextWidget(gui, 1, 1, 0.71764705882, 1)
-                GuiText(gui, mod_setting_group_x_offset, 0, "CLICK AGAIN TO CANCEL...")
+                GuiText(gui, mod_setting_group_x_offset, 0, "RIGHT CLICK TO CANCEL...")
             end
             local cancelling = false
-            if last_hovered and left_clicked then
+            if last_hovered and right_clicked then
                 listening_to_key_press = false
                 cancelling = true
             end
