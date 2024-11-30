@@ -1,0 +1,13 @@
+<Entity name="$projectile_default">
+	<LuaComponent
+		script_source_file="mods/bags_of_many/files/spells/SPAWN_BIGBINDER.lua"
+		execute_every_n_frame="-1"
+		execute_on_removed="1"
+		remove_after_executed="1"
+		>
+	</LuaComponent>
+
+	<LifetimeComponent
+		lifetime="0">
+	</LifetimeComponent>
+</Entity>
