@@ -31,6 +31,8 @@ ModTextFileSetContent(TRANSLATIONS_FILE, translations)
 -- ADDING SPAWN CHANCE
 ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/bags_of_many/files/scripts/bags_of_many_spawn.lua")
 
+ModLuaFileAppend( "data/scripts/gun/gun_actions.lua", "mods/bags_of_many/files/spells/add_spells.lua" )
+
 function OnModInit()
     bags_mod_state.get_file_content = ModTextFileGetContent
     bags_mod_state.is_file_exist = ModDoesFileExist
