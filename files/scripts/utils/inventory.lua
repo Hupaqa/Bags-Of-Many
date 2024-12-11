@@ -6,8 +6,8 @@ local function get_entities_with_material_inventory_in_radius(x,y,r)
 	local out={}
 	for i=1,#ents do
 		local eid=ents[i]
-		if EntityGetFirstComponentIncludingDisabled(eid,"MaterialInventoryComponent") and not EntityGetFirstComponentIncludingDisabled(eid,"ControlsComponent") and not EntityHasTag(eid,"player_unit") then
-		--so basically, look for anything with a material component, but blacklist anything with a controls component. this is to ensure things which can eat cannot be placed in a bag. for extra security, check for the player_unit tag in case some other mod messes with the player, because otherwise, the player gets placed in the bag, which, while hilarious, bricks the save.
+		if EntityGetFirstComponentIncludingDisabled(eid,"MaterialInventoryComponent") and EntityHasTag(eid,"item_pickup") then
+		--so basically, look for anything with a material component, and make sure that it is an item - because things other than potions have a MaterialInventoryComponent, such as the player - and putting the player inside a bag softlocks the save (pretty funny).
 			out[#out+1]=ents[i]
 		end
 	end
