@@ -1,6 +1,19 @@
 dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/noita_utils.lua" )
 
+local function get_entities_with_material_inventory_in_radius(x,y,r)
+	local ents=EntityGetInRadius(x,y,r)
+	local out={}
+	for i=1,#ents do
+		local eid=ents[i]
+		if EntityGetFirstComponentIncludingDisabled(eid,"MaterialInventoryComponent") and EntityHasTag(eid,"item_pickup") then
+		--so basically, look for anything with a material component, and make sure that it is an item - because things other than potions have a MaterialInventoryComponent, such as the player - and putting the player inside a bag softlocks the save (pretty funny).
+			out[#out+1]=ents[i]
+		end
+	end
+	return out
+end
+
 local pickup_distance = 20
 
 function bag_pickup_action(entity_who_kicked, active_item)
@@ -36,7 +49,7 @@ function universal_bag_pickup(entity_who_kicked, active_item)
     end
     -- Pickup potions
     if ModSettingGet("BagsOfMany.allow_potions") then
-        local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "potion")
+        local entities = get_entities_with_material_inventory_in_radius(pos_x, pos_y, pickup_distance)
         add_potions_to_inventory(active_item, inventory, entity_who_kicked, entities)
     end
     -- Pickup items
@@ -55,7 +68,7 @@ function potion_bag_pickup(entity_who_kicked, active_item)
     local inventory = get_inventory(active_item)
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
         -- Pickup potions
-    local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "potion")
+    local entities = get_entities_with_material_inventory_in_radius(pos_x, pos_y, pickup_distance)
     add_potions_to_inventory(active_item, inventory, entity_who_kicked, entities)
 end
 
