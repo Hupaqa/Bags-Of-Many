@@ -1209,25 +1209,22 @@ function generate_tooltip(item)
         end
     elseif has_material_inventory(item) then
         local potion_fill_percent = get_potion_fill_percent(item)
-        local potion_size = get_potion_size(item)
         local materials = get_potion_contents(item)
         if materials then
-            local material_inv_type = "POTION"
-            if is_powder_stash(item) then
-                material_inv_type = "POUCH"
-            end
-            for i = 1, #materials do
-                local game_text = GameTextGet(materials[i].name)
-                if i == 1 then
-                    tooltip = tooltip .. string.upper(game_text) .. " " .. material_inv_type .. " (" .. string.format("%.2f", potion_fill_percent*100) .. "% FULL)" .. "\n"
-                end
-                local text_to_add = string.format("%.2f", materials[i].amount) .. "% " .. string.upper(game_text:sub(1,1)) .. game_text:sub(2, #game_text)
-                tooltip = tooltip .. text_to_add .. "\n"
-            end
-            if #materials <= 0 then
-                tooltip = tooltip .. "EMPTY " .. material_inv_type
-            end
-            -- tooltip = tooltip .. "size : [" .. tostring(potion_size) .. "]\n"
+			local acomp=EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+			local entname= "POTION"
+			if acomp then
+				entname = GameTextGetTranslatedOrNot(ComponentGetValue2(acomp, "ui_name") or entname):gsub(" ?%$0 ?","",1) -- potion names will translate start with $0 . probably for material reasons, but we aren't supplying that.
+			end
+			
+			if #materials==0 then
+				tooltip = "EMPTY " .. entname:upper()
+			else
+				tooltip=string.format("%s %s (%.2f FULL)",GameTextGetTranslatedOrNot(materials[1].name):upper(),entname:upper(),potion_fill_percent*100.0 )
+			    for i = 1, #materials do
+					tooltip=tooltip.. string.format("\n%.2f%% %s",materials[i].amount,GameTextGetTranslatedOrNot(materials[i].name))
+				end
+			end
         end
     else
         local item_component = EntityGetComponentIncludingDisabled(item, "ItemComponent")
