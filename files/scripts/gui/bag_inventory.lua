@@ -1222,8 +1222,7 @@ function generate_tooltip(item)
 			else
 				tooltip=string.format("%s %s (%.2f FULL)",GameTextGetTranslatedOrNot(materials[1].name):upper(),entname:upper(),potion_fill_percent*100.0 )
 			    for i = 1, #materials do
-					local material_name = GameTextGetTranslatedOrNot(materials[i].name)
-					tooltip=tooltip.. string.format("\n%.2f%% %s",materials[i].amount,material_name)
+					tooltip=tooltip.. string.format("\n%.2f%% %s",materials[i].amount,GameTextGetTranslatedOrNot(materials[i].name))
 				end
 			end
         end
