@@ -1209,10 +1209,8 @@ function generate_tooltip(item)
         end
     elseif has_material_inventory(item) then
         local potion_fill_percent = get_potion_fill_percent(item)
-        --local potion_size = get_potion_size(item)
         local materials = get_potion_contents(item)
         if materials then
-			
 			local acomp=EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
 			local entname= "POTION"
 			if acomp then
@@ -1223,15 +1221,11 @@ function generate_tooltip(item)
 				tooltip = "EMPTY " .. entname:upper()
 			else
 				tooltip=string.format("%s %s (%.2f FULL)",GameTextGetTranslatedOrNot(materials[1].name):upper(),entname:upper(),potion_fill_percent*100.0 )
-				
 			    for i = 1, #materials do
 					local material_name = GameTextGetTranslatedOrNot(materials[i].name)
 					tooltip=tooltip.. string.format("\n%.2f%% %s",materials[i].amount,material_name)
 				end
-
-			end 
-			
-            -- tooltip = tooltip .. "size : [" .. tostring(potion_size) .. "]\n"
+			end
         end
     else
         local item_component = EntityGetComponentIncludingDisabled(item, "ItemComponent")
