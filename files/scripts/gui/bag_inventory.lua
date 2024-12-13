@@ -1214,7 +1214,7 @@ function generate_tooltip(item)
 			local acomp=EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
 			local entname= "POTION"
 			if acomp then
-				entname = GameTextGetTranslatedOrNot(ComponentGetValue2(acomp, "ui_name") or entname):sub(4) -- potion names will translate start with $0 . probably for material reasons, but we aren't supplying that.
+				entname = GameTextGetTranslatedOrNot(ComponentGetValue2(acomp, "ui_name") or entname):gsub(" ?%$0 ?","",1) -- potion names will translate start with $0 . probably for material reasons, but we aren't supplying that.
 			end
 			
 			if #materials==0 then
