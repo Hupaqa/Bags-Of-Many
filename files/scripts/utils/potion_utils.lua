@@ -1,3 +1,5 @@
+--- @param entity_id integer
+--- @return table|nil
 function get_biggest_potion_content( entity_id )
     local biggest_potion_content = nil
     local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
@@ -23,6 +25,8 @@ function get_biggest_potion_content( entity_id )
     end
 end
 
+--- @param entity_id integer
+--- @return table
 function get_potion_contents( entity_id )
     local materials = {}
     local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
@@ -53,6 +57,8 @@ function get_potion_contents( entity_id )
     return materials
 end
 
+--- @param entity_id integer
+--- @return table
 function get_potion_materials(entity_id)
     local material_list = {}
     local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
@@ -68,6 +74,8 @@ function get_potion_materials(entity_id)
     return material_list
 end
 
+--- @param entity_id integer
+--- @return number
 function get_potion_avalaible_space(entity_id)
     local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
     local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
@@ -82,8 +90,11 @@ function get_potion_avalaible_space(entity_id)
         end
         return capacity - total_material_count
     end
+    return 0
 end
 
+--- @param entity_id integer
+--- @return number|nil
 function get_potion_size(entity_id)
     local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
     if suc_component ~= nil then
@@ -91,6 +102,8 @@ function get_potion_size(entity_id)
     end
 end
 
+--- @param entity_id integer
+--- @return number|nil
 function get_potion_fill_percent(entity_id)
     local potion_size = get_potion_size(entity_id)
     local potion_space_left = get_potion_avalaible_space(entity_id)
@@ -99,6 +112,11 @@ function get_potion_fill_percent(entity_id)
     end
 end
 
+--- @param potion_from integer
+--- @param potion_to integer
+--- @param material_id integer
+--- @param amount_transfered number
+--- @return nil
 function transfer_potion_specific_content(potion_from, potion_to, material_id, amount_transfered)
     local suc_component_one = EntityGetFirstComponentIncludingDisabled(potion_from, "MaterialSuckerComponent")
     local inv_component_one = EntityGetFirstComponentIncludingDisabled(potion_from, "MaterialInventoryComponent")
@@ -124,6 +142,8 @@ function transfer_potion_specific_content(potion_from, potion_to, material_id, a
     end
 end
 
+--- @param entity_id integer
+--- @return nil
 function delete_potion_contents(entity_id)
     local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
     if inv_component ~= nil then
@@ -137,11 +157,18 @@ function delete_potion_contents(entity_id)
     end
 end
 
+--- @param entity_id integer
+--- @param material_id integer
+--- @return nil
 function delete_potion_specific_content(entity_id, material_id)
     local mat_name = CellFactory_GetName(material_id)
     AddMaterialInventoryMaterial(entity_id, mat_name, 0)
 end
 
+--- @param entity_id integer
+--- @param material_id integer
+--- @param amount_deleted number
+--- @return number
 function delete_potion_specific_content_quantity(entity_id, material_id, amount_deleted)
     local suc_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialSuckerComponent")
     local inv_component = EntityGetFirstComponentIncludingDisabled(entity_id, "MaterialInventoryComponent")
@@ -163,11 +190,18 @@ function delete_potion_specific_content_quantity(entity_id, material_id, amount_
     return 0
 end
 
+--- @param potion integer
+--- @param material_id integer
+--- @param amount number
+--- @return nil
 function reduce_potion_to_amount(potion, material_id, amount)
     local mat_name = CellFactory_GetName(material_id)
     AddMaterialInventoryMaterial(potion, mat_name, amount)
 end
 
+--- @param potion integer
+--- @param player integer
+--- @return nil
 function ingest_potion_material(potion, player)
     local material = get_biggest_potion_content(potion)
     if material and material.id then
@@ -187,6 +221,9 @@ function ingest_potion_material(potion, player)
     end
 end
 
+--- @param gui userdata
+--- @param entity integer
+--- @return nil
 function add_potion_color(gui, entity)
     local potion_color = GameGetPotionColorUint(entity)
     if potion_color ~= 0 then

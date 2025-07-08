@@ -1,23 +1,33 @@
+---@param gui userdata
+---@return boolean|nil
 function last_widget_is_being_hovered(gui)
     local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
     return hovered
 end
 
+---@param gui userdata
+---@return any
 function last_widget_is_left_clicked(gui)
     local left_click = GuiGetPreviousWidgetInfo(gui)
     return left_click
 end
 
+---@param gui userdata
+---@return any
 function last_widget_is_right_clicked(gui)
     local left_click = GuiGetPreviousWidgetInfo(gui)
     return left_click
 end
 
+---@param gui userdata
+---@return number, number
 function last_widget_size(gui)
     local _, _, _, _, _, width, height = GuiGetPreviousWidgetInfo(gui)
     return width, height
 end
 
+---@param gui userdata
+---@return number, number
 function last_widget_position(gui)
     local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
     return x, y
@@ -43,6 +53,16 @@ function close_inventory_gui_vanilla()
     end
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param size_x number
+---@param size_y number
+---@param pad_top number
+---@param pad_right number
+---@param pad_bottom number
+---@param pad_left number
 function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)
     size_x = size_x - 1
     size_y = size_y - 1
@@ -98,6 +118,12 @@ function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, 
     GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_x + pad_left + pad_right - 2, rotate_line_rad)
 end
 
+---@param gui userdata
+---@param pos_z number
+---@param pad_top number
+---@param pad_right number
+---@param pad_bottom number
+---@param pad_left number
 function auto_draw_background_box(gui, pos_z, pad_top, pad_right, pad_bottom, pad_left)
     local _, _, _, pos_x, pos_y, size_x, size_y = GuiGetPreviousWidgetInfo(gui)
     size_x = size_x - 1
@@ -154,6 +180,12 @@ function auto_draw_background_box(gui, pos_z, pad_top, pad_right, pad_bottom, pa
     GuiImage(gui, bags_of_many_new_id(), pos_x - pad_left + 2, pos_y + pad_bottom + size_y + 1, "mods/bags_of_many/files/ui_gfx/inventory/box/border_piece.png", 1, 1, size_x + pad_left + pad_right - 2, rotate_line_rad)
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param size_x number
+---@param size_y number
 function draw_background_click_capture(gui, pos_x, pos_y, pos_z, size_x, size_y)
     GuiZSetForNextWidget(gui, pos_z)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
@@ -165,6 +197,8 @@ function draw_background_click_capture(gui, pos_x, pos_y, pos_z, size_x, size_y)
     return GuiGetPreviousWidgetInfo(gui)
 end
 
+---@param entity_id integer
+---@return boolean
 function is_xml_sprite_file(entity_id)
     if entity_id then
         local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
@@ -178,6 +212,8 @@ function is_xml_sprite_file(entity_id)
     return false
 end
 
+---@param xml_file string
+---@return string|nil
 function extract_png_file_from_xml(xml_file)
     if xml_file then
         if not bags_mod_state.is_file_exist(xml_file) then

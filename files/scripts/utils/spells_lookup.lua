@@ -1,3 +1,4 @@
+---@return table<string, table>
 function lookup_spells()
     dofile_once("data/scripts/gun/gun_actions.lua")
     local lookup = {}

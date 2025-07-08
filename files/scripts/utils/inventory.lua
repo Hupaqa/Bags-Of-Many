@@ -38,6 +38,9 @@ end
 --- @return nil
 function universal_bag_pickup(entity_who_kicked, active_item)
     local inventory = get_inventory(active_item)
+    if inventory == nil then
+        return
+    end
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
     -- Pickup spells
     if ModSettingGet("BagsOfMany.allow_spells") then
@@ -79,6 +82,9 @@ end
 --- @return nil
 function potion_bag_pickup(entity_who_kicked, active_item)
     local inventory = get_inventory(active_item)
+    if inventory == nil then
+        return
+    end
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
         -- Pickup potions
     local entities = get_entities_with_material_inventory_in_radius(pos_x, pos_y, pickup_distance)
@@ -90,6 +96,9 @@ end
 --- @return nil
 function spell_bag_pickup(entity_who_kicked, active_item)
     local inventory = get_inventory(active_item)
+    if inventory == nil then
+        return
+    end
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
     -- Pickup spells
     local entities = EntityGetInRadiusWithTag(pos_x, pos_y, pickup_distance, "card_action")
@@ -1157,8 +1166,10 @@ function remove_entity_from_var_storage(bag, entity)
                 local initial_val = ComponentGetValue2(var_storage, "value_string")
                 local t = string_table_to_table(initial_val)
                 local index = find_value_in_table(t, entity)
-                t = remove_value_in_table(t, index)
-                ComponentSetValue2(var_storage, "value_string", table_to_string_table(t))
+                if index then
+                    t = remove_value_in_table(t, index)
+                    ComponentSetValue2(var_storage, "value_string", table_to_string_table(t))
+                end
             end
         end
     end

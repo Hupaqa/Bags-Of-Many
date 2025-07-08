@@ -31,9 +31,9 @@ local dropdown_style = ModSettingGet("BagsOfMany.dropdown_style")
 
 -- SORTING FLAG AND OPTION
 local sort_type_change_flag = false
-local sort_by_time = ModSettingGet("BagsOfMany.sorting_type")
+local sort_by_time = ModSettingGet("BagsOfMany.sorting_type") or false
 local sort_order_change_flag = false
-local sorting_order = ModSettingGet("BagsOfMany.sorting_order")
+local sorting_order = ModSettingGet("BagsOfMany.sorting_order") or false
 -- OPTION CHANGE FLAG
 local option_changed = false
 
@@ -139,11 +139,11 @@ local function update_settings()
     bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
     bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
     bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
-    dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed")
-    item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
-    sort_by_time = ModSettingGet("BagsOfMany.sorting_type")
-    sorting_order = ModSettingGet("BagsOfMany.sorting_order")
-    keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
+    dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed") or false
+    item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap") or 10
+    sort_by_time = ModSettingGet("BagsOfMany.sorting_type") or false
+    sorting_order = ModSettingGet("BagsOfMany.sorting_order") or false
+    keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open") or false
 end
 
 function reset_bag_and_buttons_gui()
@@ -174,6 +174,9 @@ function bags_of_many_bag_gui(pos_x, pos_y)
 
     local inventory_open = is_inventory_open() or show_bags_without_inventory_open
     local active_item = get_active_item()
+    if active_item == nil then
+        return
+    end
     local active_item_is_bag = is_bag(active_item)
     if active_item_is_bag then
         clean_bag_components(active_item)
@@ -329,13 +332,13 @@ function multi_layer_bag_image_v2(bag, bag_display_x, bag_display_y, pos_z, leve
                 GuiZSetForNextWidget(gui, 1)
                 GuiEndAutoBoxNinePiece(gui)
             end
-            if get_bag_pickup_override(active_item_bag) == bag then
+            if active_item_bag ~= nil and get_bag_pickup_override(active_item_bag) == bag then
                 GuiText(gui, bag_display_x, bag_display_y + 49, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override"))
             else
                 GuiText(gui, bag_display_x, bag_display_y + 49, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override_not_current"))
             end
         end
-        if right_click then
+        if right_click and active_item_bag ~= nil then
             toggle_bag_pickup_override(active_item_bag, bag)
         end
     end
@@ -361,11 +364,13 @@ function draw_inventory_v2(active_item, pos_x, pos_y, pos_z, entity, level)
         end
 
         -- Items drawing loop
-        local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
-        if not option_changed then
-            draw_inventory_dragged_item_v2(pos_z)
-            draw_inventory_v2_invisible(storage_size, positions[level], entity, level)
-            draw_inventory_v2_items(items, positions[level], entity, level, pos_z)
+        if type(sort_by_time) == "boolean" and type(sorting_order) == "boolean" then
+            local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
+            if not option_changed then
+                draw_inventory_dragged_item_v2(pos_z)
+                draw_inventory_v2_invisible(storage_size, positions[level], entity, level)
+                draw_inventory_v2_items(items, positions[level], entity, level, pos_z)
+            end
         end
     else
     end
@@ -833,7 +838,7 @@ function detect_vanilla_wand_inventory_mouse_inputV2(gui, pos_x, pos_y, pos_z, i
         end
         if spell and hover and InputIsMouseButtonJustDown(1) then
             -- SHIFT CLICK SWAP
-            if InputIsKeyDown(225) then
+            if InputIsKeyDown(225) and active_item_bag ~= nil then
                 shift_clicked = true
                 add_item_shift_click(active_item_bag, spell)
             end
@@ -891,7 +896,7 @@ function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, it
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
         -- SHIFT CLICK SWAP
-        if InputIsKeyDown(225) then
+        if InputIsKeyDown(225) and active_item_bag ~= nil then
             shift_clicked = true
             add_item_shift_click(active_item_bag, item)
         end
@@ -949,7 +954,7 @@ function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, in
     end
     if item and hover and InputIsMouseButtonJustDown(1) then
         -- SHIFT CLICK SWAP
-        if InputIsKeyDown(225) then
+        if InputIsKeyDown(225) and active_item_bag ~= nil then
             swap_frame = GameGetFrameNum()
             close_inventory_gui_vanilla()
             shift_clicked = true
@@ -1084,7 +1089,7 @@ function draw_inventory_button(pos_x, pos_y, active_item)
             GuiText(gui, pos_x, pos_y + 34, "[RMB]" .. GameTextGet("$bag_button_tooltip_bag_override_not_current"))
         end
     end
-    if right_clicked then
+    if right_clicked and active_item_bag ~= nil then
         toggle_bag_pickup_override(active_item_bag, 0)
     end
 end
@@ -1130,7 +1135,7 @@ function draw_inventory_drop_button(bag, pos_x, pos_y, pos_z, level)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local l_clk, r_clk = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", dropping_button_sprite)
-    if l_clk then
+    if l_clk and type(sort_by_time) == "boolean" and type(sorting_order) == "boolean" then
         if dropping_button_sprite == drop_orderly then
             drop_all_inventory(bag, true, sort_by_time, sorting_order)
         else

@@ -11,6 +11,8 @@ local spells_type_sprite = {
 	[ACTION_TYPE_PASSIVE] = "data/ui_gfx/inventory/item_bg_passive.png",
 }
 
+---@param entity integer
+---@return table<string, any>
 function get_wand_info(entity)
     local ability_comp = EntityGetFirstComponentIncludingDisabled(entity, "AbilityComponent")
     local wand_info = {}
@@ -27,6 +29,8 @@ function get_wand_info(entity)
     return wand_info
 end
 
+---@param entity integer
+---@return string|nil
 function get_spell_action_id(entity)
     local item_action_component = EntityGetComponentIncludingDisabled(entity, "ItemActionComponent")
     if item_action_component then
@@ -35,6 +39,8 @@ function get_spell_action_id(entity)
     return nil
 end
 
+---@param entity integer
+---@return integer|nil
 function get_spell_type(entity)
     local action_id = get_spell_action_id(entity)
     if action_id and bags_mod_state.lookup_spells[action_id] then
@@ -43,6 +49,8 @@ function get_spell_type(entity)
     return nil
 end
 
+---@param entity integer
+---@return string|nil
 function get_spell_type_sprite(entity)
     local type = get_spell_type(entity)
     if type then
