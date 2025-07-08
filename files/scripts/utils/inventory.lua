@@ -104,7 +104,7 @@ end
 --- @return integer|nil
 function get_player_control_component()
     local player = get_player_entity()
-    if player then        
+    if player then
         local control_comp = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
         return control_comp
     end
@@ -292,7 +292,7 @@ function is_spell(entity)
         local tags = EntityGetTags(entity)
         if tags then
             return string.find(tags, "card_action") ~= nil
-        end    
+        end
     end
     return false
 end
@@ -756,7 +756,7 @@ function get_player_inventory_quick()
             end
         end
     end
-    
+
 end
 
 --- @return table|nil
@@ -1006,7 +1006,7 @@ function swap_item_to_position(item, position, bag)
     if var_storage_one then
         local bag_inventory = get_inventory(bag)
         local item_inventory = EntityGetParent(item)
-        if bag_inventory ~= item_inventory then
+        if bag_inventory ~= item_inventory and bag_inventory then
             add_entity_to_inventory(item, bag_inventory)
         end
         ComponentSetValue2(var_storage_one, "value_int", position)
@@ -1096,40 +1096,48 @@ end
 function swap_items_btw_inventories(dragged_item, hovered_item, entity_one, entity_two)
     local var_storage_one = get_var_storage_with_name(dragged_item, "bags_of_many_item_position")
     local var_storage_two = get_var_storage_with_name(hovered_item, "bags_of_many_item_position")
-    local position_one
-    local position_two
+    local position_one_x, position_one_y
+    local position_two_x, position_two_y
     local inv_entity_one = entity_one
     local inv_entity_two = entity_two
     if is_bag(entity_one) then
         if var_storage_one then
-            position_one = ComponentGetValue2(var_storage_one, "value_int")
-            inv_entity_one = get_inventory(entity_one)
+            position_one_x = ComponentGetValue2(var_storage_one, "value_int")
+            local inv = get_inventory(entity_one)
+            if inv then
+                inv_entity_one = inv
+            end
+            position_one_y = 1
         end
     else
-        position_one = get_item_inventory_slot(dragged_item)
+        position_one_x, position_one_y = get_item_inventory_slot(dragged_item)
     end
     if is_bag(entity_two) then
         if var_storage_two then
-            position_two = ComponentGetValue2(var_storage_two, "value_int")
-            inv_entity_two = get_inventory(entity_two)
+            position_two_x, position_two_y = ComponentGetValue2(var_storage_two, "value_int")
+            local inv = get_inventory(entity_two)
+            if inv then
+                inv_entity_two = inv
+            end
         end
+        position_two_y = 1
     else
-        position_two = get_item_inventory_slot(hovered_item)
+        position_two_x, position_two_y = get_item_inventory_slot(hovered_item)
     end
     -- Make sure item can be switched from one bag to the other
-    if not is_allowed_in_inventory(dragged_item, entity_two, position_two) or not is_allowed_in_inventory(hovered_item, entity_one, position_one) then
+    if not is_allowed_in_inventory(dragged_item, entity_two, position_two_x) or not is_allowed_in_inventory(hovered_item, entity_one, position_one_x) then
         return
     end
     if var_storage_one then
-        add_item_position(hovered_item, position_one)
+        add_item_position(hovered_item, position_one_x)
     else
-        set_entity_inventory_position(hovered_item, position_one)
+        set_entity_inventory_position(hovered_item, position_one_x, 0)
         remove_item_position(hovered_item)
     end
     if var_storage_two then
-        add_item_position(dragged_item, position_two)
+        add_item_position(dragged_item, position_two_x)
     else
-        set_entity_inventory_position(dragged_item, position_two)
+        set_entity_inventory_position(dragged_item, position_two_x, 0)
         remove_item_position(dragged_item)
     end
     add_entity_to_inventory(hovered_item, inv_entity_one)
@@ -1540,15 +1548,20 @@ end
 function get_active_item()
     local player = EntityGetWithTag("player_unit")[1]
     if player then
-        local activeItem = ComponentGetValue2(EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component"), "mActualActiveItem")
-        return activeItem > 0 and activeItem or nil
+        local inv_comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+        if inv_comp then
+            local activeItem = ComponentGetValue2(inv_comp, "mActualActiveItem")
+            return activeItem > 0 and activeItem or nil
+        end
     end
 end
 
 --- @return nil
 function get_active_bag()
     local active_item = get_active_item()
-    bag_pickup_override_local = get_bag_pickup_override(active_item)
+    if active_item then
+        bag_pickup_override_local = get_bag_pickup_override(active_item)
+    end
 end
 
 --- @return integer|nil
@@ -1595,6 +1608,9 @@ end
 --- @return table
 function get_bag_inventory_items(entity_id, sort, order_asc)
     local inventory = get_inventory(entity_id)
+    if not inventory then
+        return {}
+    end
     local items = EntityGetAllChildren(inventory)
     if items then
         if sort then
@@ -1602,10 +1618,10 @@ function get_bag_inventory_items(entity_id, sort, order_asc)
         else
             sort_entity_by_position(items)
         end
-        return items
     else
-        return {}
+        items = {}
     end
+    return items
 end
 
 --- @param item integer
@@ -1619,12 +1635,14 @@ end
 --- @return table
 function get_bag_items(entity_id)
     local inventory = get_inventory(entity_id)
+    if not inventory then
+        return {}
+    end
     local items = EntityGetAllChildren(inventory)
     if items then
         return items
-    else
-        return {}
     end
+    return {}
 end
 
 --- @param entity_id integer
