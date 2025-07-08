@@ -1,3 +1,4 @@
+--- @return number
 function get_player_health()
 	local damagemodel = EntityGetFirstComponentIncludingDisabled( get_player(), "DamageModelComponent" )
 	local health = 0
@@ -7,6 +8,7 @@ function get_player_health()
 	return health
 end
 
+--- @return number
 function get_player_max_health()
 	local damagemodels = EntityGetComponent( get_player(), "DamageModelComponent" )
 	local maxHealth = 0
@@ -19,6 +21,7 @@ function get_player_max_health()
 	return maxHealth
 end
 
+--- @return number
 function get_player_flight_left()
 	local character_data_comp = EntityGetComponent( get_player(), "CharacterDataComponent" )
 	local flying_left = 0
@@ -31,6 +34,7 @@ function get_player_flight_left()
 	return flying_left
 end
 
+--- @return number
 function get_player_flight_max()
 	local character_data_comp = EntityGetComponent( get_player(), "CharacterDataComponent" )
 	local fly_time_max = 0
@@ -43,6 +47,8 @@ function get_player_flight_max()
 	return fly_time_max
 end
 
+--- @param wand integer
+--- @return number
 function get_player_wand_mana_max(wand)
 	local ability_comp = EntityGetFirstComponentIncludingDisabled(wand, "AbilityComponent")
 	local mana_max = 0
@@ -52,6 +58,8 @@ function get_player_wand_mana_max(wand)
 	return mana_max
 end
 
+--- @param wand integer
+--- @return number
 function get_player_wand_mana(wand)
 	local ability_comp = EntityGetFirstComponentIncludingDisabled(wand, "AbilityComponent")
 	local mana = 0
@@ -61,6 +69,8 @@ function get_player_wand_mana(wand)
 	return mana
 end
 
+--- @param wand integer
+--- @return number
 function get_player_wand_reload_time_frame(wand)
 	local ability_comp = EntityGetFirstComponentIncludingDisabled(wand, "AbilityComponent")
 	local reload_time_frame = 0
@@ -70,6 +80,8 @@ function get_player_wand_reload_time_frame(wand)
 	return reload_time_frame
 end
 
+--- @param wand integer
+--- @return number
 function get_player_wand_reload_time_frame(wand)
 	local ability_comp = EntityGetFirstComponentIncludingDisabled(wand, "AbilityComponent")
 	local reload_time_frame = 0
@@ -79,6 +91,8 @@ function get_player_wand_reload_time_frame(wand)
 	return reload_time_frame
 end
 
+--- @param wand integer
+--- @return number
 function get_player_wand_reload_next_frame_usable(wand)
 	local ability_comp = EntityGetFirstComponentIncludingDisabled(wand, "AbilityComponent")
 	local reload_next_frame_usable = 0
@@ -88,6 +102,7 @@ function get_player_wand_reload_next_frame_usable(wand)
 	return reload_next_frame_usable
 end
 
+--- @return number
 function get_player_reload_shake()
 	local inv_comp = EntityGetFirstComponentIncludingDisabled(get_player(), "InventoryGuiComponent")
 	local is_reload_shake = 0
@@ -97,6 +112,7 @@ function get_player_reload_shake()
 	return is_reload_shake
 end
 
+--- @return number
 function get_player_wallet_target()
 	local inv_comp = EntityGetFirstComponentIncludingDisabled(get_player(), "InventoryGuiComponent")
 	local wallet_money_target = 0
@@ -106,6 +122,7 @@ function get_player_wallet_target()
 	return wallet_money_target
 end
 
+--- @return number
 function get_player_has_infinite_wallet()
 	local inv_comp = EntityGetFirstComponentIncludingDisabled(get_player(), "InventoryGuiComponent")
 	local wallet_infinite = 0
@@ -115,6 +132,8 @@ function get_player_has_infinite_wallet()
 	return wallet_infinite
 end
 
+--- @param entity integer
+--- @return nil
 function enable_inherit_comps(entity)
     local inherit_comps = EntityGetComponentIncludingDisabled(entity, "InheritTransformComponent")
     local childs = EntityGetAllChildren(entity)
@@ -126,6 +145,8 @@ function enable_inherit_comps(entity)
     end
 end
 
+--- @param entity integer
+--- @return nil
 function enable_comp_with_tag_in_inventory(entity)
     local comps = EntityGetAllComponents(entity)
     local childs = EntityGetAllChildren(entity)
@@ -139,6 +160,8 @@ function enable_comp_with_tag_in_inventory(entity)
     end
 end
 
+--- @param entity integer
+--- @return nil
 function enable_game_effect_in_hand(entity)
 	local comps = EntityGetComponentIncludingDisabled(entity, "GameEffectComponent", "enabled_in_hand")
     local childs = EntityGetAllChildren(entity)
@@ -150,6 +173,8 @@ function enable_game_effect_in_hand(entity)
     end
 end
 
+--- @param item integer
+--- @return nil
 function clean_bag_components(item)
     local childs = EntityGetAllChildren(item)
 	local children_to_delete = {}
@@ -164,6 +189,10 @@ function clean_bag_components(item)
 	end
 end
 
+--- @param gui userdata
+--- @param x number
+--- @param y number
+--- @return number, number
 function world_to_screen_coords(gui, x, y)
     local ww, wh = MagicNumbersGetValue("VIRTUAL_RESOLUTION_X"), MagicNumbersGetValue("VIRTUAL_RESOLUTION_Y")
     local sw, sh = GuiGetScreenDimensions(gui)

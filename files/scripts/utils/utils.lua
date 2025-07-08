@@ -1,5 +1,9 @@
-function padding_to_center(width_box, height_box, width_entity, height_entity)
-    return math.ceil((width_box - width_entity)/2), math.ceil((height_box - height_entity)/2)
+-- Returns the (x, y) offset needed to center an image (or rectangle) of size (inner_w, inner_h)
+-- inside a box of size (outer_w, outer_h)
+function padding_to_center(outer_w, outer_h, inner_w, inner_h)
+    local pad_x = math.floor((outer_w - inner_w) / 2)
+    local pad_y = math.floor((outer_h - inner_h) / 2)
+    return pad_x, pad_y
 end
 
 function string_contains(text, contains)
@@ -211,4 +215,13 @@ end
 
 function petri_offset_func(pos_init)
     return (math.cos(pos_init * 3.1415)+1) * 0.5 * math.sin(pos_init * 30)
+end
+
+function extract_png_file_from_xml(xml_path)
+    if not xml_path or xml_path == "" then return nil end
+    local content = ModTextFileGetContent(xml_path)
+    if not content then return nil end
+    -- Look for <Sprite ... image_file="..." ... />
+    local png = string.match(content, 'image_file="([^"]+%.png)"')
+    return png
 end

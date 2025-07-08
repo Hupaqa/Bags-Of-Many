@@ -1,7 +1,11 @@
 dofile_once( "mods/bags_of_many/files/scripts/utils/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/noita_utils.lua" )
 
-local function get_entities_with_material_inventory_in_radius(x,y,r)
+--- @param x number
+--- @param y number
+--- @param r number
+--- @return table
+local function get_entities_with_material_inventory_in_radius(x, y, r)
 	local ents=EntityGetInRadius(x,y,r)
 	local out={}
 	for i=1,#ents do
@@ -16,6 +20,9 @@ end
 
 local pickup_distance = 20
 
+--- @param entity_who_kicked integer
+--- @param active_item integer
+--- @return nil
 function bag_pickup_action(entity_who_kicked, active_item)
     if is_universal_bag(active_item) then
         universal_bag_pickup(entity_who_kicked, active_item)
@@ -26,6 +33,9 @@ function bag_pickup_action(entity_who_kicked, active_item)
     end
 end
 
+--- @param entity_who_kicked integer
+--- @param active_item integer
+--- @return nil
 function universal_bag_pickup(entity_who_kicked, active_item)
     local inventory = get_inventory(active_item)
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
@@ -64,6 +74,9 @@ function universal_bag_pickup(entity_who_kicked, active_item)
     end
 end
 
+--- @param entity_who_kicked integer
+--- @param active_item integer
+--- @return nil
 function potion_bag_pickup(entity_who_kicked, active_item)
     local inventory = get_inventory(active_item)
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
@@ -72,6 +85,9 @@ function potion_bag_pickup(entity_who_kicked, active_item)
     add_potions_to_inventory(active_item, inventory, entity_who_kicked, entities)
 end
 
+--- @param entity_who_kicked integer
+--- @param active_item integer
+--- @return nil
 function spell_bag_pickup(entity_who_kicked, active_item)
     local inventory = get_inventory(active_item)
     local pos_x, pos_y = EntityGetTransform(entity_who_kicked)
@@ -80,21 +96,29 @@ function spell_bag_pickup(entity_who_kicked, active_item)
     add_spells_to_inventory(active_item, inventory, entity_who_kicked, entities)
 end
 
+--- @return integer|nil
 function get_player_entity()
 	return EntityGetWithTag("player_unit")[1]
 end
 
+--- @return integer|nil
 function get_player_control_component()
     local player = get_player_entity()
-    local control_comp = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
-    return control_comp
+    if player then        
+        local control_comp = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+        return control_comp
+    end
 end
 
+--- @param entity integer
+--- @return integer|nil
 function get_entity_velocity_component(entity)
     local velocity_comp = EntityGetFirstComponentIncludingDisabled(entity, "VelocityComponent")
     return velocity_comp
 end
 
+--- @param entity integer
+--- @return boolean
 function has_material_inventory(entity)
     local material_inv = EntityGetComponentIncludingDisabled(entity, "MaterialInventoryComponent")
     if material_inv then
@@ -103,6 +127,9 @@ function has_material_inventory(entity)
     return false
 end
 
+--- @param entity_one integer
+--- @param entity_two integer
+--- @return boolean
 function is_same_entity_type(entity_one, entity_two)
     local entity_one_type = -1
     if is_bag(entity_one) then
@@ -123,16 +150,19 @@ function is_same_entity_type(entity_one, entity_two)
     return entity_one_type == entity_two_type
 end
 
+--- @param inventory integer
+--- @return boolean
 function is_bag_inventory(inventory)
     if inventory then
         local inv_parent = EntityGetParent(inventory)
         if inv_parent and is_bag(inv_parent) then
             return true
         end
-        return false
     end
+    return false
 end
 
+--- @return boolean
 function is_inventory_open()
 	local player = get_player_entity()
 	if player then
@@ -141,8 +171,11 @@ function is_inventory_open()
 			return ComponentGetValue2(inventory_gui_component, "mActive")
 		end
 	end
+    return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_spell_permanently_attached(entity)
     local item_comps = EntityGetComponentIncludingDisabled(entity, "ItemComponent")
     if item_comps then
@@ -150,8 +183,12 @@ function is_spell_permanently_attached(entity)
             return ComponentGetValue2(item_comps[i], "permanently_attached")
         end
     end
+    return false
 end
 
+--- @param bag integer
+--- @param item_to_switch integer
+--- @return boolean
 function is_in_bag_tree(bag, item_to_switch)
     if not item_to_switch then
         return false
@@ -166,6 +203,8 @@ function is_in_bag_tree(bag, item_to_switch)
     return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_player_root_entity(entity)
     local player = get_player_entity()
     if player then
@@ -174,8 +213,11 @@ function is_player_root_entity(entity)
             return root == player
         end
     end
+    return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_wand(entity)
     local ability_comps = EntityGetComponentIncludingDisabled(entity, "AbilityComponent")
     if ability_comps then
@@ -191,34 +233,40 @@ function is_wand(entity)
     return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_item(entity)
     local ability_component = EntityGetFirstComponentIncludingDisabled(entity, "AbilityComponent")
     local ending_mc_guffin_component = EntityGetFirstComponentIncludingDisabled(entity, "EndingMcGuffinComponent")
-    return (not ability_component) or ending_mc_guffin_component or ComponentGetValue2(ability_component, "use_gun_script") == false
+    return ((not ability_component) or ending_mc_guffin_component or ComponentGetValue2(ability_component, "use_gun_script")) == false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_item_old(entity)
     if entity then
         local tags = EntityGetTags(entity)
         if tags then
             return string.find(tags, "item_pickup") ~= nil
         end
-    else
-        return false
     end
+    return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_potion(entity)
     if entity then
         local tags = EntityGetTags(entity)
         if tags then
             return string.find(tags, "potion") ~= nil
         end
-    else
-        return false
     end
+    return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_powder_stash(entity)
     local is_powder_stash = false
     if entity then
@@ -237,17 +285,20 @@ function is_powder_stash(entity)
     end
 end
 
+--- @param entity integer
+--- @return boolean
 function is_spell(entity)
     if entity then
         local tags = EntityGetTags(entity)
         if tags then
             return string.find(tags, "card_action") ~= nil
-        end
-    else
-        return false
+        end    
     end
+    return false
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_bag(entity_id)
     if EntityGetName(entity_id) == nil then
         return false
@@ -255,22 +306,32 @@ function is_bag(entity_id)
     return string.find(EntityGetName(entity_id), "bag_") ~= nil
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_universal_bag(entity_id)
     return name_contains(entity_id, "universal")
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_potion_bag(entity_id)
     return name_contains(entity_id, "potions")
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_spell_bag(entity_id)
     return name_contains(entity_id, "spells")
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_gold_nugget(entity_id)
     return string.find(EntityGetFilename(entity_id), "goldnugget") ~= nil
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_allowed_in_universal_bag(entity_id)
     local is_a_spell = false
     local is_a_wand = false
@@ -300,6 +361,8 @@ function is_allowed_in_universal_bag(entity_id)
     return is_a_spell or is_a_wand or is_a_potion or is_an_item or is_a_bag
 end
 
+--- @param entity integer
+--- @return boolean
 function is_shop_item(entity)
     local item_cost_comp = EntityGetFirstComponentIncludingDisabled(entity,"ItemCostComponent")
     if item_cost_comp then
@@ -308,6 +371,8 @@ function is_shop_item(entity)
     return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_stealable (entity)
     local item_cost_comp = EntityGetFirstComponentIncludingDisabled(entity,"ItemCostComponent")
     if item_cost_comp then
@@ -316,6 +381,9 @@ function is_stealable (entity)
     return true
 end
 
+--- @param bag_one integer
+--- @param bag_two integer
+--- @return boolean
 function is_bag_one_smaller_than_bag_two(bag_one, bag_two)
     if not is_bag(bag_one) or not is_bag(bag_two) then
         return true
@@ -328,19 +396,26 @@ function is_bag_one_smaller_than_bag_two(bag_one, bag_two)
     return false
 end
 
+--- @param entity integer
+--- @return boolean
 function is_small_bag(entity)
     return name_contains(entity, "small")
 end
 
+--- @param entity integer
+--- @return boolean
 function is_medium_bag(entity)
     return name_contains(entity, "medium")
 end
 
+--- @param entity integer
+--- @return boolean
 function is_big_bag(entity)
     return name_contains(entity, "big")
 end
 
--- 1 is small, 2 is medium, 3 is big, nil is error its not a bag
+--- @param entity integer
+--- @return integer|nil
 function get_bag_size(entity)
     if is_small_bag(entity) then
         return 1
@@ -353,14 +428,21 @@ function get_bag_size(entity)
     end
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_allowed_in_potions_bag(entity_id)
     return has_material_inventory(entity_id)
 end
 
+--- @param entity_id integer
+--- @return boolean
 function is_allowed_in_spells_bag(entity_id)
     return is_spell(entity_id)
 end
 
+--- @param item_id integer
+--- @param bag_id integer
+--- @return boolean
 function is_allowed_in_bag(item_id, bag_id)
     if is_bag(item_id) and is_in_bag_tree(item_id, bag_id) then
         return false
@@ -389,6 +471,10 @@ function is_allowed_in_bag(item_id, bag_id)
     return false
 end
 
+--- @param item_id integer
+--- @param inv_id integer
+--- @param position integer
+--- @return boolean
 function is_allowed_in_inventory(item_id, inv_id, position)
     if is_bag(inv_id) then
         return is_allowed_in_bag(item_id, inv_id)
@@ -410,9 +496,12 @@ function is_allowed_in_inventory(item_id, inv_id, position)
     return false
 end
 
+--- @param draw_list table
+--- @param item integer
+--- @return integer
 function find_item_level_in_draw_list(draw_list, item)
     if not draw_list or not item then
-        return
+        return 0
     end
     local level_item = 0
     for key, value in pairs(draw_list) do
@@ -423,9 +512,12 @@ function find_item_level_in_draw_list(draw_list, item)
     return level_item
 end
 
+--- @param draw_list table
+--- @param level integer
+--- @return table
 function remove_draw_list_up_to_level(draw_list, level)
     if not draw_list or not level then
-        return
+        return {}
     end
     for key, _ in pairs(draw_list) do
         if key >= level then
@@ -435,9 +527,12 @@ function remove_draw_list_up_to_level(draw_list, level)
     return draw_list
 end
 
+--- @param draw_list table
+--- @param level integer
+--- @return table
 function remove_draw_list_under_level(draw_list, level)
     if not draw_list or not level then
-        return
+        return {}
     end
     for key, _ in pairs(draw_list) do
         if key > level then
@@ -447,6 +542,8 @@ function remove_draw_list_under_level(draw_list, level)
     return draw_list
 end
 
+--- @param entity_id integer
+--- @return boolean
 function item_pickup_is_pickable_in_inventory(entity_id)
     local item_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ItemComponent")
     if item_comp then
@@ -456,6 +553,9 @@ function item_pickup_is_pickable_in_inventory(entity_id)
     return false
 end
 
+--- @param entity_id integer
+--- @param contains_string string
+--- @return boolean
 function name_contains(entity_id, contains_string)
     if EntityGetName(entity_id) == nil then
         return false
@@ -463,6 +563,9 @@ function name_contains(entity_id, contains_string)
     return string.find(EntityGetName(entity_id), contains_string) ~= nil
 end
 
+--- @param bag integer
+--- @param maximum integer
+--- @return boolean
 function is_bag_not_full(bag, maximum)
     local number_of_items = #get_bag_inventory_items(bag, false, false)
     if bag == nil or maximum == nil or number_of_items == nil then
@@ -471,6 +574,11 @@ function is_bag_not_full(bag, maximum)
     return number_of_items < maximum
 end
 
+--- @param item integer
+--- @param with_movement boolean|nil
+--- @param delta_x number|nil
+--- @param delta_y number|nil
+--- @return nil
 function drop_item_from_parent(item, with_movement, delta_x, delta_y)
     if item and type(item) == "number" then
         local active_item = get_active_item()
@@ -514,10 +622,15 @@ function drop_item_from_parent(item, with_movement, delta_x, delta_y)
     end
 end
 
+--- @param bag integer
+--- @param orderly boolean
+--- @param sort_by_time boolean
+--- @param sorting_order boolean
+--- @return nil
 function drop_all_inventory(bag, orderly, sort_by_time, sorting_order)
     local items = get_bag_inventory_items(bag, sort_by_time, sorting_order)
     if orderly then
-        local spacing = ModSettingGet("BagsOfMany.drop_orderly_distance")
+        local spacing = tonumber(ModSettingGet("BagsOfMany.drop_orderly_distance"))
         if not spacing then
             spacing = 10
         else
@@ -534,6 +647,7 @@ function drop_all_inventory(bag, orderly, sort_by_time, sorting_order)
     end
 end
 
+--- @return table|nil
 function get_player_inventory_quick_table()
     local vanilla_items = get_player_inventory_quick_items()
     if vanilla_items then
@@ -551,6 +665,7 @@ function get_player_inventory_quick_table()
     end
 end
 
+--- @return table|nil, integer|nil
 function get_player_inventory_wand_table()
     local vanilla_items = get_player_inventory_quick_items()
     if vanilla_items then
@@ -569,6 +684,7 @@ function get_player_inventory_wand_table()
     end
 end
 
+--- @return table|nil
 function get_player_inventory_full_table()
     local vanilla_spells = get_player_inventory_full_items()
     if vanilla_spells then
@@ -585,6 +701,8 @@ function get_player_inventory_full_table()
     return {}
 end
 
+--- @param wand integer
+--- @return table
 function get_wand_spells_table(wand)
     if not is_wand(wand) then
         return {}
@@ -604,6 +722,8 @@ function get_wand_spells_table(wand)
     return {}
 end
 
+--- @param wand integer
+--- @return table
 function get_wand_spells_table_no_always_cast(wand)
     if not is_wand(wand) then
         return {}
@@ -622,38 +742,73 @@ function get_wand_spells_table_no_always_cast(wand)
     return {}
 end
 
+--- @return integer|nil
 function get_player_inventory_quick()
-    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
-        if EntityGetName(child) == "inventory_quick" then
-            return child
+    local player = EntityGetWithTag("player_unit")
+    if player == nil or #player == 0 then
+        return nil
+    end
+    local children = EntityGetAllChildren(player[1])
+    if children then
+        for _, child in ipairs(children) do
+            if EntityGetName(child) == "inventory_quick" then
+                return child
+            end
         end
     end
+    
 end
 
+--- @return table|nil
 function get_player_inventory_quick_items()
-    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
-        if EntityGetName(child) == "inventory_quick" then
-            return EntityGetAllChildren(child)
+    local player = EntityGetWithTag("player_unit")
+    if player == nil or #player == 0 then
+        return nil
+    end
+    local children = EntityGetAllChildren(player[1])
+    if children then
+        for _, child in ipairs(children) do
+            if EntityGetName(child) == "inventory_quick" then
+                return EntityGetAllChildren(child)
+            end
         end
     end
 end
 
+--- @return integer|nil
 function get_player_inventory_full()
-    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
-        if EntityGetName(child) == "inventory_full" then
-            return child
+    local player = EntityGetWithTag("player_unit")
+    if player == nil or #player == 0 then
+        return nil
+    end
+    local children = EntityGetAllChildren(player[1])
+    if children then
+        for _, child in ipairs(children) do
+            if EntityGetName(child) == "inventory_full" then
+                return child
+            end
         end
     end
 end
 
+--- @return table|nil
 function get_player_inventory_full_items()
-    for _, child in ipairs(EntityGetAllChildren(EntityGetWithTag("player_unit")[1])) do
-        if EntityGetName(child) == "inventory_full" then
-            return EntityGetAllChildren(child)
+    local player = EntityGetWithTag("player_unit")
+    if player == nil or #player == 0 then
+        return nil
+    end
+    local children = EntityGetAllChildren(player[1])
+    if children then
+        for _, child in ipairs(children) do
+            if EntityGetName(child) == "inventory_full" then
+                return EntityGetAllChildren(child)
+            end
         end
     end
 end
 
+--- @param entity_id integer
+--- @return integer|nil, integer|nil
 function get_item_inventory_slot(entity_id)
     local item_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ItemComponent")
     if item_comp then
@@ -662,6 +817,8 @@ function get_item_inventory_slot(entity_id)
     end
 end
 
+--- @param entity integer
+--- @return integer
 function get_item_pickup_frame(entity)
     local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
     for _, var_storage in ipairs(var_storages or {}) do
@@ -672,6 +829,8 @@ function get_item_pickup_frame(entity)
     return 0
 end
 
+--- @param bag integer
+--- @return integer|nil
 function get_bag_pickup_override(bag)
     local bag_pickup_override_storage = get_var_storage_with_name(bag, "bags_of_many_bag_pickup_override")
     if bag_pickup_override_storage then
@@ -684,6 +843,8 @@ function get_bag_pickup_override(bag)
     return nil
 end
 
+--- @param spell integer
+--- @return integer|nil
 function get_spell_remaining_uses(spell)
     if spell then
         local item_comp = EntityGetFirstComponentIncludingDisabled(spell, "ItemComponent")
@@ -694,6 +855,9 @@ function get_spell_remaining_uses(spell)
     end
 end
 
+--- @param main_bag integer
+--- @param secondary_bag integer
+--- @return nil
 function toggle_bag_pickup_override(main_bag, secondary_bag)
     local bag_pickup_override_storage = get_var_storage_with_name(main_bag, "bags_of_many_bag_pickup_override")
     if not bag_pickup_override_storage then
@@ -711,6 +875,8 @@ function toggle_bag_pickup_override(main_bag, secondary_bag)
     end
 end
 
+--- @param entity integer
+--- @return nil
 function add_component_pickup_frame(entity)
     local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
     local item_has_item_pickup_frame = false
@@ -728,6 +894,8 @@ function add_component_pickup_frame(entity)
     end
 end
 
+--- @param entity integer
+--- @return nil
 function remove_component_pickup_frame(entity)
     local var_storages = EntityGetComponentIncludingDisabled(entity, "VariableStorageComponent")
     for _, var_storage in ipairs(var_storages or {}) do
@@ -737,6 +905,9 @@ function remove_component_pickup_frame(entity)
     end
 end
 
+--- @param entity integer
+--- @param position integer
+--- @return nil
 function add_item_position(entity, position)
     local var_storage = get_var_storage_with_name(entity, "bags_of_many_item_position")
     if var_storage then
@@ -749,6 +920,8 @@ function add_item_position(entity, position)
     end
 end
 
+--- @param entity integer
+--- @return nil
 function remove_item_position(entity)
     local var_storage = get_var_storage_with_name(entity, "bags_of_many_item_position")
     if var_storage then
@@ -756,6 +929,8 @@ function remove_item_position(entity)
     end
 end
 
+--- @param entity integer
+--- @return nil
 function add_inherit_comp(entity)
     if EntityGetFirstComponentIncludingDisabled(entity, "InheritTransformComponent") then
         return
@@ -772,6 +947,8 @@ function add_inherit_comp(entity)
     return inherit_comp
 end
 
+--- @param entity integer
+--- @return nil
 function remove_inherit_comp(entity)
     local inherit_comps = EntityGetComponentIncludingDisabled(entity, "InheritTransformComponent", "coop_respawn")
     for _, inherit_comp in ipairs(inherit_comps or {}) do
@@ -779,6 +956,8 @@ function remove_inherit_comp(entity)
     end
 end
 
+--- @param entity integer
+--- @return nil
 function disable_inherit_comps(entity)
     local inherit_comps = EntityGetComponentIncludingDisabled(entity, "InheritTransformComponent")
     for _, inherit_comp in ipairs(inherit_comps or {}) do
@@ -786,19 +965,27 @@ function disable_inherit_comps(entity)
     end
 end
 
+--- @param entity integer
+--- @param position integer
+--- @return nil
 function add_bags_of_many_comps(entity, position)
     add_inherit_comp(entity)
     add_item_position(entity, position)
     add_component_pickup_frame(entity)
 end
 
+--- @param entity integer
+--- @return nil
 function remove_bags_of_many_comps(entity)
     remove_inherit_comp(entity)
     remove_item_position(entity)
     remove_component_pickup_frame(entity)
 end
 
--- SWAPS ITEM TO A POSITION (EMPTY POSITION)
+--- @param item integer
+--- @param position integer
+--- @param bag integer
+--- @return nil
 function swap_item_to_position(item, position, bag)
     -- Prevent bag being placed inside themselves (will cause CRASH)
     if item == bag then
@@ -827,7 +1014,11 @@ function swap_item_to_position(item, position, bag)
     end
 end
 
--- SWAPS ITEM ONE TO ITEM TWO POSITION (SWAP TO NOT EMPTY POSITION)
+--- @param dragged_item integer
+--- @param hovered_item integer
+--- @param bag_one integer
+--- @param bag_two integer
+--- @return nil
 function swap_item_position(dragged_item, hovered_item, bag_one, bag_two)
     if dragged_item and hovered_item then
         -- In case for some reason the item is not in a bag ?
@@ -850,6 +1041,9 @@ function swap_item_position(dragged_item, hovered_item, bag_one, bag_two)
     end
 end
 
+--- @param item integer
+--- @param bag integer
+--- @return nil
 function swap_item_to_bag(item, bag)
     -- Prevent bag being placed inside themselves (will cause CRASH)
     if item == bag then
@@ -869,6 +1063,11 @@ function swap_item_to_bag(item, bag)
     end
 end
 
+--- @param dragged_item integer
+--- @param hovered_item integer
+--- @param bag_one integer
+--- @param bag_two integer
+--- @return nil
 function swap_items_btw_bags(dragged_item, hovered_item, bag_one, bag_two)
     -- Different bags switching two items
     local var_storage_one = get_var_storage_with_name(dragged_item, "bags_of_many_item_position")
@@ -889,6 +1088,11 @@ function swap_items_btw_bags(dragged_item, hovered_item, bag_one, bag_two)
     end
 end
 
+--- @param dragged_item integer
+--- @param hovered_item integer
+--- @param entity_one integer
+--- @param entity_two integer
+--- @return nil
 function swap_items_btw_inventories(dragged_item, hovered_item, entity_one, entity_two)
     local var_storage_one = get_var_storage_with_name(dragged_item, "bags_of_many_item_position")
     local var_storage_two = get_var_storage_with_name(hovered_item, "bags_of_many_item_position")
@@ -934,6 +1138,9 @@ function swap_items_btw_inventories(dragged_item, hovered_item, entity_one, enti
     hide_entity(dragged_item)
 end
 
+--- @param bag integer
+--- @param entity integer
+--- @return nil
 function remove_entity_from_var_storage(bag, entity)
     if bag then
         local variable_storages = EntityGetComponentIncludingDisabled(bag, "VariableStorageComponent")
@@ -949,6 +1156,9 @@ function remove_entity_from_var_storage(bag, entity)
     end
 end
 
+--- @param bag integer
+--- @param item integer
+--- @return nil
 function add_item_shift_click(bag, item)
     local inv_size = get_bag_inventory_size(bag)
     if bag and item and bag ~= item and inv_size and is_allowed_in_bag(item, bag) then
@@ -959,6 +1169,9 @@ function add_item_shift_click(bag, item)
     end
 end
 
+--- @param inventory integer
+--- @param path string
+--- @return integer|nil
 function add_item_to_inventory(inventory, path)
     local item = EntityLoad(path)
     if item then
@@ -969,6 +1182,10 @@ function add_item_to_inventory(inventory, path)
     return item
 end
 
+--- @param wand integer
+--- @param spell integer
+--- @param position integer
+--- @return nil
 function add_item_to_inventory_wand_vanilla(wand, spell, position)
     if wand and spell and position then
         local can_be_added_at_pos = false
@@ -993,6 +1210,9 @@ function add_item_to_inventory_wand_vanilla(wand, spell, position)
     end
 end
 
+--- @param item integer
+--- @param position integer
+--- @return nil
 function add_item_to_inventory_quick_vanilla(item, position)
     if item and type(item) == "number" and position then
         local can_be_added_at_pos = true
@@ -1017,6 +1237,10 @@ function add_item_to_inventory_quick_vanilla(item, position)
     end
 end
 
+--- @param item integer
+--- @param pos_x integer
+--- @param pos_y integer
+--- @return nil
 function add_item_to_inventory_full_vanilla(item, pos_x, pos_y)
     if item and type(item) == "number" and pos_x and pos_y then
         local can_be_added_at_pos = true
@@ -1042,12 +1266,21 @@ function add_item_to_inventory_full_vanilla(item, pos_x, pos_y)
     end
 end
 
+--- @param position integer
+--- @param inventory integer
+--- @param entity integer
+--- @return nil
 function add_entity_to_inventory_bag(position, inventory, entity)
     hide_entity(entity)
     add_bags_of_many_comps(entity, position)
     add_entity_to_inventory(entity, inventory)
 end
 
+--- @param entity integer
+--- @param inventory integer
+--- @param pos_x integer
+--- @param pos_y integer
+--- @return nil
 function add_entity_to_vanilla_inventory(entity, inventory, pos_x, pos_y)
     hide_entity(entity)
     local item_comp = EntityGetFirstComponentIncludingDisabled(entity, "ItemComponent")
@@ -1060,15 +1293,22 @@ function add_entity_to_vanilla_inventory(entity, inventory, pos_x, pos_y)
     set_entity_inventory_position(entity, pos_x, pos_y)
 end
 
+--- @param entity integer
+--- @param inventory integer
+--- @return nil
 function add_entity_to_inventory(entity, inventory)
     EntityRemoveFromParent(entity)
     EntityAddChild(inventory, entity)
 end
 
+--- @param entity integer
+--- @return nil
 function remove_entity_from_inventory(entity)
     remove_bags_of_many_comps(entity)
 end
 
+--- @param entity integer
+--- @return nil
 function set_entity_touched(entity)
     local item_comp = EntityGetFirstComponentIncludingDisabled(entity, "ItemComponent")
     if item_comp then
@@ -1077,6 +1317,10 @@ function set_entity_touched(entity)
     end
 end
 
+--- @param entity integer
+--- @param pos_x integer
+--- @param pos_y integer
+--- @return nil
 function set_entity_inventory_position(entity, pos_x, pos_y)
     local item_comp = EntityGetFirstComponentIncludingDisabled(entity, "ItemComponent")
     if item_comp and pos_x and pos_y then
@@ -1084,6 +1328,11 @@ function set_entity_inventory_position(entity, pos_x, pos_y)
     end
 end
 
+--- @param active_item integer
+--- @param inventory integer
+--- @param player_id integer
+--- @param entities table
+--- @return nil
 function add_spells_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if EntityGetParent(entity) == 0 then
@@ -1100,6 +1349,11 @@ function add_spells_to_inventory(active_item, inventory, player_id, entities)
     end
 end
 
+--- @param active_item integer
+--- @param inventory integer
+--- @param player_id integer
+--- @param entities table
+--- @return nil
 function add_wands_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         local can_be_picked_up = true
@@ -1121,6 +1375,11 @@ function add_wands_to_inventory(active_item, inventory, player_id, entities)
     end
 end
 
+--- @param active_item integer
+--- @param inventory integer
+--- @param player_id integer
+--- @param entities table
+--- @return nil
 function add_potions_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         if EntityGetParent(entity) == 0 then
@@ -1131,6 +1390,11 @@ function add_potions_to_inventory(active_item, inventory, player_id, entities)
     end
 end
 
+--- @param active_item integer
+--- @param inventory integer
+--- @param player_id integer
+--- @param entities table
+--- @return nil
 function add_items_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         local can_be_picked_up = true
@@ -1149,6 +1413,11 @@ function add_items_to_inventory(active_item, inventory, player_id, entities)
     end
 end
 
+--- @param active_item integer
+--- @param inventory integer
+--- @param player_id integer
+--- @param entities table
+--- @return nil
 function add_bags_to_inventory(active_item, inventory, player_id, entities)
     for _, entity in ipairs(entities) do
         local entity_allowed_in_bag = false
@@ -1232,6 +1501,8 @@ function CheckEntityCollideWithWorkshop(entity)
     return colliding_with_workshop_entity
 end
 
+--- @param item integer
+--- @return integer|nil, integer|nil
 function get_smallest_vanilla_pos_for_item(item)
     if is_spell(item) then
         local full_table = get_player_inventory_full_table()
@@ -1265,6 +1536,7 @@ function get_smallest_vanilla_pos_for_item(item)
     return nil, nil
 end
 
+--- @return integer|nil
 function get_active_item()
     local player = EntityGetWithTag("player_unit")[1]
     if player then
@@ -1273,11 +1545,13 @@ function get_active_item()
     end
 end
 
+--- @return nil
 function get_active_bag()
     local active_item = get_active_item()
     bag_pickup_override_local = get_bag_pickup_override(active_item)
 end
 
+--- @return integer|nil
 function get_inventory_two_component()
     local player = get_player()
     if player then
@@ -1286,6 +1560,7 @@ function get_inventory_two_component()
     end
 end
 
+--- @return integer|nil, integer|nil
 function get_inventory_spell_size()
     local inv_comp = get_inventory_two_component()
     if inv_comp then
@@ -1295,6 +1570,7 @@ function get_inventory_spell_size()
     end
 end
 
+--- @return integer|nil
 function get_inventory_quick_size()
     local inv_comp = get_inventory_two_component()
     if inv_comp then
@@ -1303,7 +1579,9 @@ function get_inventory_quick_size()
     end
 end
 
-function get_inventory( entity_id )
+--- @param entity_id integer
+--- @return integer|nil
+function get_inventory(entity_id)
     for _, child in ipairs(EntityGetAllChildren(entity_id) or {}) do
         if EntityGetName(child) == "inventory_full" then
             return child
@@ -1311,6 +1589,10 @@ function get_inventory( entity_id )
     end
 end
 
+--- @param entity_id integer
+--- @param sort boolean
+--- @param order_asc boolean
+--- @return table
 function get_bag_inventory_items(entity_id, sort, order_asc)
     local inventory = get_inventory(entity_id)
     local items = EntityGetAllChildren(inventory)
@@ -1326,11 +1608,15 @@ function get_bag_inventory_items(entity_id, sort, order_asc)
     end
 end
 
+--- @param item integer
+--- @return integer|nil
 function get_inventory_bag_owner(item)
     local inventory = EntityGetParent(item)
     return EntityGetParent(inventory)
 end
 
+--- @param entity_id integer
+--- @return table
 function get_bag_items(entity_id)
     local inventory = get_inventory(entity_id)
     local items = EntityGetAllChildren(inventory)
@@ -1341,6 +1627,8 @@ function get_bag_items(entity_id)
     end
 end
 
+--- @param entity_id integer
+--- @return integer
 function get_item_position(entity_id)
     local var_storage = get_var_storage_with_name(entity_id, "bags_of_many_item_position")
     if var_storage then
@@ -1349,6 +1637,8 @@ function get_item_position(entity_id)
     return 0
 end
 
+--- @param bag integer
+--- @return integer
 function get_smallest_position_avalaible(bag)
     local items = get_bag_items(bag)
     local bag_size = get_bag_inventory_size(bag)
@@ -1372,7 +1662,9 @@ function get_smallest_position_avalaible(bag)
     return smallest_pos
 end
 
-function get_bag_inventory_size( entity_id )
+--- @param entity_id integer
+--- @return integer
+function get_bag_inventory_size(entity_id)
     if entity_id then
         local bag_name = EntityGetName(entity_id)
         if bag_name then
@@ -1384,8 +1676,11 @@ function get_bag_inventory_size( entity_id )
             end
         end
     end
+    return 0
 end
 
+--- @param entity_id integer
+--- @return string
 function get_sprite_file( entity_id )
     local sprite = "mods/bags_of_many/files/ui_gfx/inventory/unidentified_item.png"
     if not entity_id then
@@ -1438,6 +1733,8 @@ function get_sprite_file( entity_id )
     return sprite
 end
 
+--- @param entity_id integer
+--- @return nil
 function hide_entity( entity_id )
     local components = EntityGetAllComponents(entity_id)
     local children = EntityGetAllChildren(entity_id)
@@ -1451,6 +1748,8 @@ function hide_entity( entity_id )
     end
 end
 
+--- @param entity_id integer
+--- @return nil
 function show_entity( entity_id )
     local x, y = get_player_pos()
     local components = EntityGetAllComponents(entity_id)
@@ -1475,6 +1774,8 @@ function show_entity( entity_id )
     end
 end
 
+--- @param entity integer
+--- @return nil
 function show_in_hand_effect(entity)
     local items = get_bag_items(entity)
     for _, item in ipairs(items) do
@@ -1491,6 +1792,13 @@ function show_in_hand_effect(entity)
     end
 end
 
+--- @param pos_x number
+--- @param pos_y number
+--- @param init_x number
+--- @param init_y number
+--- @param limit_x number
+--- @param limit_y number
+--- @return boolean
 function moved_far_enough(pos_x, pos_y, init_x, init_y, limit_x, limit_y)
     if not pos_x or not pos_y or not init_x or not init_y then
         return true
@@ -1504,6 +1812,9 @@ function moved_far_enough(pos_x, pos_y, init_x, init_y, limit_x, limit_y)
     return moved_enough
 end
 
+--- @param inventory table
+--- @param order_asc boolean
+--- @return nil
 function sort_entity_by_pickup_frame(inventory, order_asc)
     insertion_sort_entityId(inventory)
     insertion_sort_frame(inventory)
@@ -1512,10 +1823,14 @@ function sort_entity_by_pickup_frame(inventory, order_asc)
     end
 end
 
+--- @param inventory table
+--- @return nil
 function sort_entity_by_position(inventory)
     insertion_sort_position(inventory)
 end
 
+--- @param array table
+--- @return table
 function insertion_sort_position(array)
     local len = #array
     for j = 2, len do
@@ -1530,6 +1845,8 @@ function insertion_sort_position(array)
     return array
 end
 
+--- @param array table
+--- @return table
 function insertion_sort_entityId(array)
     local len = #array
     for j = 2, len do
@@ -1544,6 +1861,8 @@ function insertion_sort_entityId(array)
     return array
 end
 
+--- @param array table
+--- @return table
 function insertion_sort_frame(array)
     local len = #array
     for j = 2, len do
@@ -1558,6 +1877,8 @@ function insertion_sort_frame(array)
     return array
 end
 
+--- @param x table
+--- @return table
 function revert_table(x)
     local n, m = #x, #x/2
     for i=1, m do

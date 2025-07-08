@@ -634,8 +634,10 @@ end
 function draw_vanilla_spell_inventory_capture(gui, pos_x, pos_y, pos_z)
     local vanilla_spells = get_player_inventory_full_table()
     local x, y = get_inventory_spell_size()
-    for i = 0, (x * y) - 1 do
-        detect_vanilla_spell_inventory_mouse_input(gui, pos_x + (20 * ((i)%x)), pos_y + (math.floor((i)/x)* 20), pos_z, vanilla_spells[i], i - (x *math.floor((i)/x)), math.floor((i)/x))
+    if vanilla_spells then        
+        for i = 0, (x * y) - 1 do
+            detect_vanilla_spell_inventory_mouse_input(gui, pos_x + (20 * ((i)%x)), pos_y + (math.floor((i)/x)* 20), pos_z, vanilla_spells[i], i - (x *math.floor((i)/x)), math.floor((i)/x))
+        end
     end
 end
 
@@ -1069,7 +1071,7 @@ function draw_inventory_button(pos_x, pos_y, active_item)
     -- Open or close bag
     if clicked then
         bag_open = not bag_open
-        GlobalsSetValue("bags_of_many.bag_open", bag_open and 1 or 0)
+        GlobalsSetValue("bags_of_many.bag_open", tostring(bag_open and 1 or 0))
     end
     -- Show tooltip
     if not dragging_button and hovered_invisible then
@@ -1320,7 +1322,7 @@ function draw_wand_spells(wand_capacity, wand_spells, spells_per_line, pos_x, po
                 if remaining_uses >= 0 then
                     GuiColorSetForNextWidget(gui, 1, 1, 1, 0.8)
                     GuiZSetForNextWidget(gui, 1)
-                    GuiText(gui, background_pos_x+2, background_pos_y, remaining_uses)
+                    GuiText(gui, background_pos_x+2, background_pos_y, tostring(remaining_uses))
                 end
                 draw_action_type(wand_spells[i], background_pos_x, background_pos_y, 2, alpha, 1)
                 GuiZSetForNextWidget(gui, 2)

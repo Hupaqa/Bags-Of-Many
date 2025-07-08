@@ -7,18 +7,21 @@ Mouse = {
     }
 }
 
+--- @return nil
 function register_click_frame()
     if InputIsMouseButtonJustDown(1) then
         bags_mod_state.left_mouse_down_frame = GameGetFrameNum()
     end
 end
 
+--- @return nil
 function register_release_frame()
     if InputIsMouseButtonJustUp(1) then
         bags_mod_state.left_mouse_up_frame = GameGetFrameNum()
     end
 end
 
+--- @return boolean
 function is_dragging()
     if bags_mod_state.left_mouse_down_frame > bags_mod_state.left_mouse_up_frame then
         return true
@@ -26,6 +29,8 @@ function is_dragging()
     return false
 end
 
+--- @param gui userdata
+--- @return nil
 function calculate_mouse_pos(gui)
     local screen_width, screen_height = GuiGetScreenDimensions(gui)
     local mouse_raw_x, mouse_raw_y = InputGetMousePosOnScreen()
@@ -42,6 +47,8 @@ function calculate_mouse_pos(gui)
     Mouse.Position.Y = mouse_raw_y * screen_height / screen_size_y
 end
 
+--- @param value_pressed number
+--- @return string
 function get_key_pressed_name(value_pressed)
     for key, value in pairs(InputCodes.Key) do
         if value_pressed == value then
@@ -51,6 +58,8 @@ function get_key_pressed_name(value_pressed)
     return ""
 end
 
+--- @param value_pressed number
+--- @return string
 function get_mouse_pressed_name(value_pressed)
     for mouse, value in pairs(InputCodes.Mouse) do
         if value_pressed == value then
@@ -60,6 +69,7 @@ function get_mouse_pressed_name(value_pressed)
     return ""
 end
 
+--- @return table
 function detect_any_key_just_down()
     local just_down_list = {}
     for key, value in pairs(InputCodes.Key) do
@@ -71,6 +81,7 @@ function detect_any_key_just_down()
     return just_down_list
 end
 
+--- @return table
 function detect_any_mouse_just_down()
     local just_down_list = {}
     for key, value in pairs(InputCodes.Mouse) do
@@ -82,6 +93,13 @@ function detect_any_mouse_just_down()
     return just_down_list
 end
 
+--- @param pos_x number
+--- @param pos_y number
+--- @param size_x number
+--- @param height_y number
+--- @param mouse_x number
+--- @param mouse_y number
+--- @return boolean
 function is_mouse_pos_in_box(pos_x, pos_y, size_x, height_y, mouse_x, mouse_y)
     if mouse_x - (pos_x + size_x) <= 0.0001 then
         mouse_x = math.floor(mouse_x)
