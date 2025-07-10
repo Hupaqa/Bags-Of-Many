@@ -157,6 +157,7 @@ function reset_bag_and_buttons_gui()
     reset_potion_spots_hovered()
 end
 
+---@param table table
 function reset_item_table(table)
     for key, _ in pairs(table) do
         table[key] = nil
@@ -164,110 +165,120 @@ function reset_item_table(table)
     return table
 end
 
+---@param table table
 function reset_hovered_table(table)
     table.hovered = nil
 end
 
-function bags_of_many_bag_gui(pos_x, pos_y)
-    GuiStartFrame(gui)
-    GuiOptionsAdd(gui, GUI_OPTION.NoPositionTween)
-
-    local inventory_open = is_inventory_open() or show_bags_without_inventory_open
-    local active_item = get_active_item()
-    if active_item == nil then
-        return
-    end
-    local active_item_is_bag = is_bag(active_item)
-    if active_item_is_bag then
-        clean_bag_components(active_item)
-    end
+---@param active_item integer
+local function handle_bag_pickup_override(active_item)
     bag_pickup_override_local = get_bag_pickup_override(active_item)
     if bag_pickup_override_local and not is_in_bag_tree(active_item, bag_pickup_override_local) then
         toggle_bag_pickup_override(active_item, active_item)
     end
+end
 
-    -- Setup the inventory button
+---@param inventory_open boolean
+---@param active_item_is_bag boolean
+---@param pos_x number
+---@param pos_y number
+---@param active_item integer
+local function setup_inventory_button_if_needed(inventory_open, active_item_is_bag, pos_x, pos_y, active_item)
     if inventory_open and ((not only_show_bag_button_when_held) or (active_item_is_bag and only_show_bag_button_when_held)) then
         draw_inventory_button(pos_x, pos_y, active_item)
     end
+end
+
+---@param inventory_open boolean
+---@param active_item_is_bag boolean
+local function draw_vanilla_inventory_if_needed(inventory_open, active_item_is_bag)
     if inventory_open and active_item_is_bag then
         draw_vanilla_inventory_v2(gui)
     end
+end
 
-    local level = 1
+---@param active_item_bag integer
+---@param level integer
+---@param active_item integer
+local function update_inventory_bag_table(active_item_bag, level, active_item)
+    if not inventory_bag_table[active_item_bag] then
+        inventory_bag_table[active_item_bag] = {}
+    end
+    if inventory_bag_table[active_item_bag][level] ~= active_item then
+        inventory_bag_table[active_item_bag][level] = active_item_bag
+    end
+end
 
-    if active_item and inventory_open and active_item_is_bag and bag_open then
-        reset_bag_ui_done = false
-        active_item_bag = active_item
-        if not inventory_bag_table[active_item_bag] then
-            inventory_bag_table[active_item_bag] = {}
+---@param active_item integer
+---@param pos_x number
+---@param pos_y number
+---@param level integer
+---@return boolean
+local function draw_bag_layers_and_inventory(active_item, pos_x, pos_y, level)
+    local alchemy_gui_button_drawn = false
+    local pos_z = 10
+    for bag_level, bag in pairs(inventory_bag_table[active_item_bag]) do
+        if not is_in_bag_tree(active_item, bag) then
+            inventory_bag_table = {}
+            break
         end
-        -- Adding held item to the display list and removing every other
-        if inventory_bag_table[active_item_bag][level] ~= active_item then
-            inventory_bag_table[active_item_bag][level] = active_item_bag
+        pos_z = 10 * bag_level
+        -- DISPLAY BAG HOVERED AT BEGINNING OF INVENTORY
+        if bag_level ~= 1 then
+            pos_x, pos_y = pos_x + (5), positions[bag_level - 1].positions_y[#positions[bag_level - 1].positions_y] + (28)
+            multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, bag_level)
         end
-        local alchemy_gui_button_drawn = false
-        if not option_changed then
-            local pos_z = 10
-            for bag_level, bag in pairs(inventory_bag_table[active_item_bag]) do
-                if not is_in_bag_tree(active_item, bag) then
-                    inventory_bag_table = {}
-                    break
-                end
-                pos_z = 10 * bag_level
-                -- DISPLAY BAG HOVERED AT BEGINNING OF INVENTORY
-                if bag_level ~= 1 then
-                    pos_x, pos_y = pos_x + (5), positions[bag_level - 1].positions_y[#positions[bag_level - 1].positions_y] + (28)
-                    multi_layer_bag_image_v2(bag, pos_x, pos_y, pos_z, bag_level)
-                end
-                draw_inventory_v2(active_item, pos_x, pos_y, pos_z, bag, bag_level)
-                if is_potion_bag(bag) or (ModSettingGet("BagsOfMany.universal_bag_alchemy_table") and is_universal_bag(bag)) then
-                    alchemy_gui_button_drawn = true
-                    draw_alchemy_button_gui(pos_x-10, pos_y+1)
-                end
-            end
-            if alchemy_gui_open and alchemy_gui_button_drawn then
-                potion_mixing_gui(bags_mod_state.alchemy_pos_x, bags_mod_state.alchemy_pos_y, 10)
-            end
-        end
-    else
-        if not reset_bag_ui_done then
-            reset_table(dragged_item_table)
-            dragging_possible_swap = false
-            dragged_invis_gui_id = nil
-            dragged_item_gui_id = nil
-            bags_of_many_reset_reserved_ids()
-            GuiDestroy(gui)
-            gui = GuiCreate()
-            reset_potion_spots_hovered()
-            reset_bag_ui_done = true
+        draw_inventory_v2(active_item, pos_x, pos_y, pos_z, bag, bag_level)
+        if is_potion_bag(bag) or (ModSettingGet("BagsOfMany.universal_bag_alchemy_table") and is_universal_bag(bag)) then
+            alchemy_gui_button_drawn = true
+            draw_alchemy_button_gui(pos_x-10, pos_y+1)
         end
     end
+    return alchemy_gui_button_drawn
+end
 
-    if dragging_allowed and dragging_possible_swap then
-        swapping_inventory_v2(sort_by_time)
-        -- RESET THE GUI TO PREVENT PROBLEM OF DRAWING AFTER DRAGGING
-        dragging_possible_swap = false
-        dragged_invis_gui_id = nil
-        dragged_item_gui_id = nil
-        bags_of_many_reset_reserved_ids()
-        GuiDestroy(gui)
-        gui = GuiCreate()
+---@param alchemy_gui_open boolean
+---@param alchemy_gui_button_drawn boolean
+local function handle_alchemy_gui_if_needed(alchemy_gui_open, alchemy_gui_button_drawn)
+    if alchemy_gui_open and alchemy_gui_button_drawn then
+        potion_mixing_gui(bags_mod_state.alchemy_pos_x, bags_mod_state.alchemy_pos_y, 10)
     end
-    if swap_frame ~= 0 and GameGetFrameNum() == swap_frame + 1 then
-        swap_frame = 0
-        open_inventory_gui_vanilla()
-        reset_bag_and_buttons_gui()
-    end
-    if shift_clicked then
-        shift_clicked = false
-        -- RESET THE GUI TO PREVENT PROBLEM OF DRAWING AFTER SHIFT CLICKING
-        reset_bag_and_buttons_gui()
-    end
-    hovered_item_table = reset_item_table(hovered_item_table)
-    detect_vanilla_inventory_mouse_release(gui)
+end
 
-    -- OPTION CHANGE PROCESSING
+local function handle_bag_ui_reset()
+    reset_table(dragged_item_table)
+    dragging_possible_swap = false
+    dragged_invis_gui_id = nil
+    dragged_item_gui_id = nil
+    bags_of_many_reset_reserved_ids()
+    GuiDestroy(gui)
+    gui = GuiCreate()
+    reset_potion_spots_hovered()
+    reset_bag_ui_done = true
+end
+
+local function handle_drag_and_swap()
+    swapping_inventory_v2(sort_by_time)
+    dragging_possible_swap = false
+    dragged_invis_gui_id = nil
+    dragged_item_gui_id = nil
+    bags_of_many_reset_reserved_ids()
+    GuiDestroy(gui)
+    gui = GuiCreate()
+end
+
+local function handle_swap_frame()
+    swap_frame = 0
+    open_inventory_gui_vanilla()
+    reset_bag_and_buttons_gui()
+end
+
+local function handle_shift_click()
+    shift_clicked = false
+    reset_bag_and_buttons_gui()
+end
+
+local function handle_option_changes()
     if sort_order_change_flag then
         sort_order_change_flag = false
         sorting_order = not sorting_order
@@ -278,7 +289,61 @@ function bags_of_many_bag_gui(pos_x, pos_y)
         sort_by_time = not sort_by_time
         ModSettingSetNextValue("BagsOfMany.sorting_type", sort_by_time, false)
     end
-    -- Reset alchemy spots
+end
+
+---@param pos_x number
+---@param pos_y number
+function bags_of_many_bag_gui(pos_x, pos_y)
+    GuiStartFrame(gui)
+    GuiOptionsAdd(gui, GUI_OPTION.NoPositionTween)
+
+    local inventory_open = is_inventory_open() or (type(show_bags_without_inventory_open) == "boolean" and show_bags_without_inventory_open)
+    local active_item = get_active_item()
+    if active_item == nil then
+        return
+    end
+    local active_item_is_bag = is_bag(active_item)
+    if active_item_is_bag then
+        clean_bag_components(active_item)
+    end
+
+    handle_bag_pickup_override(active_item)
+    setup_inventory_button_if_needed(inventory_open, active_item_is_bag, pos_x, pos_y, active_item)
+    draw_vanilla_inventory_if_needed(inventory_open, active_item_is_bag)
+
+    local level = 1
+
+    if active_item and inventory_open and active_item_is_bag and bag_open then
+        reset_bag_ui_done = false
+        active_item_bag = active_item
+        update_inventory_bag_table(active_item_bag, level, active_item)
+        if inventory_bag_table[active_item_bag][level] ~= active_item then
+            inventory_bag_table[active_item_bag][level] = active_item_bag
+        end
+        local alchemy_gui_button_drawn = false
+        if not option_changed then
+            alchemy_gui_button_drawn = draw_bag_layers_and_inventory(active_item, pos_x, pos_y, level)
+            handle_alchemy_gui_if_needed(alchemy_gui_open, alchemy_gui_button_drawn)
+        end
+    else
+        if not reset_bag_ui_done then
+            handle_bag_ui_reset()
+        end
+    end
+
+    if dragging_allowed and dragging_possible_swap then
+        handle_drag_and_swap()
+    end
+    if swap_frame ~= 0 and GameGetFrameNum() == swap_frame + 1 then
+        handle_swap_frame()
+    end
+    if shift_clicked then
+        handle_shift_click()
+    end
+    hovered_item_table = reset_item_table(hovered_item_table)
+    detect_vanilla_inventory_mouse_release(gui)
+
+    handle_option_changes()
     if not dragged_item_table.item then
         reset_potion_spots_hovered()
     end
@@ -287,6 +352,8 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     bags_of_many_reset_id()
 end
 
+---@param pos_x number
+---@param pos_y number
 function button_test(pos_x, pos_y)
     local player = get_player_entity()
     if player then
@@ -298,6 +365,11 @@ function button_test(pos_x, pos_y)
     end
 end
 
+---@param bag integer
+---@param bag_display_x number
+---@param bag_display_y number
+---@param pos_z number
+---@param level number
 function multi_layer_bag_image_v2(bag, bag_display_x, bag_display_y, pos_z, level)
     local bag_hovered_sprite = get_sprite_file(bag)
     if bag_hovered_sprite then
@@ -345,6 +417,12 @@ function multi_layer_bag_image_v2(bag, bag_display_x, bag_display_y, pos_z, leve
 end
 
 -- Inventory drawing
+---@param active_item integer
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param entity integer
+---@param level number
 function draw_inventory_v2(active_item, pos_x, pos_y, pos_z, entity, level)
     if not pos_z then
         pos_z = 1
@@ -379,6 +457,10 @@ function draw_inventory_v2(active_item, pos_x, pos_y, pos_z, entity, level)
     end
 end
 
+---@param storage_size number
+---@param positions table
+---@param bag integer
+---@param level number
 function draw_inventory_v2_invisible(storage_size, positions, bag, level)
     -- LOOP FOR THE INVISIBLE STORAGES
     for i = 1, storage_size do
@@ -446,6 +528,11 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
     end
 end
 
+---@param items table
+---@param positions table
+---@param bag integer
+---@param level number
+---@param pos_z number
 function draw_inventory_v2_items(items, positions, bag, level, pos_z)
     -- LOOP FOR ITEMS
     if not items then
@@ -576,6 +663,7 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
     end
 end
 
+---@param gui userdata
 function draw_vanilla_inventory_v2(gui)
     reset_vanilla_capture_vars()
     draw_vanilla_inventory_capture(gui, MagicNumbersGetValue("UI_BARS_POS_X") - 1, MagicNumbersGetValue("UI_BARS_POS_Y"), 1)
@@ -602,6 +690,10 @@ function reset_vanilla_capture_vars()
     vanilla_inventory_table.hovering_spot_level = nil
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function draw_vanilla_inventory_capture(gui, pos_x, pos_y, pos_z)
     local vanilla_items = get_player_inventory_quick_table()
     if vanilla_items then
@@ -614,6 +706,10 @@ function draw_vanilla_inventory_capture(gui, pos_x, pos_y, pos_z)
     end
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function draw_vanilla_wand_inventory_capture(gui, pos_x, pos_y, pos_z)
     local wands = get_player_inventory_wand_table()
     if wands then
@@ -636,6 +732,10 @@ function draw_vanilla_wand_inventory_capture(gui, pos_x, pos_y, pos_z)
     end
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function draw_vanilla_spell_inventory_capture(gui, pos_x, pos_y, pos_z)
     local vanilla_spells = get_player_inventory_full_table()
     local x, y = get_inventory_spell_size()
@@ -646,6 +746,7 @@ function draw_vanilla_spell_inventory_capture(gui, pos_x, pos_y, pos_z)
     end
 end
 
+---@param pos_z number
 function draw_inventory_dragged_item_v2(pos_z)
     local item = dragged_item_table.item
     if item and dragged_invis_gui_id and dragged_item_gui_id then
@@ -679,12 +780,13 @@ function draw_inventory_dragged_item_v2(pos_z)
     end
 end
 
-function swapping_inventory_v2(sort_by_t)
+---@param sort_by_time boolean
+function swapping_inventory_v2(sort_by_time)
     if vanilla_inventory_table.quick.widget_item then
         swapping_vanilla_inventory()
     else
         if not is_potion_spot_hovered() then
-            swapping_in_bag_inventory(sort_by_t)
+            swapping_in_bag_inventory(sort_by_time)
         else
             swapping_potion_alchemy()
         end
@@ -692,7 +794,8 @@ function swapping_inventory_v2(sort_by_t)
     dragged_item_table = reset_table(dragged_item_table)
 end
 
-function swapping_in_bag_inventory(sort_by_t)
+---@param sort_by_time boolean
+function swapping_in_bag_inventory(sort_by_time)
     if vanilla_inventory_table.hovering then
         if dragged_item_table.item then
             if not is_spell(dragged_item_table.item) and vanilla_inventory_table.inventory_type == 1 then
@@ -707,7 +810,7 @@ function swapping_in_bag_inventory(sort_by_t)
         end
         return
     end
-    if not sort_by_t then
+    if not sort_by_time then
         if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
                 swap_item_position(dragged_item_table.item, hovered_item_table.item, dragged_item_table.bag, hovered_item_table.bag)
@@ -763,9 +866,10 @@ function swapping_potion_alchemy()
     reset_potion_spots_hovered()
 end
 
-function swapping_vanilla_inventory(sort_by_t)
+---@param sort_by_time boolean
+function swapping_vanilla_inventory(sort_by_time)
     dragged_item_table.item = vanilla_inventory_table.quick.widget_item
-    if not sort_by_t then
+    if not sort_by_time then
         if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
             if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
                 swap_item_position(dragged_item_table.item, hovered_item_table.item, dragged_item_table.bag, hovered_item_table.bag)
@@ -788,6 +892,12 @@ function swapping_vanilla_inventory(sort_by_t)
     vanilla_inventory_table.quick.frame_release = 0
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param item integer
+---@param inv_spot number
 function detect_vanilla_wand_inventory_mouse_inputV2(gui, pos_x, pos_y, pos_z, item, inv_spot)
     if not item or not is_wand(item) then
         return
@@ -869,6 +979,13 @@ function detect_vanilla_wand_inventory_mouse_inputV2(gui, pos_x, pos_y, pos_z, i
     end
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param item integer
+---@param inv_spot number
+---@param level number
 function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot, level)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
@@ -924,6 +1041,12 @@ function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, it
     end
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param item integer
+---@param inv_spot number
 function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
@@ -999,32 +1122,58 @@ function detect_vanilla_inventory_mouse_release(gui)
     end
 end
 
+---@param draw_x number
+---@param draw_y number
+---@return boolean
 function button_is_not_at_zero(draw_x, draw_y)
     return math.floor(draw_x) ~= 0 and math.floor(draw_y) ~= 0
 end
 
+---@param draw_x number
+---@param draw_y number
+---@param item_pos_x number
+---@param item_pos_y number
+---@return boolean
 function button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y)
     return math.ceil(draw_x) ~= math.ceil(item_pos_x) or math.ceil(draw_y) ~= math.ceil(item_pos_y)
 end
 
+---@param gui userdata
+---@param id integer
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function draw_left_bracket(gui, id, pos_x, pos_y, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, id, pos_x-5, pos_y - 4, "mods/bags_of_many/files/ui_gfx/inventory/background_left.png", bag_ui_alpha, 1)
 end
 
+---@param gui userdata
+---@param id integer
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function draw_middle(gui, id, pos_x, pos_y, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, id, pos_x, pos_y - 4, "mods/bags_of_many/files/ui_gfx/inventory/background_middle.png", bag_ui_alpha, 1)
 end
 
+---@param gui userdata
+---@param id integer
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function draw_right_bracket(gui, id, pos_x, pos_y, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
     GuiZSetForNextWidget(gui, pos_z)
     GuiImage(gui, id, pos_x+20, pos_y - 4, "mods/bags_of_many/files/ui_gfx/inventory/background_right.png", bag_ui_alpha, 1)
 end
 
+---@param pos_x number
+---@param pos_y number
+---@param active_item integer
 function draw_inventory_button(pos_x, pos_y, active_item)
     local dragging_button = false
     -- Invisible button overlay
@@ -1094,6 +1243,9 @@ function draw_inventory_button(pos_x, pos_y, active_item)
     end
 end
 
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function draw_inventory_sorting_option(pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
@@ -1131,6 +1283,11 @@ function draw_inventory_sorting_direction(pos_x, pos_y, pos_z)
     end
 end
 
+---@param bag integer
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param level number
 function draw_inventory_drop_button(bag, pos_x, pos_y, pos_z, level)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
@@ -1199,6 +1356,8 @@ function draw_inventory_multiple_depth_button(pos_x, pos_y, pos_z)
     end
 end
 
+---@param item integer
+---@return string
 function generate_tooltip(item)
     local tooltip = ""
     -- Spell tooltip
@@ -1245,6 +1404,10 @@ function generate_tooltip(item)
     return tooltip
 end
 
+---@param item integer
+---@param pos_x number
+---@param pos_y number
+---@param level number
 function draw_tooltip(item, pos_x, pos_y, level)
     pos_x = pos_x + (5 * (level - 1))
     local tooltip = generate_tooltip(item)
@@ -1296,6 +1459,8 @@ function draw_tooltip(item, pos_x, pos_y, level)
     end
 end
 
+---@param wand_spells table
+---@return table, table
 function filter_wand_spells(wand_spells)
     local always_cast = {}
     local normal_cast = {}
@@ -1309,8 +1474,14 @@ function filter_wand_spells(wand_spells)
         end
         return always_cast, normal_cast
     end
+    return always_cast, normal_cast
 end
 
+---@param wand_capacity number
+---@param wand_spells table
+---@param spells_per_line number
+---@param pos_x number
+---@param pos_y number
 function draw_wand_spells(wand_capacity, wand_spells, spells_per_line, pos_x, pos_y)
     local alpha = 1
     for i = 1, wand_capacity do
@@ -1364,6 +1535,12 @@ function draw_wand_always_cast_spells(wand_spells, pos_x, pos_y)
     end
 end
 
+---@param entity integer
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param alpha number
+---@param scale number
 function draw_action_type(entity, pos_x, pos_y, pos_z, alpha, scale)
     local sprite = get_spell_type_sprite(entity)
     if sprite then
@@ -1372,12 +1549,23 @@ function draw_action_type(entity, pos_x, pos_y, pos_z, alpha, scale)
     end
 end
 
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
 function inventory_slot(gui, pos_x, pos_y, pos_z)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
     GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png", bag_ui_alpha, 1, 1)
 end
 
+---@param gui userdata
+---@param size number
+---@param item_per_line number
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@return table
 function inventory(gui, size, item_per_line, pos_x, pos_y, pos_z)
     local positions_x = {}
     local positions_y = {}
@@ -1428,14 +1616,18 @@ function draw_alchemy_button_gui(pos_x, pos_y)
     end
 end
 
+---@return boolean
 function is_potion_in_table()
     return left_spot_alchemy.item ~= nil or right_spot_alchemy.item ~= nil or combined_spot_alchemy.item ~= nil
 end
 
+---@param item integer
+---@return boolean
 function is_item_in_alchemy_table(item)
     return left_spot_alchemy.item == item or right_spot_alchemy.item == item or combined_spot_alchemy.item == item
 end
 
+---@return boolean
 function is_material_in_alchemy_table_selected()
     local left_material_selected = false
     if left_spot_alchemy.item and potion_alchemy_content_buttons[left_spot_alchemy.item] then
@@ -1476,11 +1668,12 @@ function is_material_in_alchemy_table_selected()
     return false
 end
 
+---@return boolean
 function is_potion_spot_hovered()
     local left_hovered = left_spot_alchemy.hovered ~= nil and left_spot_alchemy.hovered
     local combined_hovered = combined_spot_alchemy.hovered ~= nil and combined_spot_alchemy.hovered
     local right_hovered = right_spot_alchemy.hovered ~= nil and right_spot_alchemy.hovered
-    return left_hovered or combined_hovered or right_hovered
+    return (left_hovered ~= nil and combined_hovered ~= nil and right_hovered ~= nil) and (left_hovered or combined_hovered or right_hovered)
 end
 
 function reset_potion_spots_tables()
@@ -1495,6 +1688,8 @@ function reset_potion_spots_hovered()
     reset_hovered_table(right_spot_alchemy)
 end
 
+---@param hold_spot any
+---@param item any
 function remove_duplicate_potion_in_spots(hold_spot, item)
     if hold_spot == item then
         hold_spot = nil

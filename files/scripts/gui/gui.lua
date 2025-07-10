@@ -1,5 +1,4 @@
 dofile_once( "mods/bags_of_many/files/scripts/gui/bag_inventory.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/gui/bag_inventory_v3.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
 
 function bags_of_many_ui_setup()
