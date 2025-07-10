@@ -6,22 +6,10 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spells_lookup.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/testing/item_spawner.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/gui.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/bags_mod_state.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
 
-bags_mod_state = {
-    get_file_content = nil,
-    is_file_exist = nil,
-    xml_file_png = {},
-    lookup_spells = {},
-    bag_pickup_override = nil,
-    button_pos_x = ModSettingGet("BagsOfMany.pos_x"),
-    button_pos_y = ModSettingGet("BagsOfMany.pos_y"),
-    alchemy_pos_x = ModSettingGet("BagsOfMany.alchemy_pos_x"),
-    alchemy_pos_y = ModSettingGet("BagsOfMany.alchemy_pos_y"),
-    alchemy_amount_transfered = 10,
-    left_mouse_down_frame = 0,
-    left_mouse_up_frame = 0,
-}
+bags_mod_state = BagsModState:new()
 
 -- Adding translations
 local TRANSLATIONS_FILE = "data/translations/common.csv"

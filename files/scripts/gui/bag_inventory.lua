@@ -20,20 +20,20 @@ local bag_ui_red = tonumber(ModSettingGet("BagsOfMany.bag_image_red"))/255
 local bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
 local bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
 local bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
-local dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed")
-local item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap")
+local dragging_allowed = get_mod_setting_boolean("BagsOfMany.dragging_allowed", true)
+local item_per_line = get_mod_setting_number("BagsOfMany.bag_slots_inventory_wrap", 10)
 
 -- BAG AND TOOLTIP TOGGLE
 local bag_open = true
 local alchemy_gui_open = false
-local keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open")
-local dropdown_style = ModSettingGet("BagsOfMany.dropdown_style")
+local keep_tooltip_open = get_mod_setting_boolean("BagsOfMany.keep_tooltip_open", false)
+local dropdown_style = get_mod_setting_boolean("BagsOfMany.dropdown_style", false)
 
 -- SORTING FLAG AND OPTION
 local sort_type_change_flag = false
-local sort_by_time = ModSettingGet("BagsOfMany.sorting_type") or false
+local sort_by_time_setting = get_mod_setting_boolean("BagsOfMany.sorting_type", false)
 local sort_order_change_flag = false
-local sorting_order = ModSettingGet("BagsOfMany.sorting_order") or false
+local sorting_order = get_mod_setting_boolean("BagsOfMany.sorting_order", false)
 -- OPTION CHANGE FLAG
 local option_changed = false
 
@@ -139,11 +139,11 @@ local function update_settings()
     bag_ui_green = tonumber(ModSettingGet("BagsOfMany.bag_image_green"))/255
     bag_ui_blue = tonumber(ModSettingGet("BagsOfMany.bag_image_blue"))/255
     bag_ui_alpha = tonumber(ModSettingGet("BagsOfMany.bag_image_alpha"))/255
-    dragging_allowed = ModSettingGet("BagsOfMany.dragging_allowed") or false
-    item_per_line = ModSettingGet("BagsOfMany.bag_slots_inventory_wrap") or 10
-    sort_by_time = ModSettingGet("BagsOfMany.sorting_type") or false
-    sorting_order = ModSettingGet("BagsOfMany.sorting_order") or false
-    keep_tooltip_open = ModSettingGet("BagsOfMany.keep_tooltip_open") or false
+    dragging_allowed = get_mod_setting_boolean("BagsOfMany.dragging_allowed", true)
+    item_per_line = get_mod_setting_number("BagsOfMany.bag_slots_inventory_wrap", 10)
+    sort_by_time_setting = get_mod_setting_boolean("BagsOfMany.sorting_type", false)
+    sorting_order = get_mod_setting_boolean("BagsOfMany.sorting_order", false)
+    keep_tooltip_open = get_mod_setting_boolean("BagsOfMany.keep_tooltip_open", false)
 end
 
 function reset_bag_and_buttons_gui()
@@ -258,7 +258,7 @@ local function handle_bag_ui_reset()
 end
 
 local function handle_drag_and_swap()
-    swapping_inventory_v2(sort_by_time)
+    swapping_inventory_v2(sort_by_time_setting)
     dragging_possible_swap = false
     dragged_invis_gui_id = nil
     dragged_item_gui_id = nil
@@ -286,8 +286,8 @@ local function handle_option_changes()
     end
     if sort_type_change_flag then
         sort_type_change_flag = false
-        sort_by_time = not sort_by_time
-        ModSettingSetNextValue("BagsOfMany.sorting_type", sort_by_time, false)
+        sort_by_time_setting = not sort_by_time_setting
+        ModSettingSetNextValue("BagsOfMany.sorting_type", sort_by_time_setting, false)
     end
 end
 
@@ -442,8 +442,8 @@ function draw_inventory_v2(active_item, pos_x, pos_y, pos_z, entity, level)
         end
 
         -- Items drawing loop
-        if type(sort_by_time) == "boolean" and type(sorting_order) == "boolean" then
-            local items = get_bag_inventory_items(entity, sort_by_time, sorting_order)
+        if type(sort_by_time_setting) == "boolean" and type(sorting_order) == "boolean" then
+            local items = get_bag_inventory_items(entity, sort_by_time_setting, sorting_order)
             if not option_changed then
                 draw_inventory_dragged_item_v2(pos_z)
                 draw_inventory_v2_invisible(storage_size, positions[level], entity, level)
@@ -542,7 +542,7 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
         local item = items[i]
         if item and not(dragged_item_table.item and dragged_item_table.item == item) then
             local item_position
-            if sort_by_time then
+            if sort_by_time_setting then
                 item_position = i
             else
                 item_position = get_item_position(item)
@@ -666,20 +666,27 @@ end
 ---@param gui userdata
 function draw_vanilla_inventory_v2(gui)
     reset_vanilla_capture_vars()
-    draw_vanilla_inventory_capture(gui, MagicNumbersGetValue("UI_BARS_POS_X") - 1, MagicNumbersGetValue("UI_BARS_POS_Y"), 1)
-    if is_inventory_open() then
-        draw_vanilla_spell_inventory_capture(gui, MagicNumbersGetValue("UI_FULL_INVENTORY_OFFSET_X") + MagicNumbersGetValue("UI_BARS_POS_X"), MagicNumbersGetValue("UI_BARS_POS_Y"), 1)
-        local player = get_player()
-        if player then
-            local is_colliding = CheckEntityCollideWithWorkshop(player)
-            local tinker_points = EntityTinkerPoints(player)
-            if is_colliding then
-                tinker_points = tinker_points + 1
-            end
-            if tinker_points > 0 then
-                draw_vanilla_wand_inventory_capture(gui, 0, 0, 1)
+    local UI_BARS_POS_X = tonumber(MagicNumbersGetValue("UI_BARS_POS_X"))
+    local UI_BARS_POS_Y = tonumber(MagicNumbersGetValue("UI_BARS_POS_Y"))
+    local UI_FULL_INVENTORY_OFFSET_X = tonumber(MagicNumbersGetValue("UI_FULL_INVENTORY_OFFSET_X"))
+    if UI_BARS_POS_X ~= nil and UI_BARS_POS_Y ~= nil and UI_FULL_INVENTORY_OFFSET_X ~= nil then
+        if is_inventory_open() then
+            draw_vanilla_inventory_capture(gui, UI_BARS_POS_X - 1, UI_BARS_POS_Y, 1)
+            draw_vanilla_spell_inventory_capture(gui, UI_FULL_INVENTORY_OFFSET_X + UI_BARS_POS_X, UI_BARS_POS_Y, 1)
+            local player = get_player()
+            if player then
+                local is_colliding = CheckEntityCollideWithWorkshop(player)
+                local tinker_points = EntityTinkerPoints(player)
+                if is_colliding then
+                    tinker_points = tinker_points + 1
+                end
+                if tinker_points > 0 then
+                    draw_vanilla_wand_inventory_capture(gui, 0, 0, 1)
+                end
             end
         end
+    else
+        print_error("Bags of Many: UI_BARS_POS_X or UI_BARS_POS_Y is nil. Please check your MagicNumbers settings.")
     end
 end
 
@@ -783,7 +790,7 @@ end
 ---@param sort_by_time boolean
 function swapping_inventory_v2(sort_by_time)
     if vanilla_inventory_table.quick.widget_item then
-        swapping_vanilla_inventory()
+        swapping_vanilla_inventory(sort_by_time)
     else
         if not is_potion_spot_hovered() then
             swapping_in_bag_inventory(sort_by_time)
@@ -1251,7 +1258,7 @@ function draw_inventory_sorting_option(pos_x, pos_y, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local sorting_option_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sorting_by_position.png"
     local sorting_option_tooltip = "$bag_button_sorting_by_position_tooltip"
-    if sort_by_time then
+    if sort_by_time_setting then
         sorting_option_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sorting_by_time.png"
         sorting_option_tooltip = "$bag_button_sorting_by_time_tooltip"
     end
@@ -1292,11 +1299,11 @@ function draw_inventory_drop_button(bag, pos_x, pos_y, pos_z, level)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local l_clk, r_clk = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", dropping_button_sprite)
-    if l_clk and type(sort_by_time) == "boolean" and type(sorting_order) == "boolean" then
+    if l_clk and type(sort_by_time_setting) == "boolean" and type(sorting_order) == "boolean" then
         if dropping_button_sprite == drop_orderly then
-            drop_all_inventory(bag, true, sort_by_time, sorting_order)
+            drop_all_inventory(bag, true, sort_by_time_setting, sorting_order)
         else
-            drop_all_inventory(bag, false, sort_by_time, sorting_order)
+            drop_all_inventory(bag, false, sort_by_time_setting, sorting_order)
         end
         remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
     elseif r_clk then
@@ -1427,8 +1434,7 @@ function draw_tooltip(item, pos_x, pos_y, level)
     elseif is_wand(item) then
         local tooltip_x = pos_x
         local tooltip_y = pos_y+31
-        -- local spells_per_line = 10
-        local spells_per_line = tonumber(ModSettingGet("BagsOfMany.spells_slots_inventory_wrap"))
+        local spells_per_line = get_mod_setting_number("BagsOfMany.spells_slots_inventory_wrap", 10)
         local wand_capacity = EntityGetWandCapacity(item)
         local wand_spells = EntityGetAllChildren(item)
         local always_cast, normal_cast = filter_wand_spells(wand_spells)
@@ -1459,7 +1465,7 @@ function draw_tooltip(item, pos_x, pos_y, level)
     end
 end
 
----@param wand_spells table
+---@param wand_spells table|nil
 ---@return table, table
 function filter_wand_spells(wand_spells)
     local always_cast = {}
@@ -2109,7 +2115,7 @@ function setup_inventory_options_buttons(bag, level, pos_x, pos_y, pos_z)
         nb_button = nb_button + 1
         draw_inventory_sorting_option(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
     end
-    if sort_by_time and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
+    if sort_by_time_setting and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
         local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
         nb_button = nb_button + 1
         draw_inventory_sorting_direction(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)

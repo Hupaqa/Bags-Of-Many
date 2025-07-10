@@ -63,6 +63,9 @@ end
 ---@param pad_right number
 ---@param pad_bottom number
 ---@param pad_left number
+-- Draws a background box with the given padding.
+-- If only pad_top is provided, it will apply the same padding to all sides.
+-- If pad_top and pad_right are provided, it will apply pad_top to top and bottom, and pad_right to left and right.
 function draw_background_box(gui, pos_x, pos_y, pos_z, size_x, size_y, pad_top, pad_right, pad_bottom, pad_left)
     size_x = size_x - 1
     size_y = size_y - 1
@@ -121,9 +124,12 @@ end
 ---@param gui userdata
 ---@param pos_z number
 ---@param pad_top number
----@param pad_right number
----@param pad_bottom number
----@param pad_left number
+---@param pad_right number|nil
+---@param pad_bottom number|nil
+---@param pad_left number|nil
+-- Draws a background box with the given padding.
+-- If only pad_top is provided, it will apply the same padding to all sides.
+-- If pad_top and pad_right are provided, it will apply pad_top to top and bottom, and pad_right to left and right.
 function auto_draw_background_box(gui, pos_z, pad_top, pad_right, pad_bottom, pad_left)
     local _, _, _, pos_x, pos_y, size_x, size_y = GuiGetPreviousWidgetInfo(gui)
     size_x = size_x - 1

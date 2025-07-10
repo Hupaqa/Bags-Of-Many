@@ -1,6 +1,43 @@
+---@param setting_name string
+---@param default_value number
+---@return number
+function get_mod_setting_number(setting_name, default_value)
+	local value = ModSettingGet(setting_name)
+	if type(value) ~= "number" then
+		value = default_value
+	end
+	return value
+end
+
+---@param setting_name string
+---@param default_value boolean
+---@return boolean
+function get_mod_setting_boolean(setting_name, default_value)
+	local value = ModSettingGet(setting_name)
+	if type(value) ~= "boolean" then
+		value = default_value
+	end
+	return value
+end
+
+---@param setting_name string
+---@param default_value string
+---@return string
+function get_mod_setting_string(setting_name, default_value)
+	local value = ModSettingGet(setting_name)
+	if type(value) ~= "string" then
+		value = default_value
+	end
+	return value
+end
+
 --- @return number
 function get_player_health()
-	local damagemodel = EntityGetFirstComponentIncludingDisabled( get_player(), "DamageModelComponent" )
+	local player_entity = get_player()
+	if player_entity == nil then
+		return 0
+	end
+	local damagemodel = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
 	local health = 0
 	if damagemodel ~= nil then
 		health = ComponentGetValue2(damagemodel, "hp")
@@ -10,10 +47,14 @@ end
 
 --- @return number
 function get_player_max_health()
-	local damagemodels = EntityGetComponent( get_player(), "DamageModelComponent" )
+	local player_entity = get_player()
+	if player_entity == nil then
+		return 0
+	end
+	local damagemodels = EntityGetComponent(player_entity, "DamageModelComponent")
 	local maxHealth = 0
 	if( damagemodels ~= nil ) then
-		for i,v in ipairs(damagemodels) do
+		for _,v in ipairs(damagemodels) do
 			maxHealth = ComponentGetValue2( v, "max_hp" )
 			break
 		end
@@ -23,10 +64,14 @@ end
 
 --- @return number
 function get_player_flight_left()
-	local character_data_comp = EntityGetComponent( get_player(), "CharacterDataComponent" )
+	local player_entity = get_player()
+	if player_entity == nil then
+		return 0
+	end
+	local character_data_comp = EntityGetComponent(player_entity, "CharacterDataComponent")
 	local flying_left = 0
 	if( character_data_comp ~= nil ) then
-		for i,v in ipairs(character_data_comp) do
+		for _,v in ipairs(character_data_comp) do
 			flying_left = ComponentGetValue2( v, "mFlyingTimeLeft" )
 			break
 		end
@@ -36,10 +81,14 @@ end
 
 --- @return number
 function get_player_flight_max()
-	local character_data_comp = EntityGetComponent( get_player(), "CharacterDataComponent" )
+	local player_entity = get_player()
+	if player_entity == nil then
+		return 0
+	end
+	local character_data_comp = EntityGetComponent(player_entity, "CharacterDataComponent")
 	local fly_time_max = 0
 	if( character_data_comp ~= nil ) then
-		for i,v in ipairs(character_data_comp) do
+		for _,v in ipairs(character_data_comp) do
 			fly_time_max = ComponentGetValue2( v, "fly_time_max" )
 			break
 		end
@@ -104,7 +153,11 @@ end
 
 --- @return number
 function get_player_reload_shake()
-	local inv_comp = EntityGetFirstComponentIncludingDisabled(get_player(), "InventoryGuiComponent")
+	local player_entity = get_player()
+	if player_entity == nil then
+		return 0
+	end
+	local inv_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 	local is_reload_shake = 0
 	if inv_comp then
 		is_reload_shake = ComponentGetValue2(inv_comp,"mFrameShake_ReloadBar")
@@ -114,7 +167,11 @@ end
 
 --- @return number
 function get_player_wallet_target()
-	local inv_comp = EntityGetFirstComponentIncludingDisabled(get_player(), "InventoryGuiComponent")
+	local player_entity = get_player()
+	if player_entity == nil then
+		return 0
+	end
+	local inv_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 	local wallet_money_target = 0
 	if inv_comp then
 		wallet_money_target = ComponentGetValue2(inv_comp,"wallet_money_target")
@@ -124,7 +181,11 @@ end
 
 --- @return number
 function get_player_has_infinite_wallet()
-	local inv_comp = EntityGetFirstComponentIncludingDisabled(get_player(), "InventoryGuiComponent")
+	local player_entity = get_player()
+	if player_entity == nil then
+		return 0
+	end
+	local inv_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 	local wallet_infinite = 0
 	if inv_comp then
 		wallet_infinite = ComponentGetValue2(inv_comp,"mHasReachedInf")
