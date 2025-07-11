@@ -8,6 +8,7 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/potion_utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/common_gui.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/information_table.lua" )
 
 -- GUI SECTION
 local gui = gui or GuiCreate()
@@ -51,46 +52,10 @@ local shift_clicked = false
 local dragging_possible_swap = false
 local dragged_invis_gui_id = nil
 local dragged_item_gui_id = nil
-local dragged_item_table = {
-    item = nil,
-    position = nil,
-    bag = nil,
-    level = nil,
-    position_x = nil,
-    position_y = nil,
-    initial_position_x = nil,
-    initial_position_y = nil,
-}
-local hovered_item_table = {
-    item = nil,
-    position = nil,
-    bag = nil,
-    level = nil,
-    position_x = nil,
-    position_y = nil,
-    initial_position_x = nil,
-    initial_position_y = nil,
-}
-local left_click_table = {
-    item = nil,
-    position = nil,
-    bag = nil,
-    level = nil,
-    position_x = nil,
-    position_y = nil,
-    initial_position_x = nil,
-    initial_position_y = nil,
-}
-local right_click_table = {
-    item = nil,
-    position = nil,
-    bag = nil,
-    level = nil,
-    position_x = nil,
-    position_y = nil,
-    initial_position_x = nil,
-    initial_position_y = nil,
-}
+local dragged_item_table = InformationTable:new()
+local hovered_item_table = InformationTable:new()
+local left_click_table = InformationTable:new()
+local right_click_table = InformationTable:new()
 
 -- ALCHEMY TABLE SPOTS VARIABLES
 local left_spot_alchemy = {
