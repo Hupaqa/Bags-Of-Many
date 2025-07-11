@@ -6,7 +6,7 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/inventory.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/spells_lookup.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/testing/item_spawner.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/gui.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/utils/bags_mod_state.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/objects/bags_mod_state.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
 
 bags_mod_state = BagsModState:new()
