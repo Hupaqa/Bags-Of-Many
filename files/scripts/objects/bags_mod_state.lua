@@ -1,6 +1,7 @@
 ---@class BagsModState
 ---@field get_file_content function|nil
 ---@field is_file_exist function|nil
+---@field new_gui_item_id function|nil
 ---@field xml_file_png table
 ---@field lookup_spells table
 ---@field bag_pickup_override any
@@ -19,6 +20,7 @@ function BagsModState:new()
     local obj = setmetatable({}, self)
     obj.get_file_content = nil
     obj.is_file_exist = nil
+    obj.new_gui_item_id = nil
     obj.xml_file_png = {}
     obj.lookup_spells = {}
     obj.bag_pickup_override = nil

@@ -7,6 +7,7 @@ dofile_once( "mods/bags_of_many/files/scripts/utils/spells_lookup.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/testing/item_spawner.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/gui.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/objects/bags_mod_state.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/utils/noita_utils.lua" )
 print("Bags of many enabled start a new run to have the items spawn in your world.")
 
 bags_mod_state = BagsModState:new()
@@ -24,6 +25,7 @@ ModLuaFileAppend( "data/scripts/gun/gun_actions.lua", "mods/bags_of_many/files/s
 function OnModInit()
     bags_mod_state.get_file_content = ModTextFileGetContent
     bags_mod_state.is_file_exist = ModDoesFileExist
+    bags_mod_state.new_gui_item_id = bags_of_many_new_id
 end
 
 local LOAD_KEY = "BAGS_OF_MANY_LOAD_DONE"
@@ -104,6 +106,6 @@ function OnPausedChanged(is_paused, is_inventory_pause)
         bags_mod_state.button_pos_x = ModSettingGet("BagsOfMany.pos_x")
         bags_mod_state.button_pos_y = ModSettingGet("BagsOfMany.pos_y")
 	end
-    bags_mod_state.alchemy_pos_x = ModSettingGet("BagsOfMany.alchemy_pos_x")
-    bags_mod_state.alchemy_pos_y = ModSettingGet("BagsOfMany.alchemy_pos_y")
+    bags_mod_state.alchemy_pos_x = get_mod_setting_number("alchemy_pos_x", 170)
+    bags_mod_state.alchemy_pos_y = get_mod_setting_number("alchemy_pos_y", 200)
 end

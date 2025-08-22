@@ -2,6 +2,7 @@
 bag_of_many_current_id = 1
 bag_of_many_reserved_ids = {}
 -- ID
+--- @return integer
 function bags_of_many_new_id()
     for i = 1, #bag_of_many_reserved_ids do
         if bag_of_many_reserved_ids[i] == bag_of_many_current_id + 1 then
@@ -14,6 +15,7 @@ end
 function bags_of_many_reset_id()
     bag_of_many_current_id = 1
 end
+--- @return integer
 function bags_of_many_current_id()
     return bag_of_many_current_id
 end
