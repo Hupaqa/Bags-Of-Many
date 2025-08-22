@@ -1,5 +1,5 @@
-dofile_once( "mods/bags_of_many/files/scripts/gui/information_table.lua" )
-dofile_once( "mods/bags_of_many/files/scripts/gui/vanilla_inventory.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/objects/information_table.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/objects/vanilla_inventory.lua" )
 
 BAGS_OF_MANY_GUI_STATES = BAGS_OF_MANY_GUI_STATES or {}
 

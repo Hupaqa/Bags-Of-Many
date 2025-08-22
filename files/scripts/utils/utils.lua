@@ -56,24 +56,6 @@ function string_table_to_table(inputstr)
     return t
 end
 
--- function table_to_string_table(table)
---     local str = ""
---     if table then
---         for i = 1, #table do
---             if i == 1 then
---                 str = str .. "{"
---             end
---             str = str .. tostring(table[i])
---             if i == #table then
---                 str = str .. "}"
---             else
---                 str = str .. ","
---             end
---         end
---     end
---     return str
--- end
-
 ---@param table table
 ---@param value any
 ---@return integer|nil
@@ -273,13 +255,53 @@ function petri_offset_func(pos_init)
     return (math.cos(pos_init * 3.1415)+1) * 0.5 * math.sin(pos_init * 30)
 end
 
----@param xml_path string
+---@param xml_file string
 ---@return string|nil
-function extract_png_file_from_xml(xml_path)
-    if not xml_path or xml_path == "" then return nil end
-    local content = ModTextFileGetContent(xml_path)
-    if not content then return nil end
-    -- Look for <Sprite ... image_file="..." ... />
-    local png = string.match(content, 'image_file="([^"]+%.png)"')
-    return png
+function extract_png_file_from_xml(xml_file)
+    if xml_file then
+        if not bags_mod_state.is_file_exist(xml_file) then
+            return
+        end
+        if  bags_mod_state.xml_file_png and bags_mod_state.xml_file_png[xml_file] then
+            return bags_mod_state.xml_file_png[xml_file]
+        end
+        local file_content = bags_mod_state.get_file_content(xml_file)
+        if file_content then
+            local file_png_with_apostrophe = string.match(file_content, '%".+%.png%"')
+            if file_png_with_apostrophe then
+                local file_png = string.gsub(file_png_with_apostrophe, '"', "")
+                bags_mod_state.xml_file_png[xml_file] = file_png
+                return file_png
+            end
+        end
+    end
+end
+
+---@param table table
+function reset_item_table(table)
+    for key, _ in pairs(table) do
+        table[key] = nil
+    end
+    return table
+end
+
+---@param table table
+function reset_hovered_table(table)
+    table.hovered = nil
+end
+
+---@param draw_x number
+---@param draw_y number
+---@return boolean
+function button_is_not_at_zero(draw_x, draw_y)
+    return math.floor(draw_x) ~= 0 and math.floor(draw_y) ~= 0
+end
+
+---@param draw_x number
+---@param draw_y number
+---@param item_pos_x number
+---@param item_pos_y number
+---@return boolean
+function button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y)
+    return math.ceil(draw_x) ~= math.ceil(item_pos_x) or math.ceil(draw_y) ~= math.ceil(item_pos_y)
 end

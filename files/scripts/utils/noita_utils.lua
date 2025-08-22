@@ -266,3 +266,18 @@ function world_to_screen_coords(gui, x, y)
     x, y = x * sw, y * sh
     return x, y
 end
+
+---@param entity_id integer
+---@return boolean
+function is_xml_sprite_file(entity_id)
+    if entity_id then
+        local item_component = EntityGetComponentIncludingDisabled(entity_id, "SpriteComponent")
+        if item_component then
+            local sprite = ComponentGetValue2(item_component[1], "image_file")
+            if string_contains(sprite, ".xml") then
+                return true
+            end
+        end
+    end
+    return false
+end

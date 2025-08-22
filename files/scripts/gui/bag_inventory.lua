@@ -9,6 +9,7 @@ dofile_once( "mods/bags_of_many/files/scripts/gui/common_gui.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/utils.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/utils/inputs.lua" )
 dofile_once( "mods/bags_of_many/files/scripts/gui/states.lua" )
+dofile_once( "mods/bags_of_many/files/scripts/gui/inventory_background.lua" )
 
 -- GUI SECTION
 local bag_of_many_gui = gui or GuiCreate()
@@ -69,7 +70,7 @@ local function update_settings()
 end
 
 function reset_bag_and_buttons_gui()
-    reset_table(dragged_item_table)
+    reset_table(BAGS_OF_MANY_GUI_STATES.dragged_item_table)
     dragging_possible_swap = false
     dragged_invis_gui_id = nil
     dragged_item_gui_id = nil
@@ -77,19 +78,6 @@ function reset_bag_and_buttons_gui()
     GuiDestroy(bag_of_many_gui)
     bag_of_many_gui = GuiCreate()
     reset_potion_spots_hovered()
-end
-
----@param table table
-function reset_item_table(table)
-    for key, _ in pairs(table) do
-        table[key] = nil
-    end
-    return table
-end
-
----@param table table
-function reset_hovered_table(table)
-    table.hovered = nil
 end
 
 ---@param active_item integer
@@ -149,7 +137,7 @@ local function handle_alchemy_gui_if_needed(alchemy_gui_open, alchemy_gui_button
 end
 
 local function handle_bag_ui_reset()
-    reset_table(dragged_item_table)
+    reset_table(BAGS_OF_MANY_GUI_STATES.dragged_item_table)
     dragging_possible_swap = false
     dragged_invis_gui_id = nil
     dragged_item_gui_id = nil
@@ -247,14 +235,14 @@ function bags_of_many_bag_gui(pos_x, pos_y)
     if shift_clicked then
         handle_shift_click()
     end
-    hovered_item_table = reset_item_table(hovered_item_table)
+    BAGS_OF_MANY_GUI_STATES.hovered_item_table = reset_item_table(BAGS_OF_MANY_GUI_STATES.hovered_item_table)
     detect_vanilla_inventory_mouse_release()
 
     handle_option_changes()
-    if not dragged_item_table.item then
+    if not BAGS_OF_MANY_GUI_STATES.dragged_item_table.item then
         reset_potion_spots_hovered()
     end
-    reset_table(left_click_table)
+    reset_table(BAGS_OF_MANY_GUI_STATES.left_click_table)
     update_settings()
     bags_of_many_reset_id()
 end
@@ -279,7 +267,7 @@ end
 ---@param level number
 function multi_layer_bag_image_v2(bag, bag_display_x, bag_display_y, pos_z, level)
     local bag_hovered_sprite = get_sprite_file(bag)
-    if bag_hovered_sprite then
+    if bag_hovered_sprite ~= nil and bag_hovered_sprite ~= "" then
         if bag_pickup_override_local == bag then
             GuiZSetForNextWidget(bag_of_many_gui, pos_z + 1)
             GuiImage(bag_of_many_gui, bags_of_many_new_id(), bag_display_x, bag_display_y, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
@@ -333,7 +321,7 @@ end
 function draw_inventory_v2(active_item, pos_x, pos_y, pos_z, entity, level)
     if not pos_z then
         pos_z = 1
-    end
+    end    
     if is_bag(entity) and active_item then
         local storage_size = get_bag_inventory_size(entity)
         if not item_per_line then
@@ -374,7 +362,7 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
         local item_pos_x = positions.positions_x[i]
         local item_pos_y = positions.positions_y[i]
 
-        if not(dragged_item_table.item and dragged_item_table.bag == bag and dragged_item_table.level == level and dragged_item_table.position == i) and active_item_bag then
+        if not(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag == bag and BAGS_OF_MANY_GUI_STATES.dragged_item_table.level == level and BAGS_OF_MANY_GUI_STATES.dragged_item_table.position == i) and active_item_bag then
             -- Invisible dragging button
             if dragging_allowed then
                 GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.IsExtraDraggable)
@@ -389,44 +377,44 @@ function draw_inventory_v2_invisible(storage_size, positions, bag, level)
 
             -- DETECT DRAGGING
             if dragging_allowed then
-                if dragged_item_table.item and dragged_item_table.bag == bag and dragged_item_table.level == level and dragged_item_table.position == i then
-                    dragged_item_table.position_x = draw_x
-                    dragged_item_table.position_y = draw_y
+                if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag == bag and BAGS_OF_MANY_GUI_STATES.dragged_item_table.level == level and BAGS_OF_MANY_GUI_STATES.dragged_item_table.position == i then
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_x = draw_x
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_y = draw_y
                 end
-                if not dragged_item_table.item and button_is_not_at_zero(draw_x, draw_y) and button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y) then
-                    dragged_item_table.bag = bag
-                    dragged_item_table.position = i
-                    dragged_item_table.level = level
-                    dragged_item_table.position_x = draw_x
-                    dragged_item_table.position_y = draw_y
-                    dragged_item_table.initial_position_x = item_pos_x
-                    dragged_item_table.initial_position_y = item_pos_y
+                if not BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and button_is_not_at_zero(draw_x, draw_y) and button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y) then
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag = bag
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.position = i
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.level = level
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_x = draw_x
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_y = draw_y
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.initial_position_x = item_pos_x
+                    BAGS_OF_MANY_GUI_STATES.dragged_item_table.initial_position_y = item_pos_y
                     dragged_invis_gui_id = bags_of_many_current_id()
                     bags_of_many_reserve_id(dragged_invis_gui_id)
                 end
-                if math.floor(draw_x) == 0 and math.floor(draw_y) == 0 and dragged_item_table.level == level and dragged_item_table.bag == bag and dragged_item_table.position == i then
+                if math.floor(draw_x) == 0 and math.floor(draw_y) == 0 and BAGS_OF_MANY_GUI_STATES.dragged_item_table.level == level and BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag == bag and BAGS_OF_MANY_GUI_STATES.dragged_item_table.position == i then
                     dragging_possible_swap = true
                 end
             end
 
             -- LEFT CLICK: DROP ITEM
-            if clicked_inv and not dragged_item_table.item then
-                left_click_table.bag = bag
-                left_click_table.position = i
-                left_click_table.level = level
+            if clicked_inv and not BAGS_OF_MANY_GUI_STATES.dragged_item_table.item then
+                BAGS_OF_MANY_GUI_STATES.left_click_table.bag = bag
+                BAGS_OF_MANY_GUI_STATES.left_click_table.position = i
+                BAGS_OF_MANY_GUI_STATES.left_click_table.level = level
             end
             -- RIGHT CLICK: MULTI DEPTH CHANGE
             if right_clicked_inv then
-                right_click_table.bag = bag
-                right_click_table.position = i
-                right_click_table.level = level
+                BAGS_OF_MANY_GUI_STATES.right_click_table.bag = bag
+                BAGS_OF_MANY_GUI_STATES.right_click_table.position = i
+                BAGS_OF_MANY_GUI_STATES.right_click_table.level = level
             end
             -- HOVERING: SHOW TOOLTIP, ADD BAG TO INVENTORY DRAW OR SWITCH ITEM HOVERED
             if hovered_inv then
-                hovered_item_table.bag = bag
-                hovered_item_table.position = i
-                hovered_item_table.level = level
-                if dragged_item_table.item and is_allowed_in_bag(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
+                BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag = bag
+                BAGS_OF_MANY_GUI_STATES.hovered_item_table.position = i
+                BAGS_OF_MANY_GUI_STATES.hovered_item_table.level = level
+                if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and is_allowed_in_bag(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) and not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) and not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.hovered_item_table.item, BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag) then
                     GuiZSetForNextWidget(bag_of_many_gui, 20)
                     GuiImage(bag_of_many_gui, bags_of_many_new_id(), item_pos_x, item_pos_y, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1)
                 end
@@ -442,12 +430,12 @@ end
 ---@param pos_z number
 function draw_inventory_v2_items(items, positions, bag, level, pos_z)
     -- LOOP FOR ITEMS
-    if not items then
+    if not items or not positions then
         return
     end
     for i = 1, #items do
         local item = items[i]
-        if item and not(dragged_item_table.item and dragged_item_table.item == item) then
+        if item and not(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and BAGS_OF_MANY_GUI_STATES.dragged_item_table.item == item) then
             local item_position
             if sort_by_time_setting then
                 item_position = i
@@ -461,7 +449,7 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                 if item_pos_x and item_pos_y then
 
                     -- LEFT CLICK: DROP ITEM
-                    if left_click_table.position == item_position and left_click_table.level == level and left_click_table.bag == bag then
+                    if BAGS_OF_MANY_GUI_STATES.left_click_table.position == item_position and BAGS_OF_MANY_GUI_STATES.left_click_table.level == level and BAGS_OF_MANY_GUI_STATES.left_click_table.bag == bag then
                         if InputIsKeyDown(225) then
                             local smallest_pos_x, smallest_pos_y = get_smallest_vanilla_pos_for_item(item)
                             if smallest_pos_x and smallest_pos_y then
@@ -483,15 +471,15 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                                 remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
                             end
                         else
-                            left_click_table.item = item
+                            BAGS_OF_MANY_GUI_STATES.left_click_table.item = item
                             drop_item_from_parent(item)
                             remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
                         end
                     end
                     -- RIGHT CLICK: DROP ITEM OR IF POTION INGEST MATERIAL
-                    if right_click_table.position == item_position and right_click_table.level == level and right_click_table.bag == bag then
-                        right_click_table.item = item
-                        reset_table(right_click_table)
+                    if BAGS_OF_MANY_GUI_STATES.right_click_table.position == item_position and BAGS_OF_MANY_GUI_STATES.right_click_table.level == level and BAGS_OF_MANY_GUI_STATES.right_click_table.bag == bag then
+                        BAGS_OF_MANY_GUI_STATES.right_click_table.item = item
+                        reset_table(BAGS_OF_MANY_GUI_STATES.right_click_table)
                         if is_potion(item) then
                             local player = get_player()
                             if player then
@@ -513,10 +501,10 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                     end
                     local hover_animation = 0
                     -- HOVERED: DETECT WHICH ITEM IS HOVERED
-                    if hovered_item_table.position == item_position and hovered_item_table.level == level and hovered_item_table.bag == bag and not left_click_table.item then
+                    if BAGS_OF_MANY_GUI_STATES.hovered_item_table.position == item_position and BAGS_OF_MANY_GUI_STATES.hovered_item_table.level == level and BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag == bag and not BAGS_OF_MANY_GUI_STATES.left_click_table.item then
                         hover_animation = 1
-                        hovered_item_table.item = item
-                        if not is_bag(item) and not dragged_item_table.item then
+                        BAGS_OF_MANY_GUI_STATES.hovered_item_table.item = item
+                        if not is_bag(item) and not BAGS_OF_MANY_GUI_STATES.dragged_item_table.item then
                             draw_tooltip(item, item_pos_x, item_pos_y, level)
                         end
 
@@ -525,17 +513,17 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                             inventory_bag_table[active_item_bag][level+1] = item
                         end
                     end
-                    if dropdown_style and not hovered_item_table.item and not keep_tooltip_open then
+                    if dropdown_style and not BAGS_OF_MANY_GUI_STATES.hovered_item_table.item and not keep_tooltip_open then
                         remove_draw_list_under_level(inventory_bag_table[active_item_bag], level)
                     end
 
-                    if dragged_item_table.level == level and dragged_item_table.bag == bag and dragged_item_table.position == item_position then
-                        dragged_item_table.item = item
+                    if BAGS_OF_MANY_GUI_STATES.dragged_item_table.level == level and BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag == bag and BAGS_OF_MANY_GUI_STATES.dragged_item_table.position == item_position then
+                        BAGS_OF_MANY_GUI_STATES.dragged_item_table.item = item
                         dragged_item_gui_id = bags_of_many_new_id()
                         bags_of_many_reserve_id(dragged_item_gui_id)
                     end
                     -- prevent item flash when dragging ends
-                    if sprite_path and not(dragged_item_table.item == item) then
+                    if sprite_path and not(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item == item) then
                         local img_width, img_height = GuiGetImageDimensions(bag_of_many_gui, sprite_path, 1)
                         local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
                         item_pos_x = item_pos_x + pad_x
@@ -553,13 +541,13 @@ function draw_inventory_v2_items(items, positions, bag, level, pos_z)
                             GuiZSetForNextWidget(bag_of_many_gui, pos_z + 8)
                             GuiImage(bag_of_many_gui, bags_of_many_new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/inventory/bag_pickup_override_inventory.png", 1, 1)
                         end
-                        if item == left_spot_alchemy.item then
+                        if item == BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item then
                             GuiZSetForNextWidget(bag_of_many_gui, pos_z + 8)
                             GuiImage(bag_of_many_gui, bags_of_many_new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_spot_left.png", 1, 1)
-                        elseif item == combined_spot_alchemy.item then
+                        elseif item == BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item then
                             GuiZSetForNextWidget(bag_of_many_gui, pos_z + 8)
                             GuiImage(bag_of_many_gui, bags_of_many_new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_spot_combined.png", 1, 1)
-                        elseif item == right_spot_alchemy.item then
+                        elseif item == BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item then
                             GuiZSetForNextWidget(bag_of_many_gui, pos_z + 8)
                             GuiImage(bag_of_many_gui, bags_of_many_new_id(), item_pos_x - pad_x, item_pos_y - pad_y + hover_animation, "mods/bags_of_many/files/ui_gfx/potion_mixing/alchemy_spot_right.png", 1, 1)
                         end
@@ -572,7 +560,7 @@ end
 
 ---@param pos_z number
 function draw_inventory_dragged_item_v2(pos_z)
-    local item = dragged_item_table.item
+    local item = BAGS_OF_MANY_GUI_STATES.dragged_item_table.item
     if item and dragged_invis_gui_id and dragged_item_gui_id then
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.IsExtraDraggable)
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.NoPositionTween)
@@ -585,8 +573,8 @@ function draw_inventory_dragged_item_v2(pos_z)
         if math.floor(draw_x) == 0 and math.floor(draw_y) == 0 then
             dragging_possible_swap = true
         else
-            dragged_item_table.position_x = draw_x
-            dragged_item_table.position_y = draw_y
+            BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_x = draw_x
+            BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_y = draw_y
         end
 
         local sprite_path = get_sprite_file(item)
@@ -595,8 +583,8 @@ function draw_inventory_dragged_item_v2(pos_z)
             local item_pos_x = 10
             local img_width, img_height = GuiGetImageDimensions(bag_of_many_gui, sprite_path, 1)
             local pad_x, pad_y = padding_to_center(20, 20, img_width, img_height)
-            item_pos_x = dragged_item_table.position_x + pad_x
-            item_pos_y =  dragged_item_table.position_y + pad_y
+            item_pos_x = BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_x + pad_x
+            item_pos_y =  BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_y + pad_y
             add_item_specifity(bag_of_many_gui, item, item_pos_x, item_pos_y, pos_z + 2)
             GuiZSetForNextWidget(bag_of_many_gui, pos_z + 1)
             GuiImageButton(bag_of_many_gui, dragged_item_gui_id, item_pos_x, item_pos_y, "", sprite_path)
@@ -606,7 +594,7 @@ end
 
 ---@param sort_by_time boolean
 function swapping_inventory_v2(sort_by_time)
-    if vanilla_inventory_table.quick.widget_item then
+    if BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
         swapping_vanilla_inventory(sort_by_time)
     else
         if not is_potion_spot_hovered() then
@@ -615,154 +603,105 @@ function swapping_inventory_v2(sort_by_time)
             swapping_potion_alchemy()
         end
     end
-    dragged_item_table = reset_table(dragged_item_table)
+    BAGS_OF_MANY_GUI_STATES.dragged_item_table = reset_table(BAGS_OF_MANY_GUI_STATES.dragged_item_table)
 end
 
 ---@param sort_by_time boolean
 function swapping_in_bag_inventory(sort_by_time)
-    if vanilla_inventory_table.hovering then
-        if dragged_item_table.item then
-            if not is_spell(dragged_item_table.item) and vanilla_inventory_table.inventory_type == 1 then
+    if BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering then
+        if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item then
+            if not is_spell(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.inventory_type == 1 then
                 swap_frame = GameGetFrameNum()
                 close_inventory_gui_vanilla()
-                add_item_to_inventory_quick_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot)
-            elseif is_spell(dragged_item_table.item) and vanilla_inventory_table.inventory_type == 2 then
-                add_item_to_inventory_full_vanilla(dragged_item_table.item, vanilla_inventory_table.hovering_spot, vanilla_inventory_table.hovering_spot_level)
-            elseif is_spell(dragged_item_table.item) and vanilla_inventory_table.inventory_type == 3 then
-                add_item_to_inventory_wand_vanilla(vanilla_inventory_table.hovering_spot_level, dragged_item_table.item, vanilla_inventory_table.hovering_spot)
+                add_item_to_inventory_quick_vanilla(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot)
+            elseif is_spell(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.inventory_type == 2 then
+                add_item_to_inventory_full_vanilla(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot, BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot_level)
+            elseif is_spell(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.inventory_type == 3 then
+                add_item_to_inventory_wand_vanilla(BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot_level, BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot)
             end
         end
         return
     end
     if not sort_by_time then
-        if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
-            if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
-                swap_item_position(dragged_item_table.item, hovered_item_table.item, dragged_item_table.bag, hovered_item_table.bag)
+        if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and BAGS_OF_MANY_GUI_STATES.hovered_item_table.item and (BAGS_OF_MANY_GUI_STATES.dragged_item_table.item ~= BAGS_OF_MANY_GUI_STATES.hovered_item_table.item) then
+            if not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) and not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.hovered_item_table.item, BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag) then
+                swap_item_position(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.item, BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag)
             end
-        elseif dragged_item_table.item and not hovered_item_table.item and hovered_item_table.bag then
-            if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) then
-                swap_item_to_position(dragged_item_table.item, hovered_item_table.position, hovered_item_table.bag)
+        elseif BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and not BAGS_OF_MANY_GUI_STATES.hovered_item_table.item and BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag then
+            if not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) then
+                swap_item_to_position(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.position, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag)
             end
-        elseif dragged_item_table.item and not hovered_item_table.item and not hovered_item_table.bag then
-            if moved_far_enough(dragged_item_table.position_x, dragged_item_table.position_y, dragged_item_table.initial_position_x, dragged_item_table.initial_position_y, 20, 20) then
-                drop_item_from_parent(dragged_item_table.item, true)
-                remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
+        elseif BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and not BAGS_OF_MANY_GUI_STATES.hovered_item_table.item and not BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag then
+            if moved_far_enough(BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_x, BAGS_OF_MANY_GUI_STATES.dragged_item_table.position_y, BAGS_OF_MANY_GUI_STATES.dragged_item_table.initial_position_x, BAGS_OF_MANY_GUI_STATES.dragged_item_table.initial_position_y, 20, 20) then
+                drop_item_from_parent(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, true)
+                remove_draw_list_under_level(inventory_bag_table[active_item_bag], BAGS_OF_MANY_GUI_STATES.dragged_item_table.level)
             end
         end
     else
-        if dragged_item_table.item and hovered_item_table.bag then
-            if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
-                swap_item_to_bag(dragged_item_table.item, hovered_item_table.bag)
+        if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag then
+            if not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) and not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.hovered_item_table.item, BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag) then
+                swap_item_to_bag(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag)
             end
-        elseif dragged_item_table.item and not hovered_item_table.item and not hovered_item_table.bag then
-            drop_item_from_parent(dragged_item_table.item, true)
-            remove_draw_list_under_level(inventory_bag_table[active_item_bag], dragged_item_table.level)
+        elseif BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and not BAGS_OF_MANY_GUI_STATES.hovered_item_table.item and not BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag then
+            drop_item_from_parent(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, true)
+            remove_draw_list_under_level(inventory_bag_table[active_item_bag], BAGS_OF_MANY_GUI_STATES.dragged_item_table.level)
         end
     end
 end
 
 function swapping_potion_alchemy()
-    if dragged_item_table.item and has_material_inventory(dragged_item_table.item) then
-        if left_spot_alchemy.hovered then
-            left_spot_alchemy.item = dragged_item_table.item
-            if right_spot_alchemy.item == left_spot_alchemy.item then
-                right_spot_alchemy.item = nil
-            elseif combined_spot_alchemy.item == left_spot_alchemy.item then
-                combined_spot_alchemy.item = nil
+    if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and has_material_inventory(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) then
+        if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.hovered then
+            BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item = BAGS_OF_MANY_GUI_STATES.dragged_item_table.item
+            if BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item == BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item then
+                BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item = nil
+            elseif BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item == BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item then
+                BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item = nil
             end
-        elseif combined_spot_alchemy.hovered then
-            combined_spot_alchemy.item = dragged_item_table.item
-            if left_spot_alchemy.item == combined_spot_alchemy.item then
-                left_spot_alchemy.item = nil
-            elseif right_spot_alchemy.item == combined_spot_alchemy.item then
-                right_spot_alchemy.item = nil
+        elseif BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.hovered then
+            BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item = BAGS_OF_MANY_GUI_STATES.dragged_item_table.item
+            if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item == BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item then
+                BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item = nil
+            elseif BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item == BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item then
+                BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item = nil
             end
-        elseif right_spot_alchemy.hovered then
-            right_spot_alchemy.item = dragged_item_table.item
-            if left_spot_alchemy.item == right_spot_alchemy.item then
-                left_spot_alchemy.item = nil
-            elseif combined_spot_alchemy.item == right_spot_alchemy.item then
-                combined_spot_alchemy.item = nil
+        elseif BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.hovered then
+            BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item = BAGS_OF_MANY_GUI_STATES.dragged_item_table.item
+            if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item == BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item then
+                BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item = nil
+            elseif BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item == BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item then
+                BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item = nil
             end
         end
-        potion_alchemy_content_buttons[dragged_item_table.item] = nil
+        BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.dragged_item_table.item] = nil
     end
     reset_potion_spots_hovered()
 end
 
 ---@param sort_by_time boolean
 function swapping_vanilla_inventory(sort_by_time)
-    dragged_item_table.item = vanilla_inventory_table.quick.widget_item
+    BAGS_OF_MANY_GUI_STATES.dragged_item_table.item = BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item
     if not sort_by_time then
-        if dragged_item_table.item and hovered_item_table.item and (dragged_item_table.item ~= hovered_item_table.item) then
-            if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
-                swap_item_position(dragged_item_table.item, hovered_item_table.item, dragged_item_table.bag, hovered_item_table.bag)
+        if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and BAGS_OF_MANY_GUI_STATES.hovered_item_table.item and (BAGS_OF_MANY_GUI_STATES.dragged_item_table.item ~= BAGS_OF_MANY_GUI_STATES.hovered_item_table.item) then
+            if not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) and not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.hovered_item_table.item, BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag) then
+                swap_item_position(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.item, BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag)
             end
-        elseif dragged_item_table.item and not hovered_item_table.item and hovered_item_table.bag then
-            if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) then
-                swap_item_to_position(dragged_item_table.item, hovered_item_table.position, hovered_item_table.bag)
+        elseif BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and not BAGS_OF_MANY_GUI_STATES.hovered_item_table.item and BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag then
+            if not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) then
+                swap_item_to_position(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.position, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag)
             end
         end
     else
-        if dragged_item_table.item and hovered_item_table.bag then
-            if not is_in_bag_tree(dragged_item_table.item, hovered_item_table.bag) and not is_in_bag_tree(hovered_item_table.item, dragged_item_table.bag) then
-                swap_item_to_bag(dragged_item_table.item, hovered_item_table.bag)
+        if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag then
+            if not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag) and not is_in_bag_tree(BAGS_OF_MANY_GUI_STATES.hovered_item_table.item, BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag) then
+                swap_item_to_bag(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item, BAGS_OF_MANY_GUI_STATES.hovered_item_table.bag)
             end
         end
     end
     -- Reset variables
-    reset_table(dragged_item_table)
-    vanilla_inventory_table.quick.widget_item = nil
-    vanilla_inventory_table.quick.frame_release = 0
-end
-
----@param draw_x number
----@param draw_y number
----@return boolean
-function button_is_not_at_zero(draw_x, draw_y)
-    return math.floor(draw_x) ~= 0 and math.floor(draw_y) ~= 0
-end
-
----@param draw_x number
----@param draw_y number
----@param item_pos_x number
----@param item_pos_y number
----@return boolean
-function button_has_moved(draw_x, draw_y, item_pos_x, item_pos_y)
-    return math.ceil(draw_x) ~= math.ceil(item_pos_x) or math.ceil(draw_y) ~= math.ceil(item_pos_y)
-end
-
----@param gui userdata
----@param id integer
----@param pos_x number
----@param pos_y number
----@param pos_z number
-function draw_left_bracket(gui, id, pos_x, pos_y, pos_z)
-    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, id, pos_x-5, pos_y - 4, "mods/bags_of_many/files/ui_gfx/inventory/background_left.png", bag_ui_alpha, 1)
-end
-
----@param gui userdata
----@param id integer
----@param pos_x number
----@param pos_y number
----@param pos_z number
-function draw_middle(gui, id, pos_x, pos_y, pos_z)
-    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, id, pos_x, pos_y - 4, "mods/bags_of_many/files/ui_gfx/inventory/background_middle.png", bag_ui_alpha, 1)
-end
-
----@param gui userdata
----@param id integer
----@param pos_x number
----@param pos_y number
----@param pos_z number
-function draw_right_bracket(gui, id, pos_x, pos_y, pos_z)
-    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
-    GuiZSetForNextWidget(gui, pos_z)
-    GuiImage(gui, id, pos_x+20, pos_y - 4, "mods/bags_of_many/files/ui_gfx/inventory/background_right.png", bag_ui_alpha, 1)
+    reset_table(BAGS_OF_MANY_GUI_STATES.dragged_item_table)
+    BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item = nil
+    BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.frame_release = 0
 end
 
 ---@param pos_x number
@@ -837,26 +776,27 @@ function draw_inventory_button(pos_x, pos_y, active_item)
     end
 end
 
+---@param gui userdata
+---@param sort_by_time boolean
 ---@param pos_x number
 ---@param pos_y number
 ---@param pos_z number
-function draw_inventory_sorting_option(pos_x, pos_y, pos_z)
-    GuiZSetForNextWidget(bag_of_many_gui, pos_z)
-    GuiColorSetForNextWidget(bag_of_many_gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
+function draw_inventory_sorting_option(gui, sort_by_time, pos_x, pos_y, pos_z)
+    local option_is_changed = false
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, bag_ui_alpha)
     local sorting_option_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sorting_by_position.png"
     local sorting_option_tooltip = "$bag_button_sorting_by_position_tooltip"
-    if sort_by_time_setting then
+    if sort_by_time then
         sorting_option_sprite =  "mods/bags_of_many/files/ui_gfx/inventory/bag_gui_button_sorting_by_time.png"
         sorting_option_tooltip = "$bag_button_sorting_by_time_tooltip"
     end
-    if GuiImageButton(bag_of_many_gui, bags_of_many_new_id(), pos_x, pos_y, "", sorting_option_sprite) then
-        sort_type_change_flag = true
-        option_changed = true
-    end
-    local _, _, hovered = GuiGetPreviousWidgetInfo(bag_of_many_gui)
+    open_is_changed = GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", sorting_option_sprite)
+    local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
     if hovered then
-        GuiText(bag_of_many_gui, pos_x + 14, pos_y, GameTextGet(sorting_option_tooltip))
+        GuiText(gui, pos_x + 14, pos_y, GameTextGet(sorting_option_tooltip))
     end
+    return option_is_changed
 end
 
 function draw_inventory_sorting_direction(pos_x, pos_y, pos_z)
@@ -1088,7 +1028,7 @@ function draw_wand_spells(wand_capacity, wand_spells, spells_per_line, pos_x, po
             local spell_sprite = get_sprite_file(wand_spells[i])
             if spell_sprite then
                 local remaining_uses = get_spell_remaining_uses(wand_spells[i])
-                if remaining_uses >= 0 then
+                if remaining_uses and remaining_uses >= 0 then
                     GuiColorSetForNextWidget(bag_of_many_gui, 1, 1, 1, 0.8)
                     GuiZSetForNextWidget(bag_of_many_gui, 1)
                     GuiText(bag_of_many_gui, background_pos_x+2, background_pos_y, tostring(remaining_uses))
@@ -1146,10 +1086,11 @@ end
 ---@param pos_x number
 ---@param pos_y number
 ---@param pos_z number
-function inventory_slot(gui, pos_x, pos_y, pos_z)
+---@param alpha number
+function inventory_slot(gui, pos_x, pos_y, pos_z, alpha)
     GuiZSetForNextWidget(gui, pos_z)
     GuiColorSetForNextWidget(gui, bag_ui_red, bag_ui_green, bag_ui_blue, 1)
-    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png", bag_ui_alpha, 1, 1)
+    GuiImage(gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/inventory/full_inventory_box.png", alpha, 1, 1)
 end
 
 ---@param gui userdata
@@ -1162,34 +1103,35 @@ end
 function inventory(gui, size, item_per_line, pos_x, pos_y, pos_z)
     local positions_x = {}
     local positions_y = {}
+    local alpha = 1
     for i = 0, size - 1 do
         local pos_in_line = i%(item_per_line)
         local x = pos_x + (pos_in_line * 20)
         local y = pos_y + (math.floor(i/item_per_line) * 27)
         table.insert(positions_x, x)
         table.insert(positions_y, y)
-        inventory_slot(gui, x, y, pos_z)
+        inventory_slot(gui, x, y, pos_z, alpha)
 
         -- only 1
         if (pos_in_line == 0 and i == size-1) or (pos_in_line == 0 and pos_in_line == item_per_line-1) then
-            draw_left_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
-            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
-            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_left_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
+            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
         -- 1 and more
         elseif pos_in_line == 0 then
-            draw_left_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
-            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_left_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
         -- last for line
         elseif pos_in_line == item_per_line-1 then
-            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
-            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
+            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
         -- middle end
         elseif i == size-1 then
-            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
-            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
+            draw_right_bracket(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
         -- middle
         else
-            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1)
+            draw_middle(gui, bags_of_many_new_id(), x, y, pos_z + 1, bag_ui_red, bag_ui_green, bag_ui_blue, alpha)
         end
     end
     return {positions_x = positions_x, positions_y = positions_y}
@@ -1211,20 +1153,20 @@ end
 
 ---@return boolean
 function is_potion_in_table()
-    return left_spot_alchemy.item ~= nil or right_spot_alchemy.item ~= nil or combined_spot_alchemy.item ~= nil
+    return BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item ~= nil or BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item ~= nil or BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item ~= nil
 end
 
 ---@param item integer
 ---@return boolean
 function is_item_in_alchemy_table(item)
-    return left_spot_alchemy.item == item or right_spot_alchemy.item == item or combined_spot_alchemy.item == item
+    return BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item == item or BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item == item or BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item == item
 end
 
 ---@return boolean
 function is_material_in_alchemy_table_selected()
     local left_material_selected = false
-    if left_spot_alchemy.item and potion_alchemy_content_buttons[left_spot_alchemy.item] then
-        for _, value in pairs(potion_alchemy_content_buttons[left_spot_alchemy.item]) do
+    if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item and BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item] then
+        for _, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item]) do
             if value then
                 left_material_selected = true
                 break
@@ -1235,8 +1177,8 @@ function is_material_in_alchemy_table_selected()
         return true
     end
     local combined_material_selected = false
-    if combined_spot_alchemy.item and potion_alchemy_content_buttons[combined_spot_alchemy.item] then
-        for _, value in pairs(potion_alchemy_content_buttons[combined_spot_alchemy.item]) do
+    if BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item and BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item] then
+        for _, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item]) do
             if value then
                 combined_material_selected = true
                 break
@@ -1247,8 +1189,8 @@ function is_material_in_alchemy_table_selected()
         return true
     end
     local right_material_selected = false
-    if right_spot_alchemy.item and potion_alchemy_content_buttons[right_spot_alchemy.item] then
-        for _, value in pairs(potion_alchemy_content_buttons[right_spot_alchemy.item]) do
+    if BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item and BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item] then
+        for _, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item]) do
             if value then
                 right_material_selected = true
                 break
@@ -1263,22 +1205,22 @@ end
 
 ---@return boolean
 function is_potion_spot_hovered()
-    local left_hovered = left_spot_alchemy.hovered ~= nil and left_spot_alchemy.hovered
-    local combined_hovered = combined_spot_alchemy.hovered ~= nil and combined_spot_alchemy.hovered
-    local right_hovered = right_spot_alchemy.hovered ~= nil and right_spot_alchemy.hovered
+    local left_hovered = BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.hovered ~= nil and BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.hovered
+    local combined_hovered = BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.hovered ~= nil and BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.hovered
+    local right_hovered = BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.hovered ~= nil and BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.hovered
     return (left_hovered ~= nil and combined_hovered ~= nil and right_hovered ~= nil) and (left_hovered or combined_hovered or right_hovered)
 end
 
 function reset_potion_spots_tables()
-    reset_table(left_spot_alchemy)
-    reset_table(combined_spot_alchemy)
-    reset_table(right_spot_alchemy)
+    reset_table(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy)
+    reset_table(BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy)
+    reset_table(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy)
 end
 
 function reset_potion_spots_hovered()
-    reset_hovered_table(left_spot_alchemy)
-    reset_hovered_table(combined_spot_alchemy)
-    reset_hovered_table(right_spot_alchemy)
+    reset_hovered_table(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy)
+    reset_hovered_table(BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy)
+    reset_hovered_table(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy)
 end
 
 ---@param hold_spot any
@@ -1290,14 +1232,14 @@ function remove_duplicate_potion_in_spots(hold_spot, item)
 end
 
 function clean_potion_gui()
-    if left_spot_alchemy.item and not is_player_root_entity(left_spot_alchemy.item) then
-        left_spot_alchemy.item = nil
+    if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item and not is_player_root_entity(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item) then
+        BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item = nil
     end
-    if combined_spot_alchemy.item and not is_player_root_entity(combined_spot_alchemy.item) then
-        combined_spot_alchemy.item = nil
+    if BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item and not is_player_root_entity(BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item) then
+        BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item = nil
     end
-    if right_spot_alchemy.item and not is_player_root_entity(right_spot_alchemy.item) then
-        right_spot_alchemy.item = nil
+    if BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item and not is_player_root_entity(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item) then
+        BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item = nil
     end
 end
 
@@ -1308,14 +1250,14 @@ function potion_mixing_gui(pos_x, pos_y, pos_z)
 end
 
 function potion_alchemy_spots(pos_x, pos_y, pos_z)
-    if left_spot_alchemy.item then
-        potion_alchemy_table_content(left_spot_alchemy.item, pos_x-130, pos_y+2, pos_z)
+    if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item then
+        potion_alchemy_table_content(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item, pos_x-130, pos_y+2, pos_z)
     end
-    if combined_spot_alchemy.item then
-        potion_alchemy_table_content(combined_spot_alchemy.item, pos_x, pos_y+75, pos_z)
+    if BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item then
+        potion_alchemy_table_content(BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item, pos_x, pos_y+75, pos_z)
     end
-    if right_spot_alchemy.item then
-        potion_alchemy_table_content(right_spot_alchemy.item, pos_x+70, pos_y+2, pos_z)
+    if BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item then
+        potion_alchemy_table_content(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item, pos_x+70, pos_y+2, pos_z)
     end
 
     potion_unselect_all(pos_x - 10, pos_y + 13, pos_z)
@@ -1364,11 +1306,11 @@ function potion_alchemy_left_spot(pos_x, pos_y, pos_z)
     GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.NoPositionTween)
     GuiImage(bag_of_many_gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_left_number.png", 1, 1 ,1)
     local potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_empty_spot.png"
-    if left_spot_alchemy.item then
-        add_potion_color(bag_of_many_gui, left_spot_alchemy.item)
-        if is_potion(left_spot_alchemy.item) then
+    if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item then
+        add_potion_color(bag_of_many_gui, BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item)
+        if is_potion(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item) then
             potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
-        elseif is_powder_stash(left_spot_alchemy.item) then
+        elseif is_powder_stash(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item) then
             potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/material_pouch.png"
             pos_x = pos_x - 2
             pos_y = pos_y - 2
@@ -1376,18 +1318,18 @@ function potion_alchemy_left_spot(pos_x, pos_y, pos_z)
     else
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.DrawNoHoverAnimation)
     end
-    if dragged_item_table.item and is_potion(dragged_item_table.item) then
+    if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and is_potion(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) then
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.DrawWobble)
     end
     GuiZSetForNextWidget(bag_of_many_gui, pos_z)
     local left_spot_rc, left_spot_lc = GuiImageButton(bag_of_many_gui, bags_of_many_new_id(), pos_x, pos_y, "", potion_sprite)
     local left_hovered = last_widget_is_being_hovered(bag_of_many_gui)
     if left_spot_lc or left_spot_rc then
-        left_spot_alchemy.item = nil
+        BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item = nil
     end
     if left_hovered and not dragging_possible_swap then
         reset_potion_spots_hovered()
-        left_spot_alchemy.hovered = true
+        BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.hovered = true
     end
 end
 
@@ -1396,11 +1338,11 @@ function potion_alchemy_combined_spot(pos_x, pos_y, pos_z)
     GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.NoPositionTween)
     GuiImage(bag_of_many_gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_combined_number.png", 1, 1 ,1)
     local potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_empty_spot.png"
-    if combined_spot_alchemy.item then
-        add_potion_color(bag_of_many_gui, combined_spot_alchemy.item)
-        if is_potion(combined_spot_alchemy.item) then
+    if BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item then
+        add_potion_color(bag_of_many_gui, BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item)
+        if is_potion(BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item) then
             potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
-        elseif is_powder_stash(combined_spot_alchemy.item) then
+        elseif is_powder_stash(BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item) then
             potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/material_pouch.png"
             pos_x = pos_x - 2
             pos_y = pos_y - 2
@@ -1408,18 +1350,18 @@ function potion_alchemy_combined_spot(pos_x, pos_y, pos_z)
     else
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.DrawNoHoverAnimation)
     end
-    if dragged_item_table.item and is_potion(dragged_item_table.item) then
+    if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and is_potion(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) then
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.DrawWobble)
     end
     GuiZSetForNextWidget(bag_of_many_gui, pos_z)
     local combined_spot_rc, combined_spot_lc = GuiImageButton(bag_of_many_gui, bags_of_many_new_id(), pos_x, pos_y, "", potion_sprite)
     local combined_hovered = last_widget_is_being_hovered(bag_of_many_gui)
     if combined_spot_lc or combined_spot_rc then
-        combined_spot_alchemy.item = nil
+        BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item = nil
     end
     if combined_hovered and not dragging_possible_swap then
         reset_potion_spots_hovered()
-        combined_spot_alchemy.hovered = true
+        BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.hovered = true
     end
 end
 
@@ -1428,11 +1370,11 @@ function potion_alchemy_right_spot(pos_x, pos_y, pos_z)
     GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.NoPositionTween)
     GuiImage(bag_of_many_gui, bags_of_many_new_id(), pos_x, pos_y, "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_right_number.png", 1, 1 ,1)
     local potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion_empty_spot.png"
-    if right_spot_alchemy.item then
-        add_potion_color(bag_of_many_gui, right_spot_alchemy.item)
-        if is_potion(right_spot_alchemy.item) then
+    if BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item then
+        add_potion_color(bag_of_many_gui, BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item)
+        if is_potion(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item) then
             potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/potion.png"
-        elseif is_powder_stash(right_spot_alchemy.item) then
+        elseif is_powder_stash(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item) then
             potion_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/material_pouch.png"
             pos_x = pos_x - 2
             pos_y = pos_y - 2
@@ -1440,18 +1382,18 @@ function potion_alchemy_right_spot(pos_x, pos_y, pos_z)
     else
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.DrawNoHoverAnimation)
     end
-    if dragged_item_table.item and is_potion(dragged_item_table.item) then
+    if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and is_potion(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) then
         GuiOptionsAddForNextWidget(bag_of_many_gui, GUI_OPTION.DrawWobble)
     end
     GuiZSetForNextWidget(bag_of_many_gui, pos_z)
     local right_spot_rc, right_spot_lc = GuiImageButton(bag_of_many_gui, bags_of_many_new_id(), pos_x, pos_y, "", potion_sprite)
     if right_spot_lc or right_spot_rc then
-        right_spot_alchemy.item = nil
+        BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item = nil
     end
     local right_hovered = last_widget_is_being_hovered(bag_of_many_gui)
     if right_hovered and not dragging_possible_swap then
         reset_potion_spots_hovered()
-        right_spot_alchemy.hovered = true
+        BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.hovered = true
     end
 end
 
@@ -1467,19 +1409,19 @@ function potion_alchemy_table_content(potion, pos_x, pos_y, pos_z)
         for i = 1, #materials do
             local game_text = GameTextGet(materials[i].name)
             local potion_content_button_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/button_unchecked.png"
-            if potion_alchemy_content_buttons[potion] and potion_alchemy_content_buttons[potion][materials[i].id] then
+            if BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[potion] and BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[potion][materials[i].id] then
                 potion_content_button_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/button_checked.png"
             end
             GuiZSetForNextWidget(bag_of_many_gui, 2)
             local left_click, right_click = GuiImageButton(bag_of_many_gui, bags_of_many_new_id(), 0, position_y, "", potion_content_button_sprite)
             if left_click or right_click then
-                if not potion_alchemy_content_buttons[potion] then
-                    potion_alchemy_content_buttons[potion] = {}
+                if not BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[potion] then
+                    BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[potion] = {}
                 end
-                if potion_alchemy_content_buttons[potion][materials[i].id] then
-                    potion_alchemy_content_buttons[potion][materials[i].id] = false
+                if BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[potion][materials[i].id] then
+                    BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[potion][materials[i].id] = false
                 else
-                    potion_alchemy_content_buttons[potion][materials[i].id] = true
+                    BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[potion][materials[i].id] = true
                 end
             end
             GuiText(bag_of_many_gui, 12, position_y, string.format("%.2f", materials[i].amount) .. "% " .. string.upper(game_text:sub(1,1)) .. game_text:sub(2, #game_text))
@@ -1506,37 +1448,37 @@ function potion_alchemy_delete_chosen(pos_x, pos_y, pos_z)
         auto_draw_background_box(bag_of_many_gui, 2, 3, 6)
     end
     if left_click or right_click then
-        if left_spot_alchemy.item then
-            if potion_alchemy_content_buttons[left_spot_alchemy.item] then
-                for index, value in pairs(potion_alchemy_content_buttons[left_spot_alchemy.item]) do
+        if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item then
+            if BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item] then
+                for index, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item]) do
                     if value then
-                        local amount_left = delete_potion_specific_content_quantity(left_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                        local amount_left = delete_potion_specific_content_quantity(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
                         if amount_left <= 0 then
-                            potion_alchemy_content_buttons[left_spot_alchemy.item][index] = nil
+                            BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item][index] = nil
                         end
                     end
                 end
             end
         end
-        if combined_spot_alchemy.item then
-            if potion_alchemy_content_buttons[combined_spot_alchemy.item] then
-                for index, value in pairs(potion_alchemy_content_buttons[combined_spot_alchemy.item]) do
+        if BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item then
+            if BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item] then
+                for index, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item]) do
                     if value then
-                        local amount_left = delete_potion_specific_content_quantity(combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                        local amount_left = delete_potion_specific_content_quantity(BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
                         if amount_left <= 0 then
-                            potion_alchemy_content_buttons[combined_spot_alchemy.item][index] = nil
+                            BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item][index] = nil
                         end
                     end
                 end
             end
         end
-        if right_spot_alchemy.item then
-            if potion_alchemy_content_buttons[right_spot_alchemy.item] then
-                for index, value in pairs(potion_alchemy_content_buttons[right_spot_alchemy.item]) do
+        if BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item then
+            if BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item] then
+                for index, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item]) do
                     if value then
-                        local amount_left = delete_potion_specific_content_quantity(right_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                        local amount_left = delete_potion_specific_content_quantity(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
                         if amount_left <= 0 then
-                            potion_alchemy_content_buttons[right_spot_alchemy.item][index] = nil
+                            BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item][index] = nil
                         end
                     end
                 end
@@ -1560,7 +1502,7 @@ end
 
 function potion_alchemy_transfer(pos_x, pos_y, pos_z)
     local transfer_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/transfer_button.png"
-    if not combined_spot_alchemy.item then
+    if not BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item then
         transfer_sprite = "mods/bags_of_many/files/ui_gfx/potion_mixing/transfer_button_disabled.png"
     end
     GuiZSetForNextWidget(bag_of_many_gui, 3)
@@ -1572,18 +1514,18 @@ function potion_alchemy_transfer(pos_x, pos_y, pos_z)
         GuiText(bag_of_many_gui, pos_x + 20, pos_y, GameTextGet("$alchemy_table_transfer_button").." ("..tostring(bags_mod_state.alchemy_amount_transfered/10).."%)")
         auto_draw_background_box(bag_of_many_gui, 2, 3, 6)
     end
-    if combined_spot_alchemy.item and (left_click or right_click) then
-        if left_spot_alchemy.item then
-            for index, value in pairs(potion_alchemy_content_buttons[left_spot_alchemy.item] or {}) do
+    if BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item and (left_click or right_click) then
+        if BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item then
+            for index, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item] or {}) do
                 if value then
-                    transfer_potion_specific_content(left_spot_alchemy.item, combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                    transfer_potion_specific_content(BAGS_OF_MANY_GUI_STATES.left_spot_alchemy.item, BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
                 end
             end
         end
-        if right_spot_alchemy.item then
-            for index, value in pairs(potion_alchemy_content_buttons[right_spot_alchemy.item] or {}) do
+        if BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item then
+            for index, value in pairs(BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons[BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item] or {}) do
                 if value then
-                    transfer_potion_specific_content(right_spot_alchemy.item, combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
+                    transfer_potion_specific_content(BAGS_OF_MANY_GUI_STATES.right_spot_alchemy.item, BAGS_OF_MANY_GUI_STATES.combined_spot_alchemy.item, index, bags_mod_state.alchemy_amount_transfered)
                 end
             end
         end
@@ -1603,7 +1545,7 @@ function potion_unselect_all(pos_x, pos_y, pos_z)
             auto_draw_background_box(bag_of_many_gui, 2, 3, 6)
         end
         if left_click or right_click then
-            potion_alchemy_content_buttons = {}
+            BAGS_OF_MANY_GUI_STATES.potion_alchemy_content_buttons = {}
         end
     end
 end
@@ -1700,7 +1642,10 @@ function setup_inventory_options_buttons(bag, level, pos_x, pos_y, pos_z)
     if ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
         local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
         nb_button = nb_button + 1
-        draw_inventory_sorting_option(pos_x + pos_x_button, pos_y + pos_y_button, pos_z)
+        if draw_inventory_sorting_option(bag_of_many_gui, sort_by_time_setting, pos_x + pos_x_button, pos_y + pos_y_button, pos_z) then
+            sort_by_time_setting = not sort_by_time_setting
+            option_changed = true
+        end
     end
     if sort_by_time_setting and ModSettingGet("BagsOfMany.show_change_sorting_direction_button") then
         local pos_x_button, pos_y_button = calculate_grid_position(length, size, size, direction, nb_button)
@@ -1710,6 +1655,9 @@ function setup_inventory_options_buttons(bag, level, pos_x, pos_y, pos_z)
 end
 
 function add_item_specifity(gui, entity, x, y, z)
+    if entity == nil then
+        return
+    end
     -- Draw the item
     if EntityHasTag(entity, "card_action") then
         --Draw the action type if its a spell
@@ -1723,5 +1671,328 @@ function add_item_specifity(gui, entity, x, y, z)
     elseif has_material_inventory(entity) then
         -- Add the color to the potion sprite
         add_potion_color(gui, entity)
+    end
+end
+
+-- Vanilla inventory functions
+function reset_vanilla_capture_vars()
+    BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.inventory_type = 0
+    BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering = false
+    BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot = nil
+    BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot_level = nil
+end
+
+---@param gui userdata
+function draw_vanilla_inventory_v2(gui)
+    reset_vanilla_capture_vars()
+    local UI_BARS_POS_X = tonumber(MagicNumbersGetValue("UI_BARS_POS_X"))
+    local UI_BARS_POS_Y = tonumber(MagicNumbersGetValue("UI_BARS_POS_Y"))
+    local UI_FULL_INVENTORY_OFFSET_X = tonumber(MagicNumbersGetValue("UI_FULL_INVENTORY_OFFSET_X"))
+    if UI_BARS_POS_X ~= nil and UI_BARS_POS_Y ~= nil and UI_FULL_INVENTORY_OFFSET_X ~= nil then
+        if is_inventory_open() then
+            draw_vanilla_inventory_capture(gui, UI_BARS_POS_X - 1, UI_BARS_POS_Y, 1)
+            draw_vanilla_spell_inventory_capture(gui, UI_FULL_INVENTORY_OFFSET_X + UI_BARS_POS_X, UI_BARS_POS_Y, 1)
+            local player = get_player()
+            if player then
+                local is_colliding = CheckEntityCollideWithWorkshop(player)
+                local tinker_points = EntityTinkerPoints(player)
+                if is_colliding then
+                    tinker_points = tinker_points + 1
+                end
+                if tinker_points > 0 then
+                    draw_vanilla_wand_inventory_capture(gui, 0, 0, 1)
+                end
+            end
+        end
+    else
+        print_error("Bags of Many: UI_BARS_POS_X or UI_BARS_POS_Y is nil. Please check your MagicNumbers settings.")
+    end
+end
+
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+function draw_vanilla_inventory_capture(gui, pos_x, pos_y, pos_z)
+    local vanilla_items = get_player_inventory_quick_table()
+    if vanilla_items then
+        for i = 0, 7 do
+            if i == 4 then
+                pos_x = pos_x + 1
+            end
+            detect_vanilla_inventory_mouse_input(gui, pos_x + (20 * i), pos_y, pos_z, vanilla_items[i], i)
+        end
+    end
+end
+
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+function draw_vanilla_wand_inventory_capture(gui, pos_x, pos_y, pos_z)
+    local wands = get_player_inventory_wand_table()
+    if wands then
+        local sprite_added_padding = 0
+        local wands_found = 0
+        for i = 0, 3 do
+            if wands[i] then
+                local wand_offset_y = 48 + (63 * wands_found) + sprite_added_padding
+                local wand_sprite = get_sprite_file(wands[i])
+                if wand_sprite then
+                    local _, sprite_size_y = GuiGetImageDimensions(gui, wand_sprite)
+                    local sprite_padding = ((sprite_size_y-8)*2)
+                    sprite_added_padding = sprite_added_padding + sprite_padding
+                    local wands_spell_pos = 33 + sprite_padding
+                    detect_vanilla_wand_inventory_mouse_inputV2(gui, pos_x + 25, pos_y + wand_offset_y + wands_spell_pos, pos_z, wands[i], 1)
+                end
+                wands_found = wands_found + 1
+            end
+        end
+    end
+end
+
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+function draw_vanilla_spell_inventory_capture(gui, pos_x, pos_y, pos_z)
+    local vanilla_spells = get_player_inventory_full_table()
+    local x, y = get_inventory_spell_size()
+    if vanilla_spells then        
+        for i = 0, (x * y) - 1 do
+            detect_vanilla_spell_inventory_mouse_input(gui, pos_x + (20 * ((i)%x)), pos_y + (math.floor((i)/x)* 20), pos_z, vanilla_spells[i], i - (x *math.floor((i)/x)), math.floor((i)/x))
+        end
+    end
+end
+
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param item integer
+---@param inv_spot number
+function detect_vanilla_wand_inventory_mouse_inputV2(gui, pos_x, pos_y, pos_z, item, inv_spot)
+    if not item or not is_wand(item) then
+        return
+    end
+    local all_spells = EntityGetAllChildren(item)
+    local wand_capacity = EntityGetWandCapacity(item)
+    local normal_spells = {}
+    local permanent_spells = {}
+    for _, spell in ipairs(all_spells or {}) do
+        -- removing always cast spells from the detection
+        if is_spell_permanently_attached(spell) then
+            table.insert(permanent_spells, spell)
+        else
+            -- account for the possiblity that spells are not contiguous in the wand
+            local spell_pos = get_item_inventory_slot(spell)
+            if spell_pos and type(spell_pos) == "number" then                
+                table.insert(normal_spells, spell_pos + 1, spell)
+            end
+        end
+    end
+
+    for i = 1, wand_capacity do
+        local spell
+        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+        GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+        GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+        GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+        GuiZSetForNextWidget(gui, pos_z)
+        GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+        if normal_spells[i] then
+            spell = normal_spells[i]
+        end
+        local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+        if hover then
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.inventory_type = 3
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering = true
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot = i - 1
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot_level = item
+            -- mod dragging display ish
+            if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and not BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
+                local should_display_hover_anim = false
+                if is_spell(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) then
+                    should_display_hover_anim = true
+                end
+                if should_display_hover_anim then
+                    GuiZSetForNextWidget(gui, 1)
+                    GuiImage(gui, bags_of_many_new_id(), pos_x - 1, pos_y - 1, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1.1)
+                end
+            end
+        end
+        if spell and hover and InputIsMouseButtonJustDown(1) then
+            -- SHIFT CLICK SWAP
+            if InputIsKeyDown(225) and active_item_bag ~= nil then
+                shift_clicked = true
+                add_item_shift_click(active_item_bag, spell)
+            end
+
+            BAGS_OF_MANY_GUI_STATES.dragged_item_table.item = spell
+            BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag = item
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item = spell
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
+        end
+        if spell and not is_inventory_open() and InputIsMouseButtonDown(1) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
+            local player_control_comp = get_player_control_component()
+            if player_control_comp then
+                local sprite = get_sprite_file(BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item)
+                local mouse_x, mouse_y = ComponentGetValue2(player_control_comp, "mMousePositionRaw")
+                if mouse_x and mouse_y and sprite then
+                    local sprite_size_x, sprite_size_y = GuiGetImageDimensions(gui, sprite)
+                    local offset_x, offset_y = padding_to_center(20, 20, sprite_size_x, sprite_size_y)
+                    GuiZSetForNextWidget(gui, 1)
+                    if is_potion(BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item) then
+                        add_potion_color(gui, BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item)
+                    end
+                    GuiImage(gui, bags_of_many_new_id(), mouse_x/2 + offset_x, mouse_y/2 + offset_y, sprite, 1, 1)
+                end
+            end
+        end
+        pos_x = pos_x + 20
+        inv_spot = inv_spot + 1
+    end
+end
+
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param item integer
+---@param inv_spot number
+---@param level number
+function detect_vanilla_spell_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot, level)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+    local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+    if hover then
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.inventory_type = 2
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering = true
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot = inv_spot
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot_level = level
+        -- mod dragging display ish
+        if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and not BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
+            local should_display_hover_anim = false
+            if is_spell(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) then
+                should_display_hover_anim = true
+            end
+            if should_display_hover_anim then
+                GuiZSetForNextWidget(gui, 1)
+                GuiImage(gui, bags_of_many_new_id(), pos_x - 1, pos_y - 1, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1.1)
+            end
+        end
+    end
+    if item and hover and InputIsMouseButtonJustDown(1) then
+        -- SHIFT CLICK SWAP
+        if InputIsKeyDown(225) and active_item_bag ~= nil then
+            shift_clicked = true
+            add_item_shift_click(active_item_bag, item)
+        end
+        -- JUST USED FOR THE HOVER ANIMATION
+        BAGS_OF_MANY_GUI_STATES.dragged_item_table.item = item
+        BAGS_OF_MANY_GUI_STATES.dragged_item_table.bag = EntityGetParent(item)
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item = item
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
+    end
+    if item and not is_inventory_open() and InputIsMouseButtonDown(1) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
+        local player_control_comp = get_player_control_component()
+        if player_control_comp then
+            local sprite = get_sprite_file(BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item)
+            local mouse_x, mouse_y = ComponentGetValue2(player_control_comp, "mMousePositionRaw")
+            if mouse_x and mouse_y and sprite then
+                local sprite_size_x, sprite_size_y = GuiGetImageDimensions(gui, sprite)
+                local offset_x, offset_y = padding_to_center(20, 20, sprite_size_x, sprite_size_y)
+                GuiZSetForNextWidget(gui, 1)
+                if is_potion(BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item) then
+                    add_potion_color(gui, BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item)
+                end
+                GuiImage(gui, bags_of_many_new_id(), mouse_x/2 + offset_x, mouse_y/2 + offset_y, sprite, 1, 1)
+            end
+        end
+    end
+end
+
+---@param gui userdata
+---@param pos_x number
+---@param pos_y number
+---@param pos_z number
+---@param item integer
+---@param inv_spot number
+function detect_vanilla_inventory_mouse_input(gui, pos_x, pos_y, pos_z, item, inv_spot)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoPositionTween)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.ClickCancelsDoubleClick)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.NoSound)
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawNoHoverAnimation)
+    GuiZSetForNextWidget(gui, pos_z)
+    GuiImageButton(gui, bags_of_many_new_id(), pos_x, pos_y, "", "mods/bags_of_many/files/ui_gfx/inventory/box/invisible20x20.png")
+    local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+    if hover then
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.inventory_type = 1
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering = true
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot = inv_spot
+        -- mod dragging display ish
+        if BAGS_OF_MANY_GUI_STATES.dragged_item_table.item and not BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
+            local should_display_hover_anim = true
+            if is_item(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot <= 3 then
+                should_display_hover_anim = false
+            elseif is_wand(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering_spot >= 4 then
+                should_display_hover_anim = false
+            elseif is_spell(BAGS_OF_MANY_GUI_STATES.dragged_item_table.item) then
+                should_display_hover_anim = false
+            end
+            if should_display_hover_anim then
+                GuiZSetForNextWidget(gui, 1)
+                GuiImage(gui, bags_of_many_new_id(), pos_x - 1, pos_y - 1, "mods/bags_of_many/files/ui_gfx/full_inventory_box_highlight.png", 1, 1.1)
+            end
+        end
+    end
+    if item and hover and InputIsMouseButtonJustDown(1) then
+        -- SHIFT CLICK SWAP
+        if InputIsKeyDown(225) and active_item_bag ~= nil then
+            swap_frame = GameGetFrameNum()
+            close_inventory_gui_vanilla()
+            shift_clicked = true
+            add_item_shift_click(active_item_bag, item)
+        end
+        -- JUST USED FOR THE HOVER ANIMATION
+        BAGS_OF_MANY_GUI_STATES.dragged_item_table.item = item
+
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item = item
+        BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.frame_click = GameGetFrameNum()
+    end
+    if item and not is_inventory_open() and InputIsMouseButtonDown(1) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
+        local player_control_comp = get_player_control_component()
+        if player_control_comp then
+            local sprite = get_sprite_file(BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item)
+            local mouse_x, mouse_y = ComponentGetValue2(player_control_comp, "mMousePositionRaw")
+            if mouse_x and mouse_y and sprite then
+                local sprite_size_x, sprite_size_y = GuiGetImageDimensions(gui, sprite)
+                local offset_x, offset_y = padding_to_center(20, 20, sprite_size_x, sprite_size_y)
+                GuiZSetForNextWidget(gui, 1)
+                if is_potion(BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item) then
+                    add_potion_color(gui, BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item)
+                end
+                GuiImage(gui, bags_of_many_new_id(), mouse_x/2 + offset_x, mouse_y/2 + offset_y, sprite, 1, 1)
+            end
+        end
+    end
+end
+
+function detect_vanilla_inventory_mouse_release()
+    if InputIsMouseButtonJustUp(1) and BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item then
+        if not BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.hovering then
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.frame_release = GameGetFrameNum()
+            dragging_possible_swap = true
+            BAGS_OF_MANY_GUI_STATES.dragged_item_table.item = BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item
+        else
+            -- Reset variables
+            reset_table(BAGS_OF_MANY_GUI_STATES.dragged_item_table)
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.widget_item = nil
+            BAGS_OF_MANY_GUI_STATES.vanilla_inventory_table.quick.frame_release = 0
+        end
     end
 end
